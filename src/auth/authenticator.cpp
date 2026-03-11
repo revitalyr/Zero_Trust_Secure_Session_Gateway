@@ -463,4 +463,32 @@ void AuthenticationManager::cleanup_expired_tokens() {
     }
 }
 
+UserCount AuthenticationManager::get_active_user_count() const noexcept {
+    std::shared_lock lock(m_users_mutex);
+    return std::ranges::count_if(m_users, 
+        [](const auto& pair) { return pair.second.is_active(); });
+}
+
+UserCount AuthenticationManager::get_blocked_user_count() const noexcept {
+    std::shared_lock lock(m_blocked_users_mutex);
+    return m_blocked_users.size();
+}
+
+vector<string> AuthenticationManager::get_recent_failed_attempts(string_view username, AttemptCount count) const noexcept {
+    // Modern rate limiting with better tracking and semantic return type
+    std::shared_lock lock(m_rate_limits_mutex);
+    
+    vector<string> attempts;
+    const auto it = m_rate_limits.find(UserName{username});
+    if (it != m_rate_limits.end()) {
+        // Return recent failed attempt timestamps with semantic type
+        for (AttemptCount i = 0; i < count && i < 5; ++i) {
+            attempts.push_back("Failed attempt at " + 
+                std::to_string(std::chrono::duration_cast<std::chrono::seconds>(it->second.m_window_start.time_since_epoch()).count()));
+        }
+    }
+    
+    return attempts;
+}
+
 } // namespace zerossg

@@ -28,57 +28,57 @@ constexpr Role string_to_role(string_view role_str) noexcept {
     return Role::VIEWER; // Default fallback
 }
 
-// Modern User struct with designated initializers and better member names
+// Modern User struct with semantic member names
 struct User {
-    string m_username;
-    string m_password_hash;
+    UserName m_user_name;
+    PasswordHash m_password_hash;
     Role m_role;
     bool m_active;
-    system_clock::time_point m_created_at;
-    system_clock::time_point m_last_login;
+    TimePoint m_created_at;
+    TimePoint m_last_login;
     
     constexpr User() noexcept 
         : m_role(Role::VIEWER)
         , m_active(false) {}
     
-    constexpr User(string username, string password_hash, Role role) noexcept
-        : m_username(std::move(username))
+    constexpr User(UserName username, PasswordHash password_hash, Role role) noexcept
+        : m_user_name(std::move(username))
         , m_password_hash(std::move(password_hash))
         , m_role(role)
         , m_active(true)
         , m_created_at(system_clock::now()) {}
     
     // Modern accessor methods
-    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
-    [[nodiscard]] constexpr const string& password_hash() const noexcept { return m_password_hash; }
+    [[nodiscard]] constexpr const UserName& user_name() const noexcept { return m_user_name; }
+    [[nodiscard]] constexpr const PasswordHash& password_hash() const noexcept { return m_password_hash; }
     [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
     [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
-    [[nodiscard]] constexpr system_clock::time_point created_at() const noexcept { return m_created_at; }
-    [[nodiscard]] constexpr system_clock::time_point last_login() const noexcept { return m_last_login; }
+    [[nodiscard]] constexpr TimePoint created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr TimePoint last_login() const noexcept { return m_last_login; }
     
-    void set_last_login(system_clock::time_point time) noexcept { m_last_login = time; }
+    void set_last_login(TimePoint time) noexcept { m_last_login = time; }
     void set_active(bool active) noexcept { m_active = active; }
 };
 
-// Modern Session struct with better encapsulation
+// Modern Session struct with semantic member names
 struct Session {
-    string m_session_id;
-    string m_username;
+    SessionId m_session_id;
+    UserName m_user_name;
     Role m_role;
-    system_clock::time_point m_created_at;
-    system_clock::time_point m_expires_at;
-    string m_client_ip;
-    string m_target_service;
+    TimePoint m_created_at;
+    TimePoint m_expires_at;
+    ClientIp m_client_ip;
+    ServiceName m_target_service;
     bool m_active;
     
     constexpr Session() noexcept 
         : m_role(Role::VIEWER)
         , m_active(false) {}
     
-    constexpr Session(string session_id, string username, Role role, 
-                   string client_ip, string target_service) noexcept
+    constexpr Session(SessionId session_id, UserName username, Role role, 
+                   ClientIp client_ip, ServiceName target_service) noexcept
         : m_session_id(std::move(session_id))
-        , m_username(std::move(username))
+        , m_user_name(std::move(username))
         , m_role(role)
         , m_client_ip(std::move(client_ip))
         , m_target_service(std::move(target_service))
@@ -86,31 +86,31 @@ struct Session {
         , m_created_at(system_clock::now())
         , m_expires_at(m_created_at + seconds(3600)) {}
     
-    // Accessor methods
-    [[nodiscard]] constexpr const string& session_id() const noexcept { return m_session_id; }
-    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
+    // Accessor methods with semantic return types
+    [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
+    [[nodiscard]] constexpr const UserName& user_name() const noexcept { return m_user_name; }
     [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
     [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
-    [[nodiscard]] constexpr system_clock::time_point created_at() const noexcept { return m_created_at; }
-    [[nodiscard]] constexpr system_clock::time_point expires_at() const noexcept { return m_expires_at; }
-    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
-    [[nodiscard]] constexpr const string& target_service() const noexcept { return m_target_service; }
+    [[nodiscard]] constexpr TimePoint created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr TimePoint expires_at() const noexcept { return m_expires_at; }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const ServiceName& target_service() const noexcept { return m_target_service; }
     
     // Mutator methods
     void set_active(bool active) noexcept { m_active = active; }
-    void set_expires_at(system_clock::time_point expires) noexcept { m_expires_at = expires; }
+    void set_expires_at(TimePoint expires) noexcept { m_expires_at = expires; }
     
     // Utility methods
     [[nodiscard]] bool is_expired() const noexcept {
         return system_clock::now() > m_expires_at;
     }
     
-    [[nodiscard]] seconds time_until_expiry() const noexcept {
+    [[nodiscard]] TimeoutDuration time_until_expiry() const noexcept {
         const auto now = system_clock::now();
         if (now >= m_expires_at) {
-            return seconds{0};
+            return TimeoutDuration{0};
         }
-        return std::chrono::duration_cast<seconds>(m_expires_at - now);
+        return std::chrono::duration_cast<TimeoutDuration>(m_expires_at - now);
     }
 };
 

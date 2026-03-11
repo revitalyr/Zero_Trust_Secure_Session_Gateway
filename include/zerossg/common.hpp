@@ -38,6 +38,29 @@ using steady_clock = std::chrono::steady_clock;
 using milliseconds = std::chrono::milliseconds;
 using seconds = std::chrono::seconds;
 
+// Semantic type aliases for member data types
+using UserName = std::string;
+using PasswordHash = std::string;
+using SessionId = std::string;
+using ClientIp = std::string;
+using TokenString = std::string;
+using ServiceName = std::string;
+using HostAddress = std::string;
+using SecretKey = std::vector<unsigned char>;
+using ErrorMessage = std::string;
+
+// Semantic type aliases for counts and sizes
+using UserCount = std::size_t;
+using SessionCount = std::size_t;
+using AttemptCount = std::size_t;
+using PortNumber = std::uint16_t;
+using SecretSize = std::size_t;
+
+// Semantic type aliases for time-related types
+using TimePoint = std::chrono::system_clock::time_point;
+using Duration = std::chrono::seconds;
+using TimeoutDuration = std::chrono::seconds;
+
 // Modern expected-based error handling (C++23)
 template<typename T>
 using Result = std::expected<T, std::string>;

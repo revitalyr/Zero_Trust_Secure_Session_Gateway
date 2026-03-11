@@ -44,9 +44,9 @@ public:
     Result<bool> is_user_blocked(string_view username) const noexcept;
     Result<void> cleanup_expired_tokens() noexcept;
     
-    // Statistics and monitoring
-    [[nodiscard]] size_t get_active_user_count() const noexcept;
-    [[nodiscard]] size_t get_blocked_user_count() const noexcept;
+    // Statistics and monitoring with semantic return types
+    [[nodiscard]] UserCount get_active_user_count() const noexcept;
+    [[nodiscard]] UserCount get_blocked_user_count() const noexcept;
     [[nodiscard]] vector<string> get_recent_failed_attempts(string_view username, size_t count) const noexcept;
 
 private:
