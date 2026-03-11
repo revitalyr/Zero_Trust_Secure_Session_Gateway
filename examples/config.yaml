@@ -1,0 +1,85 @@
+# Zero Trust Secure Session Gateway Configuration
+# This file demonstrates the YAML configuration format
+
+server:
+  listen_address: "0.0.0.0"
+  listen_port: 8443
+  tls_cert_file: "/app/certs/server.crt"
+  tls_key_file: "/app/certs/server.key"
+  ca_cert_file: ""
+  thread_count: 0  # 0 = auto-detect
+  verify_client_certificates: false
+  cipher_list: "HIGH:!aNULL:!MD5:!RC4"
+
+security:
+  rate_limit_max_requests: 100
+  rate_limit_window: 300  # 5 minutes in seconds
+  brute_force_threshold: 5
+  brute_force_window: 900  # 15 minutes in seconds
+  default_block_duration: 3600000  # 1 hour in milliseconds
+  enable_ip_whitelist: false
+  allowed_ips: []
+  enable_ip_blacklist: false
+  blocked_ips: []
+
+session:
+  default_timeout: 3600  # 1 hour in seconds
+  max_sessions_per_user: 5
+  cleanup_interval: 300  # 5 minutes in seconds
+  enable_session_persistence: false
+  persistence_file: "/app/data/sessions.json"
+
+logging:
+  level: "info"  # trace, debug, info, warn, error, critical
+  pattern: "[%Y-%m-%d %H:%M:%S.%e] [%l] %v"
+  enable_console_output: true
+  enable_file_output: true
+  log_file: "/var/log/zerossg/zerossg.log"
+  max_file_size: 5242880  # 5MB in bytes
+  max_files: 3
+  enable_security_log: true
+  security_log_file: "/var/log/zerossg/security.log"
+  enable_audit_log: true
+  audit_log_file: "/var/log/zerossg/audit.log"
+
+database:
+  type: "memory"  # memory, file, sqlite, postgresql
+  connection_string: "localhost:5432/zerossg"
+  username: "zerossg"
+  password: ""
+  enable_ssl: false
+  connection_pool_size: 10
+  connection_timeout: 30  # seconds
+
+target_services:
+  ssh:
+    host: "internal-ssh-server"
+    port: 22
+    tls_enabled: false
+    allowed_roles:
+      - "admin"
+      - "operator"
+  
+  web-admin:
+    host: "internal-web-server"
+    port: 443
+    tls_enabled: true
+    allowed_roles:
+      - "admin"
+      - "operator"
+      - "viewer"
+  
+  database:
+    host: "internal-db-server"
+    port: 5432
+    tls_enabled: true
+    allowed_roles:
+      - "admin"
+  
+  api-gateway:
+    host: "internal-api-server"
+    port: 8080
+    tls_enabled: false
+    allowed_roles:
+      - "admin"
+      - "operator"

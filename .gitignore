@@ -1,0 +1,117 @@
+﻿# Build directories
+build/
+cmake-build-*/
+out/
+misc/
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+zerossg_gateway
+zerossg_tests
+
+# Object files
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.lib
+*.a
+
+# IDE files
+.vscode/
+.vs/
+*.vcxproj*
+*.sln
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Test files
+test_results/
+coverage/
+*.gcda
+*.gcno
+*.lcov
+
+# Logs
+logs/
+*.log
+
+# Configuration files with secrets
+config-local.json
+config-local.yaml
+*.key
+*.pem
+*.crt
+*.p12
+certificates/
+certs/
+
+# Runtime data
+data/
+sessions.json
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Core dumps
+core
+core.*
+
+# Profiling data
+*.prof
+*.pprof
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# Security files
+secrets/
+private_keys/
+passwords.txt
