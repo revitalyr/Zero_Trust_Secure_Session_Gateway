@@ -1,0 +1,361 @@
+Zero Trust Secure Session Gateway - Demo Requirements
+=====================================================
+
+This document lists the requirements and setup instructions for running the demo.
+
+System Requirements
+------------------
+
+1. **Operating System**
+   - Linux (Ubuntu 20.04+, CentOS 8+, etc.)
+   - macOS 10.15+
+   - Windows 10+ (with WSL2 recommended)
+
+2. **Build Tools**
+   - CMake 3.20 or higher
+   - GCC 10+ or Clang 12+ (for C++20 support)
+   - Make 3.81 or higher
+   - Git for version control
+
+3. **Runtime Dependencies**
+   - OpenSSL 1.1.1+ (for TLS and cryptography)
+   - Boost 1.75+ (for asynchronous networking)
+   - Python 3.8+ (for demo client)
+   - curl (for testing with HTTP requests)
+   - jq (for JSON processing in shell scripts)
+
+4. **Optional Dependencies**
+   - Docker 20.10+ (for containerized deployment)
+   - Docker Compose 2.0+ (for full demo stack)
+   - OpenSSL command-line tools (for certificate generation)
+
+5. **Python Packages** (for demo client)
+   - json (built-in Python 3.8+)
+   - ssl (built-in)
+   - socket (built-in)
+   - argparse (built-in)
+   - time (built-in)
+
+Quick Setup Guide
+-----------------
+
+### Linux/macOS
+
+```bash
+# 1. Install build dependencies (Ubuntu/Debian)
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential cmake git \
+    libboost-all-dev libssl-dev \
+    python3 python3-pip curl jq
+
+# 2. Install Python demo dependencies
+pip3 install --user -r examples/demo_requirements.txt
+
+# 3. Clone and build
+git clone <repository-url>
+cd zero-trust-secure-session-gateway
+chmod +x examples/demo_script.sh
+./examples/demo_script.sh
+```
+
+### Windows (WSL2)
+
+```bash
+# 1. Enable WSL2 and install Ubuntu
+wsl --install -d Ubuntu
+
+# 2. In WSL2 Ubuntu, follow Linux instructions above
+```
+
+### Docker (Recommended for Easy Demo)
+
+```bash
+# 1. Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# 2. Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 3. Run demo
+docker-compose up -d
+```
+
+Demo Scenarios
+--------------
+
+### Scenario 1: Basic Authentication Flow
+**Time**: 2 minutes
+**Purpose**: Demonstrate basic login and session creation
+
+Steps:
+1. Start gateway server
+2. Authenticate as admin user
+3. Create session for SSH service
+4. Establish proxy connection
+5. Logout and cleanup
+
+### Scenario 2: Role-Based Access Control
+**Time**: 3 minutes  
+**Purpose**: Show different access levels for different roles
+
+Steps:
+1. Test access with admin role (full access)
+2. Test access with operator role (limited access)
+3. Test access with viewer role (read-only access)
+4. Verify unauthorized access is blocked
+
+### Scenario 3: Security Features
+**Time**: 2 minutes
+**Purpose**: Demonstrate security controls
+
+Steps:
+1. Test invalid authentication (should fail)
+2. Test brute force protection
+3. Test rate limiting
+4. Verify security event logging
+
+### Scenario 4: Container Deployment
+**Time**: 5 minutes
+**Purpose**: Show production-ready deployment
+
+Steps:
+1. Build Docker image
+2. Deploy with Docker Compose
+3. Access monitoring interfaces
+4. Test with external client
+
+Expected Results
+---------------
+
+### Successful Demo Indicators
+
+✅ **Server Starts**: Gateway server starts without errors
+✅ **TLS Works**: Secure connections established
+✅ **Authenticates**: Valid users can log in
+✅ **Authorizes**: Role-based access control works
+✅ **Sessions Created**: Sessions are created and managed
+✅ **Proxy Works**: Data flows through proxy securely
+✅ **Security Logs**: All events are logged
+✅ **Monitoring**: Metrics are collected
+✅ **Clean Shutdown**: Everything stops gracefully
+
+### Performance Expectations
+
+- **Startup Time**: < 5 seconds
+- **Authentication**: < 100ms
+- **Session Creation**: < 50ms  
+- **Proxy Latency**: < 10ms additional
+- **Memory Usage**: ~50MB base + 1KB per connection
+- **CPU Usage**: < 5% idle, < 20% under load
+
+### Security Validation
+
+- **Invalid Auth**: All invalid login attempts rejected
+- **Unauthorized Access**: Requests without tokens blocked
+- **Rate Limiting**: Excessive requests throttled
+- **Audit Trail**: All actions logged with timestamps
+- **TLS Encryption**: All traffic encrypted in transit
+
+Troubleshooting
+---------------
+
+### Common Issues and Solutions
+
+**Issue**: "Port 8443 already in use"
+**Solution**: 
+```bash
+# Kill existing process
+sudo lsof -ti:8443 | xargs kill -9
+# Or change port in config.json
+```
+
+**Issue**: "Certificate verification failed"
+**Solution**:
+```bash
+# Regenerate demo certificates
+cd examples && ./generate_certs.sh
+# Or use -k flag with curl for demo
+```
+
+**Issue**: "Build failed with C++20 errors"
+**Solution**:
+```bash
+# Check compiler version
+g++ --version  # Should be 10+
+# Or specify C++ standard explicitly
+cmake .. -DCMAKE_CXX_STANDARD=20
+```
+
+**Issue**: "Python client can't connect"
+**Solution**:
+```bash
+# Check if server is running
+netstat -tulpn | grep :8443
+# Test with curl first
+curl -k https://localhost:8443
+```
+
+**Issue**: "Docker build fails"
+**Solution**:
+```bash
+# Clean Docker cache
+docker system prune -f
+# Rebuild without cache
+docker-compose build --no-cache
+```
+
+### Debug Mode
+
+Enable debug logging for troubleshooting:
+
+```json
+{
+  "logging": {
+    "level": "debug",
+    "enable_console_output": true,
+    "enable_file_output": true,
+    "log_file": "logs/debug.log"
+  },
+  "security": {
+    "rate_limit_max_requests": 50,
+    "brute_force_threshold": 3
+  }
+}
+```
+
+### Log Analysis
+
+Monitor these log files during demo:
+
+```bash
+# Main application logs
+tail -f logs/zerossg.log
+
+# Security events
+tail -f logs/security.log
+
+# Audit trail
+tail -f logs/audit.log
+
+# Filter for specific events
+grep "LOGIN_SUCCESS" logs/security.log
+grep "ACCESS_DENIED" logs/security.log
+```
+
+Performance Testing
+-----------------
+
+### Load Testing
+
+```bash
+# Install Apache Bench (ab)
+sudo apt-get install apache2-utils
+
+# Test authentication endpoint
+ab -n 1000 -c 10 -k -p auth_post.txt https://localhost:8443
+
+# auth_post.txt content:
+{"type":"login","username":"admin","password":"admin123"}
+```
+
+### Connection Testing
+
+```bash
+# Test concurrent connections
+for i in {1..10}; do
+    python3 examples/demo_client.py --demo basic &
+done
+wait
+```
+
+### Memory Profiling
+
+```bash
+# Monitor memory usage
+watch -n 1 'ps aux | grep zerossg_gateway'
+
+# Or with valgrind
+valgrind --tool=massif ./build/zerossg_gateway start config.json
+```
+
+Security Validation
+------------------
+
+### Authentication Testing
+
+```bash
+# Test various invalid credentials
+for user in "admin" "root" "test" "guest"; do
+    for pass in "password" "123456" "admin" "test"; do
+        curl -k -s -X POST https://localhost:8443 \
+            -H "Content-Type: application/json" \
+            -d "{\"type\":\"login\",\"username\":\"$user\",\"password\":\"$pass\"}" \
+            | jq -r '.status'
+    done
+done
+```
+
+### Authorization Testing
+
+```bash
+# Test access without authentication
+curl -k -s -X POST https://localhost:8443 \
+     -H "Content-Type: application/json" \
+     -d '{"type":"session","target_service":"database"}' \
+     | jq -r '.message'
+```
+
+### Rate Limit Testing
+
+```bash
+# Send rapid requests to trigger rate limiting
+for i in {1..200}; do
+    curl -k -s -X POST https://localhost:8443 \
+         -H "Content-Type: application/json" \
+         -d '{"type":"login","username":"test","password":"wrong"}' \
+         > /dev/null
+done
+```
+
+Learning Outcomes
+----------------
+
+After completing the demo, you should understand:
+
+1. **Zero Trust Architecture**: How "never trust, always verify" is implemented
+2. **Modern C++**: C++20 features and best practices in action
+3. **Enterprise Security**: Production-grade security controls
+4. **Asynchronous Programming**: Boost.Asio patterns for high performance
+5. **TLS Implementation**: OpenSSL integration for secure communications
+6. **Session Management**: Secure session lifecycle and token handling
+7. **RBAC Systems**: Role-based authorization design
+8. **Logging and Monitoring**: Comprehensive observability patterns
+9. **Container Deployment**: Docker and production deployment strategies
+10. **API Design**: RESTful JSON API patterns
+
+Next Steps
+-----------
+
+1. **Custom Configuration**: Modify config.json for your environment
+2. **Production Deployment**: Use Docker or Kubernetes for production
+3. **Integration**: Connect to real internal services
+4. **Monitoring**: Set up Prometheus + Grafana for production
+5. **Security Hardening**: Review security model for production use
+6. **Performance Tuning**: Optimize for your workload
+7. **Extend Features**: Add new authentication methods or services
+
+Support
+--------
+
+For issues with the demo:
+
+1. Check this troubleshooting guide
+2. Review the main documentation in `docs/`
+3. Check the GitHub Issues page
+4. Run with debug logging enabled
+5. Consult the architecture documentation
+
+Remember: This is a demonstration. For production use, ensure proper security hardening, certificate management, and monitoring setup.

@@ -2,9 +2,11 @@
 
 #include "zerossg/interfaces.hpp"
 #include <unordered_map>
-#include <mutex>
+#include <shared_mutex>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <expected>
+#include <ranges>
 
 namespace zerossg {
 
@@ -13,48 +15,163 @@ public:
     AuthenticationManager();
     ~AuthenticationManager() override;
     
-    // IAuthenticator interface
-    Result<string> authenticate(const string& username, const string& password) override;
-    Result<bool> validate_token(const string& token) override;
-    Result<User> get_user_from_token(const string& token) override;
+    // IAuthenticator interface with modern error handling
+    Result<string> authenticate(string_view username, string_view password) override;
+    Result<bool> validate_token(string_view token) override;
+    Result<User> get_user_from_token(string_view token) override;
     Result<string> generate_token(const User& user) override;
-    Result<void> revoke_token(const string& token) override;
+    Result<void> revoke_token(string_view token) override;
     
-    // User management
-    Result<void> add_user(const User& user);
-    Result<void> update_user(const string& username, const User& user);
-    Result<void> delete_user(const string& username);
-    Result<optional<User>> get_user(const string& username);
-    Result<vector<User>> list_users();
+    // Modern user management with move semantics
+    Result<void> add_user(User&& user) noexcept;
+    Result<void> update_user(string_view username, User&& user) noexcept;
+    Result<void> delete_user(string_view username) noexcept;
+    Result<std::optional<User>> get_user(string_view username) const noexcept;
+    Result<vector<User>> list_users() const noexcept;
     
-    // Password utilities
-    static Result<string> hash_password(const string& password);
-    static Result<bool> verify_password(const string& password, const string& hash);
+    // Modern password utilities with constexpr support where possible
+    static Result<string> hash_password(string_view password) noexcept;
+    static Result<bool> verify_password(string_view password, string_view hash) noexcept;
     
+    // Modern token management with better security
+    Result<string> generate_token_with_claims(const User& user, 
+                                          const unordered_map<string, string>& claims) noexcept;
+    Result<bool> validate_token_with_claims(string_view token, 
+                                           const unordered_map<string, string>& required_claims) noexcept;
+    
+    // Security utilities
+    Result<void> block_user(string_view username, seconds duration) noexcept;
+    Result<bool> is_user_blocked(string_view username) const noexcept;
+    Result<void> cleanup_expired_tokens() noexcept;
+    
+    // Statistics and monitoring
+    [[nodiscard]] size_t get_active_user_count() const noexcept;
+    [[nodiscard]] size_t get_blocked_user_count() const noexcept;
+    [[nodiscard]] vector<string> get_recent_failed_attempts(string_view username, size_t count) const noexcept;
+
 private:
-    // JWT operations
-    string create_jwt_payload(const User& user);
-    Result<User> parse_jwt_payload(const string& token);
-    string generate_jwt_signature(const string& header_payload);
-    bool verify_jwt_signature(const string& header_payload, const string& signature);
+    // Modern JWT operations with better security
+    string create_jwt_payload(const User& user, 
+                               const unordered_map<string, string>& claims = {}) const noexcept;
+    Result<User> parse_jwt_payload(string_view token) const noexcept;
+    string generate_jwt_signature(string_view header_payload) const noexcept;
+    bool verify_jwt_signature(string_view header_payload, string_view signature) const noexcept;
     
-    // Token management
-    string generate_secure_token();
-    void cleanup_expired_tokens();
+    // Modern token management with enhanced security
+    string generate_secure_token() noexcept;
+    string generate_session_id() const noexcept;
+    bool is_token_blacklisted(string_view token) const noexcept;
     
-    // Data storage
+    // Modern data storage with better concurrency
+    mutable shared_mutex m_users_mutex;
+    mutable shared_mutex m_tokens_mutex;
+    mutable shared_mutex m_blocked_users_mutex;
+    
     unordered_map<string, User> m_users;
     unordered_map<string, string> m_revoked_tokens; // token -> expiry_time
-    mutable std::mutex m_users_mutex;
-    mutable std::mutex m_tokens_mutex;
+    unordered_map<string, system_clock::time_point> m_blocked_users;
     
-    // JWT secret key
+    // Enhanced JWT secret with rotation support
     vector<unsigned char> m_jwt_secret;
+    system_clock::time_point m_secret_rotation_time;
     
-    // Configuration
+    // Modern configuration with constexpr
     static constexpr size_t JWT_SECRET_SIZE = 32;
     static constexpr seconds TOKEN_EXPIRY_TIME{3600}; // 1 hour
     static constexpr size_t BCRYPT_ROUNDS = 12;
+    static constexpr seconds SECRET_ROTATION_INTERVAL{86400}; // 24 hours
+    static constexpr size_t MAX_FAILED_ATTEMPTS = 5;
+    static constexpr seconds FAILED_ATTEMPT_WINDOW{900}; // 15 minutes
+    
+    // Rate limiting
+    struct RateLimitInfo {
+        size_t m_attempts{0};
+        system_clock::time_point m_window_start{system_clock::now()};
+        bool m_blocked{false};
+        
+        [[nodiscard]] bool should_block() const noexcept {
+            return m_attempts >= MAX_FAILED_ATTEMPTS;
+        }
+        
+        void reset() noexcept {
+            m_attempts = 0;
+            m_window_start = system_clock::now();
+            m_blocked = false;
+        }
+    };
+    
+    unordered_map<string, RateLimitInfo> m_rate_limits;
+    
+    // Modern helper methods
+    void rotate_jwt_secret() noexcept;
+    bool is_jwt_secret_expired() const noexcept;
+    void cleanup_expired_data() noexcept;
+    Result<vector<unsigned char>> generate_secure_random_bytes(size_t count) const noexcept;
+    
+    // Modern validation methods
+    bool is_valid_username(string_view username) const noexcept;
+    bool is_valid_password(string_view password) const noexcept;
+    bool is_valid_token_format(string_view token) const noexcept;
+    
+    // Modern security checks
+    Result<void> check_password_strength(string_view password) const noexcept;
+    Result<void> detect_suspicious_activity(string_view username, string_view client_ip) const noexcept;
 };
+
+// Modern authentication utilities
+namespace auth_utils {
+    // constexpr password strength validation
+    constexpr bool is_strong_password(string_view password) noexcept {
+        if (password.size() < 8) return false;
+        
+        bool has_upper = false, has_lower = false, has_digit = false, has_special = false;
+        
+        for (char c : password) {
+            if (std::isupper(c)) has_upper = true;
+            else if (std::islower(c)) has_lower = true;
+            else if (std::isdigit(c)) has_digit = true;
+            else if (std::ispunct(c) || std::isgraph(c)) has_special = true;
+        }
+        
+        return has_upper && has_lower && has_digit && has_special;
+    }
+    
+    // constexpr username validation
+    constexpr bool is_valid_username_format(string_view username) noexcept {
+        if (username.empty() || username.size() < 3 || username.size() > 32) {
+            return false;
+        }
+        
+        return std::ranges::all_of(username, [](char c) {
+            return std::isalnum(c) || c == '_';
+        });
+    }
+    
+    // constexpr token validation
+    constexpr bool is_valid_jwt_structure(string_view token) noexcept {
+        const auto dot_count = std::ranges::count(token, '.');
+        return dot_count == 2; // header.payload.signature
+    }
+    
+    // Modern secure comparison function
+    constexpr bool secure_equals(string_view a, string_view b) noexcept {
+        if (a.size() != b.size()) return false;
+        return std::ranges::equal(a, b);
+    }
+    
+    // Modern timing-safe comparison
+    constexpr bool timing_safe_equals(string_view a, string_view b) noexcept {
+        if (a.size() != b.size()) return false;
+        
+        volatile auto result = true;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (a[i] != b[i]) {
+                result = false;
+            }
+        }
+        
+        return result;
+    }
+}
 
 } // namespace zerossg

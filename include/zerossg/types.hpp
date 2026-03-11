@@ -2,129 +2,278 @@
 
 #include "common.hpp"
 #include <boost/asio.hpp>
+#include <array>
+#include <span>
 
 namespace zerossg {
 
-// User roles
-enum class Role {
-    ADMIN,
-    OPERATOR,
-    VIEWER
+// Modern enum class with explicit underlying type
+enum class Role : uint8_t {
+    ADMIN = 0,
+    OPERATOR = 1,
+    VIEWER = 2
 };
 
-// Convert role to string
-string role_to_string(Role role);
-Role string_to_role(const string& role_str);
+// Modern constexpr functions for enum conversion
+constexpr string_view role_to_string(Role role) noexcept {
+    constexpr std::array role_names = {"admin", "operator", "viewer"};
+    const auto index = static_cast<std::size_t>(role);
+    return index < role_names.size() ? role_names[index] : string_view{};
+}
 
-// User information
+constexpr Role string_to_role(string_view role_str) noexcept {
+    if (role_str == "admin") return Role::ADMIN;
+    if (role_str == "operator") return Role::OPERATOR;
+    if (role_str == "viewer") return Role::VIEWER;
+    return Role::VIEWER; // Default fallback
+}
+
+// Modern User struct with designated initializers and better member names
 struct User {
-    string username;
-    string password_hash;
-    Role role;
-    bool active;
-    system_clock::time_point created_at;
-    system_clock::time_point last_login;
+    string m_username;
+    string m_password_hash;
+    Role m_role;
+    bool m_active;
+    system_clock::time_point m_created_at;
+    system_clock::time_point m_last_login;
     
-    User() : active(false) {}
+    constexpr User() noexcept 
+        : m_role(Role::VIEWER)
+        , m_active(false) {}
     
-    User(string uname, string pwhash, Role r)
-        : username(std::move(uname))
-        , password_hash(std::move(pwhash))
-        , role(r)
-        , active(true)
-        , created_at(system_clock::now())
-    {}
+    constexpr User(string username, string password_hash, Role role) noexcept
+        : m_username(std::move(username))
+        , m_password_hash(std::move(password_hash))
+        , m_role(role)
+        , m_active(true)
+        , m_created_at(system_clock::now()) {}
+    
+    // Modern accessor methods
+    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
+    [[nodiscard]] constexpr const string& password_hash() const noexcept { return m_password_hash; }
+    [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
+    [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
+    [[nodiscard]] constexpr system_clock::time_point created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr system_clock::time_point last_login() const noexcept { return m_last_login; }
+    
+    void set_last_login(system_clock::time_point time) noexcept { m_last_login = time; }
+    void set_active(bool active) noexcept { m_active = active; }
 };
 
-// Session information
+// Modern Session struct with better encapsulation
 struct Session {
-    string session_id;
-    string username;
-    Role role;
-    system_clock::time_point created_at;
-    system_clock::time_point expires_at;
-    string client_ip;
-    string target_service;
-    bool active;
+    string m_session_id;
+    string m_username;
+    Role m_role;
+    system_clock::time_point m_created_at;
+    system_clock::time_point m_expires_at;
+    string m_client_ip;
+    string m_target_service;
+    bool m_active;
     
-    Session() : active(false) {}
+    constexpr Session() noexcept 
+        : m_role(Role::VIEWER)
+        , m_active(false) {}
     
-    Session(string sid, string uname, Role r, string client_ip_str, string target)
-        : session_id(std::move(sid))
-        , username(std::move(uname))
-        , role(r)
-        , client_ip(std::move(client_ip_str))
-        , target_service(std::move(target))
-        , active(true)
-        , created_at(system_clock::now())
-        , expires_at(created_at + seconds(3600)) // 1 hour default
-    {}
+    constexpr Session(string session_id, string username, Role role, 
+                   string client_ip, string target_service) noexcept
+        : m_session_id(std::move(session_id))
+        , m_username(std::move(username))
+        , m_role(role)
+        , m_client_ip(std::move(client_ip))
+        , m_target_service(std::move(target_service))
+        , m_active(true)
+        , m_created_at(system_clock::now())
+        , m_expires_at(m_created_at + seconds(3600)) {}
+    
+    // Accessor methods
+    [[nodiscard]] constexpr const string& session_id() const noexcept { return m_session_id; }
+    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
+    [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
+    [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
+    [[nodiscard]] constexpr system_clock::time_point created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr system_clock::time_point expires_at() const noexcept { return m_expires_at; }
+    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const string& target_service() const noexcept { return m_target_service; }
+    
+    // Mutator methods
+    void set_active(bool active) noexcept { m_active = active; }
+    void set_expires_at(system_clock::time_point expires) noexcept { m_expires_at = expires; }
+    
+    // Utility methods
+    [[nodiscard]] bool is_expired() const noexcept {
+        return system_clock::now() > m_expires_at;
+    }
+    
+    [[nodiscard]] seconds time_until_expiry() const noexcept {
+        const auto now = system_clock::now();
+        if (now >= m_expires_at) {
+            return seconds{0};
+        }
+        return std::chrono::duration_cast<seconds>(m_expires_at - now);
+    }
 };
 
-// Security event types
-enum class SecurityEventType {
-    LOGIN_SUCCESS,
-    LOGIN_FAILURE,
-    SESSION_START,
-    SESSION_TERMINATION,
-    AUTHENTICATION_ERROR,
-    ACCESS_VIOLATION,
-    RATE_LIMIT_EXCEEDED,
-    BRUTE_FORCE_DETECTED
+// Modern SecurityEventType with explicit underlying type
+enum class SecurityEventType : uint8_t {
+    LOGIN_SUCCESS = 0,
+    LOGIN_FAILURE = 1,
+    SESSION_START = 2,
+    SESSION_TERMINATION = 3,
+    AUTHENTICATION_ERROR = 4,
+    ACCESS_VIOLATION = 5,
+    RATE_LIMIT_EXCEEDED = 6,
+    BRUTE_FORCE_DETECTED = 7
 };
 
-string security_event_type_to_string(SecurityEventType type);
+// Modern constexpr function for security event type conversion
+constexpr string_view security_event_type_to_string(SecurityEventType type) noexcept {
+    constexpr std::array event_names = {
+        "login_success",
+        "login_failure", 
+        "session_start",
+        "session_termination",
+        "authentication_error",
+        "access_violation",
+        "rate_limit_exceeded",
+        "brute_force_detected"
+    };
+    const auto index = static_cast<std::size_t>(type);
+    return index < event_names.size() ? event_names[index] : string_view{};
+}
 
-// Security event
+// Modern SecurityEvent with better encapsulation
 struct SecurityEvent {
-    SecurityEventType type;
-    system_clock::time_point timestamp;
-    string username;
-    string client_ip;
-    string details;
+    SecurityEventType m_type;
+    system_clock::time_point m_timestamp;
+    string m_username;
+    string m_client_ip;
+    string m_details;
     
-    SecurityEvent(SecurityEventType t, string uname, string ip, string det)
-        : type(t)
-        , timestamp(system_clock::now())
-        , username(std::move(uname))
-        , client_ip(std::move(ip))
-        , details(std::move(det))
-    {}
+    constexpr SecurityEvent(SecurityEventType type, string username, 
+                        string client_ip, string details) noexcept
+        : m_type(type)
+        , m_timestamp(system_clock::now())
+        , m_username(std::move(username))
+        , m_client_ip(std::move(client_ip))
+        , m_details(std::move(details)) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr SecurityEventType type() const noexcept { return m_type; }
+    [[nodiscard]] constexpr system_clock::time_point timestamp() const noexcept { return m_timestamp; }
+    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
+    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const string& details() const noexcept { return m_details; }
 };
 
-// Network connection information
+// Modern ConnectionInfo with better encapsulation
 struct ConnectionInfo {
-    boost::asio::ip::tcp::endpoint remote_endpoint;
-    boost::asio::ip::tcp::endpoint local_endpoint;
-    string client_ip;
-    uint16_t client_port;
+    boost::asio::ip::tcp::endpoint m_remote_endpoint;
+    boost::asio::ip::tcp::endpoint m_local_endpoint;
+    string m_client_ip;
+    uint16_t m_client_port;
     
-    ConnectionInfo(const boost::asio::ip::tcp::endpoint& remote, 
-                   const boost::asio::ip::tcp::endpoint& local)
-        : remote_endpoint(remote)
-        , local_endpoint(local)
-        , client_ip(remote.address().to_string())
-        , client_port(remote.port())
-    {}
+    constexpr ConnectionInfo(const boost::asio::ip::tcp::endpoint& remote,
+                         const boost::asio::ip::tcp::endpoint& local) noexcept
+        : m_remote_endpoint(remote)
+        , m_local_endpoint(local)
+        , m_client_ip(remote.address().to_string())
+        , m_client_port(remote.port()) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr const boost::asio::ip::tcp::endpoint& remote_endpoint() const noexcept { 
+        return m_remote_endpoint; 
+    }
+    [[nodiscard]] constexpr const boost::asio::ip::tcp::endpoint& local_endpoint() const noexcept { 
+        return m_local_endpoint; 
+    }
+    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr uint16_t client_port() const noexcept { return m_client_port; }
 };
 
-// Target service configuration
+// Modern TargetService with better encapsulation and validation
 struct TargetService {
-    string name;
-    string host;
-    uint16_t port;
-    vector<Role> allowed_roles;
-    bool tls_enabled;
+    string m_name;
+    string m_host;
+    uint16_t m_port;
+    vector<Role> m_allowed_roles;
+    bool m_tls_enabled;
     
-    TargetService() : port(0), tls_enabled(false) {}
+    constexpr TargetService() noexcept 
+        : m_port(0)
+        , m_tls_enabled(false) {}
     
-    TargetService(string n, string h, uint16_t p, vector<Role> roles, bool tls)
-        : name(std::move(n))
-        , host(std::move(h))
-        , port(p)
-        , allowed_roles(std::move(roles))
-        , tls_enabled(tls)
-    {}
+    constexpr TargetService(string name, string host, uint16_t port, 
+                       vector<Role> allowed_roles, bool tls_enabled) noexcept
+        : m_name(std::move(name))
+        , m_host(std::move(host))
+        , m_port(port)
+        , m_allowed_roles(std::move(allowed_roles))
+        , m_tls_enabled(tls_enabled) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr const string& name() const noexcept { return m_name; }
+    [[nodiscard]] constexpr const string& host() const noexcept { return m_host; }
+    [[nodiscard]] constexpr uint16_t port() const noexcept { return m_port; }
+    [[nodiscard]] constexpr bool is_tls_enabled() const noexcept { return m_tls_enabled; }
+    [[nodiscard]] constexpr const vector<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
+    
+    // Modern validation method
+    [[nodiscard]] bool is_valid() const noexcept {
+        return !m_name.empty() && !m_host.empty() && 
+               m_port > 0 && m_port <= 65535 && !m_allowed_roles.empty();
+    }
+    
+    // Modern role checking
+    [[nodiscard]] bool is_role_allowed(Role role) const noexcept {
+        return std::ranges::any_of(m_allowed_roles, 
+            [role](Role allowed) { return allowed == role; });
+    }
+    
+    // Utility methods
+    [[nodiscard]] string get_address() const noexcept {
+        return m_host + ":" + std::to_string(m_port);
+    }
+};
+
+// Modern concepts for type checking
+template<typename T>
+concept UserRole = std::is_same_v<T, Role>;
+
+template<typename T>
+concept SecurityEvent = std::is_same_v<T, SecurityEventType>;
+
+template<typename T>
+concept ChronoTimePoint = requires {
+    typename T::clock;
+    typename T::duration;
+    { T::clock::now() } -> std::same_as<T>;
+};
+
+// Modern utility functions
+template<UserRole T>
+constexpr string_view role_name() noexcept {
+    return role_to_string(T{});
+}
+
+template<SecurityEvent T>
+constexpr string_view event_name() noexcept {
+    return security_event_type_to_string(T{});
+}
+
+// Modern span-based utilities
+template<typename T>
+constexpr bool contains_role(const vector<T>& roles, T role) noexcept {
+    return std::ranges::any_of(roles, [role](const T& r) { return r == role; });
+}
+
+// Compile-time validation
+template<typename T>
+concept ValidTargetService = requires(T service) {
+    { service.name() } -> std::convertible_to<string_view>;
+    { service.host() } -> std::convertible_to<string_view>;
+    { service.port() } -> std::convertible_to<uint16_t>;
+    { service.is_valid() } -> std::convertible_to<bool>;
 };
 
 } // namespace zerossg

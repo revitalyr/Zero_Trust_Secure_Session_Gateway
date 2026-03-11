@@ -1,71 +1,122 @@
-#include "zerossg/auth/authenticator.hpp"
 #include "zerossg/utils/base64.hpp"
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
 #include <nlohmann/json.hpp>
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <ranges>
+#include <algorithm>
 
 using json = nlohmann::json;
 
 namespace zerossg {
 
 AuthenticationManager::AuthenticationManager() {
-    // Generate JWT secret key
-    m_jwt_secret.resize(JWT_SECRET_SIZE);
-    if (RAND_bytes(m_jwt_secret.data(), JWT_SECRET_SIZE) != 1) {
+    // Initialize with modern C++26 features
+    m_secret_rotation_time = system_clock::now();
+    
+    // Generate JWT secret key with better randomness
+    const auto secret_result = generate_secure_random_bytes(JWT_SECRET_SIZE);
+    if (!secret_result.is_success()) {
         throw std::runtime_error("Failed to generate JWT secret");
     }
+    m_jwt_secret = secret_result.value();
     
-    // Add default admin user (password: admin123)
-    auto admin_hash_result = hash_password("admin123");
+    // Add default admin user with stronger password
+    auto admin_hash_result = hash_password("Admin@2024!SecurePass");
     if (admin_hash_result.is_success()) {
         User admin_user("admin", admin_hash_result.value(), Role::ADMIN);
-        add_user(admin_user);
+        add_user(std::move(admin_user));
     }
 }
 
 AuthenticationManager::~AuthenticationManager() = default;
 
-Result<string> AuthenticationManager::authenticate(const string& username, const string& password) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+Result<string> AuthenticationManager::authenticate(string_view username, string_view password) {
+    // Modern input validation
+    if (!is_valid_username(username)) {
+        return make_result_error<string>("Invalid username format");
+    }
     
-    auto user_it = m_users.find(username);
+    if (!is_valid_password(password)) {
+        return make_result_error<string>("Password does not meet security requirements");
+    }
+    
+    // Check rate limiting first
+    {
+        std::shared_lock lock(m_rate_limits_mutex);
+        auto& rate_info = m_rate_limits[string(username)];
+        
+        if (rate_info.should_block()) {
+            return make_result_error<string>("Account temporarily blocked due to too many failed attempts");
+        }
+        
+        // Record attempt
+        rate_info.m_attempts++;
+        rate_info.m_window_start = system_clock::now();
+    }
+    
+    // Check if user is blocked
+    {
+        std::shared_lock lock(m_blocked_users_mutex);
+        if (m_blocked_users.contains(string(username))) {
+            return make_result_error<string>("Account is blocked");
+        }
+    }
+    
+    // Find user with modern concurrency
+    std::shared_lock lock(m_users_mutex);
+    const auto user_it = m_users.find(string(username));
     if (user_it == m_users.end()) {
-        return Result<string>::error("User not found");
+        return make_result_error<string>("User not found");
     }
     
     const User& user = user_it->second;
-    if (!user.active) {
-        return Result<string>::error("User account is inactive");
+    if (!user.is_active()) {
+        return make_result_error<string>("User account is inactive");
     }
     
-    auto verify_result = verify_password(password, user.password_hash);
+    // Modern password verification with timing-safe comparison
+    const auto verify_result = verify_password(password, user.password_hash());
     if (!verify_result.is_success()) {
-        return Result<string>::error("Password verification failed: " + verify_result.error());
+        // Record failed attempt for security monitoring
+        detect_suspicious_activity(username, "");
+        return make_result_error<string>("Authentication failed: " + verify_result.error());
     }
     
     if (!verify_result.value()) {
-        return Result<string>::error("Invalid password");
+        return make_result_error<string>("Invalid credentials");
     }
     
-    // Generate JWT token
-    auto token_result = generate_token(user);
+    // Generate JWT token with enhanced security
+    auto token_result = generate_token_with_claims(user, {
+        {"iat", std::to_string(std::chrono::duration_cast<std::chrono::seconds>(system_clock::now().time_since_epoch()).count())},
+        {"exp", std::to_string(std::chrono::duration_cast<std::chrono::seconds>((system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count())},
+        {"sub", "zerossg"},
+        {"jti", generate_session_id()}
+    });
+    
     if (!token_result.is_success()) {
-        return Result<string>::error("Token generation failed: " + token_result.error());
+        return make_result_error<string>("Token generation failed: " + token_result.error());
+    }
+    
+    // Reset failed attempts on successful authentication
+    {
+        std::shared_lock lock(m_rate_limits_mutex);
+        m_rate_limits[string(username)].reset();
     }
     
     return token_result;
 }
 
-Result<bool> AuthenticationManager::validate_token(const string& token) {
-    auto user_result = get_user_from_token(token);
-    return user_result.is_success() ? Result<bool>::success(true) : Result<bool>::error(user_result.error());
-}
-
+Result<bool> AuthenticationManager::validate_token(string_view token) {
+    // Modern token format validation
+    if (!auth_utils::is_valid_jwt_structure(token)) {
+        return make_result_error<bool>("Invalid token format");
 Result<User> AuthenticationManager::get_user_from_token(const string& token) {
     // Parse JWT token (header.payload.signature)
     size_t first_dot = token.find('.');
