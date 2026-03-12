@@ -2,6 +2,7 @@
 
 // C++23 module imports
 import zerossg.interfaces;
+import zerossg.types;
 
 // Standard library imports
 import <atomic>;
