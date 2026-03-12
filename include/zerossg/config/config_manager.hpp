@@ -40,6 +40,10 @@ using std::istringstream;
 using std::lock_guard;
 using std::mutex;
 
+// Import semantic aliases from common
+using zerossg::strings;
+using zerossg::unorderedMap;
+
 struct ServerConfig {
     HostAddress listen_address{DEFAULT_LISTEN_ADDRESS};
     PortNo listen_port{DEFAULT_LISTEN_PORT};

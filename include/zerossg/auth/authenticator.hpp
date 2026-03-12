@@ -14,16 +14,15 @@ using zerossg::UserName;
 using zerossg::PasswordHash;
 using zerossg::TokenString;
 using zerossg::User;
-using zerossg::UnorderedMap;
+using zerossg::unorderedMap;
 using zerossg::SecretKey;
 using zerossg::SessionId;
 using zerossg::UserCount;
-using zerossg::Strings;
+using zerossg::strings;
 
 // Import standard library types
 using std::string_view;
 using std::seconds;
-using std::system_clock;
 
 class AuthenticationManager : public IAuthenticator {
 public:
@@ -41,8 +40,8 @@ public:
     Result<void> add_user(const User& user) noexcept;
     Result<void> update_user(const UserName& username, const User& user) noexcept;
     Result<void> delete_user(const UserName& username) noexcept;
-    Result<Optional<User>> get_user(const UserName& username) const noexcept;
-    Result<Vector<User>> list_users() const noexcept;
+    Result<std::optional<User>> get_user(const UserName& username) const noexcept;
+    Result<std::vector<User>> list_users() const noexcept;
     
     // Modern password utilities with constexpr support where possible
     static Result<PasswordHash> hash_password(const String& password) noexcept;
@@ -50,9 +49,9 @@ public:
     
     // Modern token management with better security
     Result<TokenString> generate_token_with_claims(const User& user, 
-                                          const std::unordered_map<std::string, std::string>& claims) noexcept;
+                                          const unorderedMap<std::string, std::string>& claims) noexcept;
     Result<bool> validate_token_with_claims(string_view token, 
-                                           const std::unordered_map<std::string, std::string>& required_claims) noexcept;
+                                           const unorderedMap<std::string, std::string>& required_claims) noexcept;
     
     // Security utilities
     Result<void> block_user(string_view username, seconds duration) noexcept;
@@ -67,7 +66,7 @@ public:
 private:
     // Modern JWT operations with better security
     String create_jwt_payload(const User& user, 
-                           const UnorderedMap<String, String>& claims = {}) const noexcept;
+                           const unorderedMap<String, String>& claims = {}) const noexcept;
     Result<User> parse_jwt_payload(const TokenString& token) const noexcept;
     String generate_jwt_signature(const String& header_payload) const noexcept;
     bool verify_jwt_signature(const String& header_payload, const String& signature) const noexcept;
@@ -83,13 +82,13 @@ private:
     mutable std::mutex m_blocked_users_mutex;
     mutable std::mutex m_revoked_tokens_mutex;
     
-    UnorderedMap<UserName, User> m_users;
-    UnorderedMap<TokenString, String> m_revoked_tokens;
-    UnorderedMap<UserName, system_clock::time_point> m_blocked_users;
+    unorderedMap<UserName, User> m_users;
+    unorderedMap<TokenString, String> m_revoked_tokens;
+    unorderedMap<UserName, std::chrono::system_clock::time_point> m_blocked_users;
     
     // Enhanced JWT secret with rotation support
     SecretKey m_jwt_secret;
-    system_clock::time_point m_secret_rotation_time;
+    std::chrono::system_clock::time_point m_secret_rotation_time;
     
     // Modern configuration with constexpr
     static constexpr size_t JWT_SECRET_SIZE = 32;

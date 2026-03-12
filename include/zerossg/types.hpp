@@ -96,8 +96,8 @@ struct Session {
         , m_client_ip(std::move(client_ip))
         , m_target_service(std::move(target_service))
         , m_active(true)
-        , m_created_at(system_clock::now())
-        , m_expires_at(m_created_at + seconds(3600)) {}
+        , m_created_at(std::chrono::system_clock::now())
+        , m_last_login(std::chrono::system_clock::now()) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
