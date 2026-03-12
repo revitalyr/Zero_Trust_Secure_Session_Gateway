@@ -33,11 +33,10 @@ add_executable(zerossg_gateway
 # Link libraries
 target_link_libraries(zerossg_gateway
     Boost::system
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    spdlog::spdlog
-    nlohmann_json::nlohmann_json
-    yaml-cpp::yaml-cpp
+    ${OPENSSL_LIBRARIES}
+    ${SPDLOG_LIBRARIES}
+    ${NLOHMANN_JSON_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
 )
 
 # Windows specific libraries

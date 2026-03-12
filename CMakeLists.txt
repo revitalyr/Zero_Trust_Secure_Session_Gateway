@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(ZeroTrustSecureSessionGateway VERSION 1.0.0 LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -16,12 +16,49 @@ else()
     add_compile_options(-D_FORTIFY_SOURCE=2)
 endif()
 
-# Find required packages
+# Find required packages with modern CMake
 find_package(Boost 1.75 REQUIRED COMPONENTS system)
-find_package(OpenSSL REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(nlohmann_json REQUIRED)
-find_package(yaml-cpp REQUIRED)
+
+# Use system packages with fallback
+find_package(spdlog QUIET)
+if(NOT spdlog_FOUND)
+    message(STATUS "Using vcpkg for spdlog...")
+    set(SPDLOG_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
+    set(SPDLOG_LIBRARIES spdlog)
+else()
+    set(SPDLOG_INCLUDE_DIR ${spdlog_INCLUDE_DIRS})
+    set(SPDLOG_LIBRARIES ${spdlog_LIBRARIES})
+endif()
+
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    message(STATUS "Using vcpkg for nlohmann_json...")
+    set(NLOHMANN_JSON_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
+    set(NLOHMANN_JSON_LIBRARIES nlohmann_json)
+else()
+    set(NLOHMANN_JSON_INCLUDE_DIR ${nlohmann_json_INCLUDE_DIRS})
+    set(NLOHMANN_JSON_LIBRARIES ${nlohmann_json_LIBRARIES})
+endif()
+
+find_package(yaml-cpp QUIET)
+if(NOT yaml-cpp_FOUND)
+    message(STATUS "Using vcpkg for yaml-cpp...")
+    set(YAML_CPP_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
+    set(YAML_CPP_LIBRARIES yaml-cpp)
+else()
+    set(YAML_CPP_INCLUDE_DIR ${yaml-cpp_INCLUDE_DIRS})
+    set(YAML_CPP_LIBRARIES ${yaml-cpp_LIBRARIES})
+endif()
+
+find_package(OpenSSL QUIET)
+if(NOT OpenSSL_FOUND)
+    message(STATUS "Using vcpkg for OpenSSL...")
+    set(OPENSSL_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
+    set(OPENSSL_LIBRARIES ssl crypto)
+else()
+    set(OPENSSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
+    set(OPENSSL_LIBRARIES ${OPENSSL_LIBRARIES})
+endif()
 
 # Include directories
 include_directories(include)
@@ -33,11 +70,3 @@ add_subdirectory(src)
 # Enable testing
 enable_testing()
 add_subdirectory(tests)
-
-# Installation
-install(DIRECTORY include/ DESTINATION include)
-install(TARGETS zerossg_gateway
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)

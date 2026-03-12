@@ -9,13 +9,11 @@
 #include <functional>
 #include <stdexcept>
 #include <system_error>
-#include <expected>
 #include <concepts>
 
 namespace zerossg {
 
 // Modern C++26 type aliases with semantic naming
-using string = std::string;
 using string_view = std::string_view;
 
 template<typename T>

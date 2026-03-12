@@ -14,11 +14,10 @@ target_link_libraries(zerossg_tests
     GTest::gtest
     GTest::gtest_main
     Boost::system
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    spdlog::spdlog
-    nlohmann_json::nlohmann_json
-    yaml-cpp::yaml-cpp
+    ${OPENSSL_LIBRARIES}
+    ${SPDLOG_LIBRARIES}
+    ${NLOHMANN_JSON_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
 )
 
 # Include directories
