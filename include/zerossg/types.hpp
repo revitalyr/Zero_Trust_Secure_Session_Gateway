@@ -1,7 +1,5 @@
 #pragma once
 
-// C++23 module imports
-import zerossg.std;
 
 namespace zerossg {
 
@@ -17,6 +15,11 @@ using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 using ClientIp = std::string;
 using ServiceName = std::string;
 using systemClock = std::chrono::system_clock;
+
+// Import standard library types for clarity
+using std::string_view;
+using std::chrono::system_clock;
+using std::chrono::minutes;
 
 
 // Modern enum class with explicit underlying type

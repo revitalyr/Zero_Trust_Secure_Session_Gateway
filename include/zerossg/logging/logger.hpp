@@ -25,7 +25,6 @@ using zerossg::FileName;
 using zerossg::SecurityEvent;
 
 // Import standard library types for clarity
-using std::shared_ptr;
 using std::mutex;
 using std::string;
 using std::lock_guard;
@@ -95,13 +94,13 @@ public:
     void log_throughput(size_t bytes_transferred, const String& direction = "total");
     
     // Static factory methods
-    static std::shared_ptr<Logger> create(const String& name = "zerossg");
-    static std::shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
-    static std::shared_ptr<Logger> create_security_logger();
-    static std::shared_ptr<Logger> create_audit_logger();
+    static zerossg::shared_ptr<Logger> create(const String& name = "zerossg");
+    static zerossg::shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
+    static zerossg::shared_ptr<Logger> create_security_logger();
+    static zerossg::shared_ptr<Logger> create_audit_logger();
     
 private:
-    std::shared_ptr<spdlog::logger> m_logger;
+    zerossg::shared_ptr<spdlog::logger> m_logger;
     mutable mutex m_mutex;
     
     // Helper methods
