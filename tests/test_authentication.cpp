@@ -25,7 +25,7 @@ protected:
 
 TEST_F(AuthenticationTest, ValidAuthentication) {
     // Add a test user
-    User test_user("testuser", "hashed_password", Role::OPERATOR);
+    User test_user("testuser", "hashed_password", zerossg::Role::OPERATOR);
     auto add_result = auth_manager->add_user(test_user);
     ASSERT_TRUE(add_result.is_success());
     
@@ -44,7 +44,7 @@ TEST_F(AuthenticationTest, InvalidAuthentication) {
 
 TEST_F(AuthenticationTest, UserManagement) {
     // Add user
-    User test_user("newuser", "password_hash", Role::VIEWER);
+    User test_user("newuser", "password_hash", zerossg::Role::VIEWER);
     auto add_result = auth_manager->add_user(test_user);
     EXPECT_TRUE(add_result.is_success());
     
@@ -53,17 +53,17 @@ TEST_F(AuthenticationTest, UserManagement) {
     EXPECT_TRUE(get_result.is_success());
     EXPECT_TRUE(get_result.value().has_value());
     EXPECT_EQ(get_result.value()->username, "newuser");
-    EXPECT_EQ(get_result.value()->role, Role::VIEWER);
+    EXPECT_EQ(get_result.value()->role, zerossg::Role::VIEWER);
     
     // Update user
-    User updated_user("newuser", "new_hash", Role::ADMIN);
+    User updated_user("newuser", "new_hash", zerossg::Role::ADMIN);
     auto update_result = auth_manager->update_user("newuser", updated_user);
     EXPECT_TRUE(update_result.is_success());
     
     // Verify update
     get_result = auth_manager->get_user("newuser");
     EXPECT_TRUE(get_result.is_success());
-    EXPECT_EQ(get_result.value()->role, Role::ADMIN);
+    EXPECT_EQ(get_result.value()->role, zerossg::Role::ADMIN);
     
     // Delete user
     auto delete_result = auth_manager->delete_user("newuser");
@@ -77,12 +77,12 @@ TEST_F(AuthenticationTest, UserManagement) {
 
 TEST_F(AuthenticationTest, DuplicateUser) {
     // Add first user
-    User user1("duplicate", "hash1", Role::OPERATOR);
+    User user1("duplicate", "hash1", zerossg::Role::OPERATOR);
     auto add1_result = auth_manager->add_user(user1);
     EXPECT_TRUE(add1_result.is_success());
     
     // Try to add duplicate user
-    User user2("duplicate", "hash2", Role::VIEWER);
+    User user2("duplicate", "hash2", zerossg::Role::VIEWER);
     auto add2_result = auth_manager->add_user(user2);
     EXPECT_TRUE(add2_result.is_error());
     EXPECT_EQ(add2_result.error(), "User already exists");
@@ -107,7 +107,7 @@ TEST_F(AuthenticationTest, PasswordHashing) {
 
 TEST_F(AuthenticationTest, TokenGeneration) {
     // Add a test user
-    User test_user("tokenuser", "hash", Role::ADMIN);
+    User test_user("tokenuser", "hash", zerossg::Role::ADMIN);
     auth_manager->add_user(test_user);
     
     // Generate token
@@ -124,12 +124,12 @@ TEST_F(AuthenticationTest, TokenGeneration) {
     auto user_result = auth_manager->get_user_from_token(token_result.value());
     EXPECT_TRUE(user_result.is_success());
     EXPECT_EQ(user_result.value().username, "tokenuser");
-    EXPECT_EQ(user_result.value().role, Role::ADMIN);
+    EXPECT_EQ(user_result.value().role, zerossg::Role::ADMIN);
 }
 
 TEST_F(AuthenticationTest, TokenRevocation) {
     // Add a test user
-    User test_user("revokeuser", "hash", Role::OPERATOR);
+    User test_user("revokeuser", "hash", zerossg::Role::OPERATOR);
     auth_manager->add_user(test_user);
     
     // Generate token

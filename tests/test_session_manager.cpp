@@ -26,7 +26,7 @@ protected:
 };
 
 TEST_F(SessionManagerTest, CreateSession) {
-    User test_user("testuser", "hash", Role::OPERATOR);
+    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
     string client_ip = "192.168.1.100";
     string target_service = "ssh";
     
@@ -45,7 +45,7 @@ TEST_F(SessionManagerTest, CreateSession) {
 }
 
 TEST_F(SessionManagerTest, SessionValidation) {
-    User test_user("testuser", "hash", Role::VIEWER);
+    User test_user("testuser", "hash", zerossg::Role::VIEWER);
     string client_ip = "192.168.1.101";
     string target_service = "web-admin";
     
@@ -68,7 +68,7 @@ TEST_F(SessionManagerTest, SessionValidation) {
 }
 
 TEST_F(SessionManagerTest, SessionUpdate) {
-    User test_user("testuser", "hash", Role::ADMIN);
+    User test_user("testuser", "hash", zerossg::Role::ADMIN);
     string client_ip = "192.168.1.102";
     string target_service = "database";
     
@@ -93,7 +93,7 @@ TEST_F(SessionManagerTest, SessionUpdate) {
 }
 
 TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
-    User test_user("testuser", "hash", Role::OPERATOR);
+    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
     string client_ip = "192.168.1.103";
     string target_service = "ssh";
     
@@ -120,8 +120,8 @@ TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
 }
 
 TEST_F(SessionManagerTest, ActiveSessionsList) {
-    User user1("user1", "hash", Role::OPERATOR);
-    User user2("user2", "hash", Role::VIEWER);
+    User user1("user1", "hash", zerossg::Role::OPERATOR);
+    User user2("user2", "hash", zerossg::Role::VIEWER);
     
     // Create sessions
     auto session1_result = session_manager->create_session(user1, "192.168.1.104", "ssh");
@@ -147,7 +147,7 @@ TEST_F(SessionManagerTest, ActiveSessionsList) {
 }
 
 TEST_F(SessionManagerTest, SessionExtension) {
-    User test_user("testuser", "hash", Role::ADMIN);
+    User test_user("testuser", "hash", zerossg::Role::ADMIN);
     string client_ip = "192.168.1.106";
     string target_service = "database";
     
@@ -173,8 +173,8 @@ TEST_F(SessionManagerTest, SessionExtension) {
 }
 
 TEST_F(SessionManagerTest, SessionFiltering) {
-    User user1("user1", "hash", Role::OPERATOR);
-    User user2("user2", "hash", Role::VIEWER);
+    User user1("user1", "hash", zerossg::Role::OPERATOR);
+    User user2("user2", "hash", zerossg::Role::VIEWER);
     
     string client_ip1 = "192.168.1.107";
     string client_ip2 = "192.168.1.108";
@@ -206,7 +206,7 @@ TEST_F(SessionManagerTest, SessionFiltering) {
 }
 
 TEST_F(SessionManagerTest, Statistics) {
-    User test_user("testuser", "hash", Role::OPERATOR);
+    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
     
     // Check initial statistics
     EXPECT_EQ(session_manager->get_active_session_count(), 0);
@@ -233,7 +233,7 @@ TEST_F(SessionManagerTest, Statistics) {
 }
 
 TEST_F(SessionManagerTest, CleanupExpiredSessions) {
-    User test_user("testuser", "hash", Role::VIEWER);
+    User test_user("testuser", "hash", zerossg::Role::VIEWER);
     
     // Create session
     auto session_result = session_manager->create_session(test_user, "192.168.1.111", "web-admin");

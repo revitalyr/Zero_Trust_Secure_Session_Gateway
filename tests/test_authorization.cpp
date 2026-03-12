@@ -24,9 +24,9 @@ protected:
 
 TEST_F(AuthorizationTest, ServiceAccessByRole) {
     // Create test users
-    User admin_user("admin", "hash", Role::ADMIN);
-    User operator_user("operator", "hash", Role::OPERATOR);
-    User viewer_user("viewer", "hash", Role::VIEWER);
+    User admin_user("admin", "hash", zerossg::Role::ADMIN);
+    User operator_user("operator", "hash", zerossg::Role::OPERATOR);
+    User viewer_user("viewer", "hash", zerossg::Role::VIEWER);
     
     // Test SSH service (admin and operator only)
     auto ssh_access = authz_manager->can_access_service(admin_user, "ssh");
@@ -57,9 +57,9 @@ TEST_F(AuthorizationTest, ServiceAccessByRole) {
 }
 
 TEST_F(AuthorizationTest, PermissionChecking) {
-    User admin_user("admin", "hash", Role::ADMIN);
-    User operator_user("operator", "hash", Role::OPERATOR);
-    User viewer_user("viewer", "hash", Role::VIEWER);
+    User admin_user("admin", "hash", zerossg::Role::ADMIN);
+    User operator_user("operator", "hash", zerossg::Role::OPERATOR);
+    User viewer_user("viewer", "hash", zerossg::Role::VIEWER);
     
     // Test admin permissions
     auto permission = authz_manager->has_permission(admin_user, "user.delete");

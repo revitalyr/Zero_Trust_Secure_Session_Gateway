@@ -136,7 +136,7 @@ export struct Session {
 };
 
 // Modern SecurityEventType with explicit underlying type
-enum class SecurityEventType : uint8_t {
+export enum class SecurityEventType : uint8_t {
     LOGIN_SUCCESS = 0,
     LOGIN_FAILURE = 1,
     SESSION_START = 2,
