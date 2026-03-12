@@ -2,15 +2,8 @@
 #include "zerossg/common.hpp"
 #include "zerossg/constants.hpp"
 #include "zerossg/utils/base64.hpp"
-
-// C++ Standard Library headers (alphabetical order)
-#include <algorithm>
-#include <iomanip>
-#include <random>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include "zerossg/types.hpp"
+#include "zerossg/auth/authenticator.hpp"
 
 // Third-party library headers
 #include <nlohmann/json.hpp>
@@ -37,6 +30,14 @@ namespace zerossg {
     using zerossg::SecretKey;
     using zerossg::LockGuard;
     using zerossg::system_clock;
+    
+    // Import specific std utilities that are needed
+    using std::to_string;
+    using std::hash;
+    using std::random_device;
+    using std::mt19937;
+    using std::uniform_int_distribution;
+    using std::numeric_limits;
 
 AuthenticationManager::AuthenticationManager() {
     // Initialize with modern C++26 features
@@ -117,9 +118,9 @@ Result<String> AuthenticationManager::authenticate(const UserName& username, con
     
     // Generate JWT token with enhanced security
     // Generate simple JWT token for now
-    auto now = std::chrono::system_clock::now();
-    auto iat = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-    auto exp = std::chrono::duration_cast<std::chrono::seconds>((now + std::chrono::seconds(3600)).time_since_epoch()).count();
+    auto now = system_clock::now();
+    auto iat = std::chrono::duration_cast<Duration>(now.time_since_epoch()).count();
+    auto exp = std::chrono::duration_cast<Duration>((now + Duration(3600)).time_since_epoch()).count();
     
     json payload = {
         {"username", user.m_user_name},
