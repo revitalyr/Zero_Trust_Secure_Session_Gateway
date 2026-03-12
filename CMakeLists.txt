@@ -85,6 +85,26 @@ if(DEFINED ENV{VCPKG_ROOT})
     include_directories($ENV{VCPKG_ROOT}/installed/x64-windows/include)
 endif()
 
+# C++23 modules support
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    # CMake 3.28+ has native module support
+    set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_STD ON)
+    
+    # Add module interface files
+    file(GLOB_RECURSE MODULE_FILES 
+        "include/zerossg/*.ixx"
+        "include/zerossg/**/*.ixx"
+    )
+    
+    # Create module targets
+    foreach(module_file ${MODULE_FILES})
+        get_filename_component(module_name ${module_file} NAME_WE)
+        add_library(${module_name} MODULE ${module_file})
+        target_compile_features(${module_name} PUBLIC cxx_std_23)
+    endforeach()
+endif()
+
 # Add subdirectories
 add_subdirectory(src)
 
