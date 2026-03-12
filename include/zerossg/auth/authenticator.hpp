@@ -54,25 +54,26 @@ public:
 
 private:
     // Modern JWT operations with better security
-    std::string create_jwt_payload(const User& user, 
-                               const std::unordered_map<std::string, std::string>& claims = {}) const noexcept;
-    Result<User> parse_jwt_payload(string_view token) const noexcept;
-    std::string generate_jwt_signature(string_view header_payload) const noexcept;
-    bool verify_jwt_signature(string_view header_payload, string_view signature) const noexcept;
+    String create_jwt_payload(const User& user, 
+                           const UnorderedMap<String, String>& claims = {}) const noexcept;
+    Result<User> parse_jwt_payload(const TokenString& token) const noexcept;
+    String generate_jwt_signature(const String& header_payload) const noexcept;
+    bool verify_jwt_signature(const String& header_payload, const String& signature) const noexcept;
     
     // Modern token management with enhanced security
     TokenString generate_secure_token() noexcept;
     SessionId generate_session_id() const noexcept;
-    bool is_token_blacklisted(string_view token) const noexcept;
+    bool is_token_blacklisted(const TokenString& token) const noexcept;
     
     // Modern data storage with better concurrency
     mutable std::shared_mutex m_users_mutex;
     mutable std::shared_mutex m_tokens_mutex;
     mutable std::shared_mutex m_blocked_users_mutex;
+    mutable std::shared_mutex m_revoked_tokens_mutex;
     
-    std::unordered_map<UserName, User> m_users;
-    std::unordered_map<TokenString, std::string> m_revoked_tokens;
-    std::unordered_map<UserName, system_clock::time_point> m_blocked_users;
+    UnorderedMap<UserName, User> m_users;
+    UnorderedMap<TokenString, String> m_revoked_tokens;
+    UnorderedMap<UserName, system_clock::time_point> m_blocked_users;
     
     // Enhanced JWT secret with rotation support
     SecretKey m_jwt_secret;

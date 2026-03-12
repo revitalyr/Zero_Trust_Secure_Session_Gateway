@@ -33,6 +33,7 @@ namespace zerossg {
     using zerossg::PasswordHash;
     using zerossg::Optional;
     using zerossg::Vector;
+    using zerossg::UnorderedMap;
     using zerossg::SecretKey;
     using zerossg::LockGuard;
     using zerossg::system_clock;
@@ -528,6 +529,56 @@ Strings AuthenticationManager::get_recent_failed_attempts(string_view username, 
     }
     
     return attempts;
+}
+
+// Helper functions for JWT operations
+String role_to_string(Role role) {
+    switch (role) {
+        case Role::Admin: return "admin";
+        case Role::User: return "user";
+        case Role::Guest: return "guest";
+        default: return "unknown";
+    }
+}
+
+String AuthenticationManager::generate_jwt_signature(const String& header_payload) const noexcept {
+    try {
+        unsigned char* hmac = nullptr;
+        unsigned int hmac_len = 0;
+        
+        HMAC(EVP_sha256(), 
+              m_jwt_secret.data(), static_cast<int>(m_jwt_secret.size()),
+              reinterpret_cast<const unsigned char*>(header_payload.c_str()), header_payload.length(),
+              hmac, &hmac_len);
+        
+        String result = base64_encode(String(reinterpret_cast<char*>(hmac), hmac_len));
+        OPENSSL_free(hmac);
+        return result;
+    } catch (...) {
+        return "";
+    }
+}
+
+bool AuthenticationManager::verify_jwt_signature(const String& header_payload, const String& signature) const noexcept {
+    try {
+        String expected_signature = generate_jwt_signature(header_payload);
+        return expected_signature == signature;
+    } catch (...) {
+        return false;
+    }
+}
+
+namespace auth_utils {
+    bool is_valid_jwt_structure(const TokenString& token) {
+        // Basic JWT structure validation: header.payload.signature
+        size_t first_dot = token.find('.');
+        size_t second_dot = token.find('.', first_dot + 1);
+        
+        return first_dot != String::npos && 
+               second_dot != String::npos && 
+               second_dot > first_dot + 1 &&
+               second_dot < token.length() - 1;
+    }
 }
 
 SessionId AuthenticationManager::generate_session_id() const noexcept {
