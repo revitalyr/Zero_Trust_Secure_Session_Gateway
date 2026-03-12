@@ -119,15 +119,15 @@ Result<String> AuthenticationManager::authenticate(const UserName& username, con
     // Generate simple JWT token for now
     auto now = std::chrono::system_clock::now();
     auto iat = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-    auto exp = std::chrono::duration_cast<std::chrono::seconds>((now + TOKEN_EXPIRY_TIME).time_since_epoch()).count();
+    auto exp = std::chrono::duration_cast<std::chrono::seconds>((now + std::chrono::seconds(3600)).time_since_epoch()).count();
     
     json payload = {
-        {"username", user.username},
-        {"role", role_to_string(user.role)},
+        {"username", user.m_user_name},
+        {"role", role_to_string(user.m_role)},
         {"iat", iat},
         {"exp", exp},
         {"sub", "zerossg"},
-        {"jti", std::to_string(std::hash<std::string>{}(user.username + std::to_string(iat)))}
+        {"jti", std::to_string(std::hash<std::string>{}(std::string(user.m_user_name) + std::to_string(iat)))}
     };
     
     // Create JWT header
