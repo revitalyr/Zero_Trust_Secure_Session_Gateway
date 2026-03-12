@@ -40,6 +40,7 @@ export using unorderedMap = std::unordered_map<K, V>;
 
 export using systemClock = std::chrono::system_clock;
 export using steadyClock = std::chrono::steady_clock;
+export using timePoint = std::chrono::system_clock::time_point;
 export using milliseconds = std::chrono::milliseconds;
 export using seconds = std::chrono::seconds;
 

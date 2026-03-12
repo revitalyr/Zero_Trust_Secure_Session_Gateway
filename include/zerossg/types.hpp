@@ -13,7 +13,9 @@ using SecretKey = std::vector<unsigned char>;
 using SessionId = std::string;
 using UserCount = size_t;
 using Strings = std::vector<std::string>;
-using TimePoint = std::chrono::system_clock::time_point;
+using TimePoint = timePoint;
+using ClientIp = std::string;
+using ServiceName = std::string;
 
 
 // Modern enum class with explicit underlying type
@@ -46,8 +48,8 @@ struct User {
     PasswordHash m_password_hash;
     PasswordHash m_password_hash_confirm;
     Role m_role;
-    std::chrono::system_clock::time_point m_created_at;
-    std::chrono::system_clock::time_point m_last_login;
+    timePoint m_created_at;
+    timePoint m_last_login;
     bool m_active;
     
     constexpr User() noexcept 
@@ -96,8 +98,8 @@ struct Session {
         , m_client_ip(std::move(client_ip))
         , m_target_service(std::move(target_service))
         , m_active(true)
-        , m_created_at(std::chrono::system_clock::now())
-        , m_last_login(std::chrono::system_clock::now()) {}
+        , m_created_at(systemClock::now())
+        , m_last_login(systemClock::now()) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }

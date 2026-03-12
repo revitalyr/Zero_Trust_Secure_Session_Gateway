@@ -84,11 +84,11 @@ private:
     
     unorderedMap<UserName, User> m_users;
     unorderedMap<TokenString, String> m_revoked_tokens;
-    unorderedMap<UserName, std::chrono::system_clock::time_point> m_blocked_users;
+    unorderedMap<UserName, timePoint> m_blocked_users;
     
     // Enhanced JWT secret with rotation support
     SecretKey m_jwt_secret;
-    std::chrono::system_clock::time_point m_secret_rotation_time;
+    timePoint m_secret_rotation_time;
     
     // Modern configuration with constexpr
     static constexpr size_t JWT_SECRET_SIZE = 32;
