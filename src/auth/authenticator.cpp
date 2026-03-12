@@ -17,7 +17,6 @@ using String = zerossg::String;
 using UserName = zerossg::UserName;
 using PasswordHash = zerossg::PasswordHash;
 using TokenString = zerossg::TokenString;
-using User = zerossg::User;
 using SecretKey = zerossg::SecretKey;
 using SessionId = zerossg::SessionId;
 using UserCount = zerossg::UserCount;
@@ -26,15 +25,20 @@ using TimePoint = zerossg::TimePoint;
 using make_result_error = zerossg::make_result_error;
 
 namespace zerossg {
+    // Import type aliases
+    using User = zerossg::User;
+    using Role = zerossg::Role;
+    
+    // Import role constants
+    using zerossg::ADMIN;
+    using zerossg::OPERATOR;
+    using zerossg::VIEWER;
+    
     // Import specific std utilities that are needed
     using std::move;
     using std::make_unique;
     using std::make_shared;
     using std::to_string;
-    using std::hash;
-    using std::random_device;
-    using std::mt19937;
-    using std::uniform_int_distribution;
     using std::numeric_limits;
     using std::system_clock;
     using std::runtime_error;
@@ -47,8 +51,8 @@ namespace zerossg {
 // Helper function to generate secure random bytes
 Result<vector<unsigned char>> generate_secure_random_bytes(size_t size) {
     vector<unsigned char> bytes(size);
-    random_device rd;
-    uniform_int_distribution<unsigned char> dist(0, 255);
+    std::random_device rd;
+    std::uniform_int_distribution<unsigned char> dist(0, 255);
     
     for (size_t i = 0; i < size; ++i) {
         bytes[i] = dist(rd);

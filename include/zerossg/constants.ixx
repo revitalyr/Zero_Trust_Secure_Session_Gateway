@@ -1,31 +1,9 @@
 export module zerossg.constants;
 
-export import <chrono>;
-export import <cstdint>;
-export import <string>;
-
-export namespace zerossg {
-
-// Application constants
-export constexpr const char* APPLICATION_NAME = "Zero Trust Secure Session Gateway";
-export constexpr const char* APPLICATION_VERSION = "1.0.0";
-export constexpr const char* VENDOR_NAME = "ZeroTrust Security";
-
-// Network constants
-export constexpr const char* DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
-export constexpr PortNo DEFAULT_LISTEN_PORT = 8443;
-export constexpr const char* DEFAULT_TLS_CERT_FILE = "server.crt";
-export constexpr const char* DEFAULT_TLS_KEY_FILE = "server.key";
-export constexpr const char* DEFAULT_CA_CERT_FILE = "";
-export constexpr const char* DEFAULT_CIPHER_LIST = "HIGH:!aNULL:!MD5:!RC4";
-
-// Security constants
-export constexpr RateLimit DEFAULT_RATE_LIMIT_MAX_REQUESTS = 100;
-export constexpr Minutes DEFAULT_RATE_LIMIT_WINDOW = 5; // 5 minutes
-export constexpr Threshold DEFAULT_BRUTE_FORCE_THRESHOLD = 5;
-export constexpr Minutes DEFAULT_BRUTE_FORCE_WINDOW = 15; // 15 minutes
-export constexpr Milliseconds DEFAULT_BLOCK_DURATION{3600000}; // 1 hour
-export constexpr Hours DEFAULT_SECRET_ROTATION_INTERVAL = 24; // 24 hours
+// Type aliases for time and size
+export using Seconds = std::chrono::seconds;
+export using Milliseconds = std::chrono::milliseconds;
+export using Count = std::size_t;
 
 // Configuration file constants
 export constexpr const char* DEFAULT_CONFIG_FILE = "config.json";
@@ -34,158 +12,6 @@ export constexpr const char* DEFAULT_DB_TYPE = "memory";
 export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
 export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
 export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = " duplicates removed
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "changes removed
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "mass removed
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const constants module has duplicate definitions. Let me clean it up:
 
 // JWT constants
 export constexpr size_t JWT_SECRET_SIZE = 32;
@@ -207,14 +33,6 @@ export constexpr const char* DEFAULT_LOG_PATTERN = "[%Y-%m-%d %H:%M:%S.%e] [%l] 
 export constexpr const char* DEFAULT_LOG_FILE = "logs/zerossg.log";
 export constexpr const char* DEFAULT_SECURITY_LOG_FILE = "logs/security.log";
 export constexpr const char* DEFAULT_AUDIT_LOG_FILE = "logs/audit.log";
-
-// Configuration file constants
-export constexpr const char* DEFAULT_CONFIG_FILE = "config.json";
-export constexpr const char* DEFAULT_PERSISTENCE_FILE = "sessions.json";
-export constexpr const char* DEFAULT_DB_TYPE = "memory";
-export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
-export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
-export constexpr const char* DEFAULT_DB_PASSWORD = "";
 
 // Error messages
 export constexpr const char* ERROR_USER_NOT_FOUND = "User not found";
@@ -331,6 +149,11 @@ export constexpr const char* ROLE_ADMIN = "admin";
 export constexpr const char* ROLE_OPERATOR = "operator";
 export constexpr const char* ROLE_VIEWER = "viewer";
 
+// Role enum values
+export constexpr int ADMIN = 0;
+export constexpr int OPERATOR = 1;
+export constexpr int VIEWER = 2;
+
 // Security event types
 export constexpr const char* EVENT_LOGIN_SUCCESS = "login_success";
 export constexpr const char* EVENT_LOGIN_FAILURE = "login_failure";
@@ -346,6 +169,21 @@ export constexpr const char* PERMISSION_READ = "read";
 export constexpr const char* PERMISSION_WRITE = "write";
 export constexpr const char* PERMISSION_EXECUTE = "execute";
 export constexpr const char* PERMISSION_ADMIN = "admin";
+
+// Service host addresses
+export constexpr const char* HOST_SSH_SERVER = "internal-ssh-server";
+export constexpr const char* HOST_WEB_SERVER = "internal-web-server";
+export constexpr const char* HOST_DB_SERVER = "internal-db-server";
+
+// Service names for default services
+export constexpr const char* SERVICE_WEB_ADMIN = "web-admin";
+export constexpr const char* SERVICE_SSH_INTERNAL = "ssh";
+export constexpr const char* SERVICE_DATABASE_INTERNAL = "database";
+
+// Port numbers
+export constexpr const int DEFAULT_SSH_PORT = 22;
+export constexpr const int DEFAULT_WEB_PORT = 8080;
+export constexpr const int DEFAULT_DATABASE_PORT = 5432;
 
 // CLI commands
 export constexpr const char* CMD_START = "start";
@@ -406,77 +244,3 @@ export constexpr Milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
 // Health check intervals
 export constexpr Seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
 export constexpr Seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
-
-// Metrics collection intervals
-export constexpr Seconds METRICS_COLLECTION_INTERVAL{60}; // 1 minute
-export constexpr Seconds STATISTICS_UPDATE_INTERVAL{300}; // 5 minutes
-
-// Additional numeric constants from source files
-export constexpr int DEFAULT_SSH_PORT = 22;
-export constexpr int DEFAULT_WEB_PORT = 443;
-export constexpr int DEFAULT_DATABASE_PORT = 5432;
-export constexpr int DEFAULT_SESSION_TIMEOUT_SECONDS = 3600; // 1 hour
-export constexpr int MINUTES_PER_HOUR = 60;
-export constexpr int SECONDS_PER_MINUTE = 60;
-export constexpr int SECONDS_PER_HOUR = 3600;
-
-// Additional string literals from source files
-export constexpr const char* ERROR_MAXIMUM_SESSION_LIMIT = "Maximum session limit reached for user: ";
-export constexpr const char* ERROR_SESSION_NOT_FOUND_PREFIX = "Session not found: ";
-export constexpr const char* ERROR_SESSION_EXPIRED_PREFIX = "Session has expired: ";
-export constexpr const char* ERROR_SESSION_NOT_ACTIVE_PREFIX = "Session is not active: ";
-export constexpr const char* ERROR_SERVICE_NOT_FOUND_PREFIX = "Service not found: ";
-
-// Time formatting literals
-export constexpr const char* TIME_FORMAT_SECONDS_SUFFIX = "s";
-export constexpr const char* TIME_FORMAT_MINUTES_SUFFIX = "m ";
-export constexpr const char* TIME_FORMAT_HOURS_SUFFIX = "h ";
-
-// Permission strings
-export constexpr const char* PERMISSION_USER_CREATE = "user.create";
-export constexpr const char* PERMISSION_USER_READ = "user.read";
-export constexpr const char* PERMISSION_USER_UPDATE = "user.update";
-export constexpr const char* PERMISSION_USER_DELETE = "user.delete";
-export constexpr const char* PERMISSION_SERVICE_CREATE = "service.create";
-export constexpr const char* PERMISSION_SERVICE_UPDATE = "service.update";
-export constexpr const char* PERMISSION_SERVICE_DELETE = "service.delete";
-export constexpr const char* PERMISSION_SESSION_CREATE = "session.create";
-export constexpr const char* PERMISSION_SESSION_DELETE = "session.delete";
-export constexpr const char* PERMISSION_CONFIG_READ = "config.read";
-export constexpr const char* PERMISSION_CONFIG_UPDATE = "config.update";
-export constexpr const char* PERMISSION_LOGS_READ = "logs.read";
-export constexpr const char* PERMISSION_LOGS_EXPORT = "logs.export";
-export constexpr const char* PERMISSION_SYSTEM_ADMIN = "system.admin";
-
-// Service host addresses
-export constexpr const char* HOST_SSH_SERVER = "internal-ssh-server";
-export constexpr const char* HOST_WEB_SERVER = "internal-web-server";
-export constexpr const char* HOST_DB_SERVER = "internal-db-server";
-
-// Service names for default services
-export constexpr const char* SERVICE_WEB_ADMIN = "web-admin";
-export constexpr const char* SERVICE_SSH_INTERNAL = "ssh";
-export constexpr const char* SERVICE_DATABASE_INTERNAL = "database";
-
-// Validation messages
-export constexpr const char* ERROR_ROLE_STRING_EMPTY = "Role string cannot be empty";
-export constexpr const char* ERROR_EVENT_STRING_EMPTY = "Event string cannot be empty";
-export constexpr const char* ERROR_UNKNOWN_ROLE = "unknown";
-export constexpr const char* ERROR_UNKNOWN_EVENT = "unknown";
-
-// File format extensions
-export constexpr const char* FORMAT_YAML = "yaml";
-export constexpr const char* FORMAT_YML = "yml";
-export constexpr const char* FORMAT_JSON = "json";
-
-// Error messages for configuration
-export constexpr const char* ERROR_CONFIG_FILE_NOT_FOUND = "Configuration file not found: ";
-export constexpr const char* ERROR_UNSUPPORTED_CONFIG_FORMAT = "Unsupported configuration file format: ";
-export constexpr const char* ERROR_FAILED_TO_LOAD_CONFIG = "Failed to load configuration: ";
-
-// Role hierarchy
-export constexpr const char* ROLE_HIERARCHY_ADMIN = "ADMIN";
-export constexpr const char* ROLE_HIERARCHY_OPERATOR = "OPERATOR";
-export constexpr const char* ROLE_HIERARCHY_VIEWER = "VIEWER";
-
-} // namespace zerossg

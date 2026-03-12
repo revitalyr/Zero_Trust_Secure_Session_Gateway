@@ -17,10 +17,6 @@ import <sstream>;
 using json = nlohmann::json;
 
 namespace zerossg {
-    // Import std utilities
-    using std::make_unique;
-    using std::move;
-    using std::string;
 
 // GatewayServer implementation
 GatewayServer::GatewayServer() = default;
@@ -29,13 +25,13 @@ GatewayServer::~GatewayServer() {
     stop();
 }
 
-Result<void> GatewayServer::initialize(const string& config_file) {
+Result<void> GatewayServer::initialize(const std::string& config_file) {
     try {
         // Initialize TLS handler
         m_tls_handler = std::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);
         if (!tls_result.is_success()) {
-            return Result<void>::error("TLS initialization failed: " + tls_result.error());
+            return zerossg::Result<void>::error("TLS initialization failed: " + tls_result.error());
         }
         
         // Initialize business logic components
@@ -53,15 +49,15 @@ Result<void> GatewayServer::initialize(const string& config_file) {
             return setup_result;
         }
         
-        return Result<void>::success();
+        return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return Result<void>::error("Server initialization failed: " + string(e.what()));
+        return zerossg::Result<void>::error("Server initialization failed: " + std::string(e.what()));
     }
 }
 
 Result<void> GatewayServer::start() {
     if (m_running.load()) {
-        return Result<void>::error("Server is already running");
+        return zerossg::Result<void>::error("Server is already running");
     }
     
     try {
@@ -76,10 +72,10 @@ Result<void> GatewayServer::start() {
         std::cout << "Zero Trust Secure Session Gateway started on " 
                   << m_listen_address << ":" << m_listen_port << std::endl;
         
-        return Result<void>::success();
+        return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
         m_running.store(false);
-        return Result<void>::error("Failed to start server: " + string(e.what()));
+        return zerossg::Result<void>::error("Failed to start server: " + std::string(e.what()));
     }
 }
 
@@ -104,9 +100,9 @@ Result<void> GatewayServer::stop() {
         
         std::cout << "Zero Trust Secure Session Gateway stopped" << std::endl;
         
-        return Result<void>::success();
+        return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return Result<void>::error("Error stopping server: " + string(e.what()));
+        return zerossg::Result<void>::error("Error stopping server: " + std::string(e.what()));
     }
 }
 
@@ -121,9 +117,9 @@ Result<void> GatewayServer::setup_acceptor() {
         m_acceptor->bind(endpoint);
         m_acceptor->listen(boost::asio::socket_base::max_listen_connections);
         
-        return Result<void>::success();
+        return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to setup acceptor: " + string(e.what()));
+        return zerossg::Result<void>::error("Failed to setup acceptor: " + std::string(e.what()));
     }
 }
 
@@ -254,12 +250,12 @@ void Connection::handle_read(const boost::system::error_code& error, size_t byte
     do_read();
 }
 
-void Connection::handle_request(const string& request) {
+void Connection::handle_request(const std::string& request) {
     try {
         json request_json = json::parse(request);
-        string request_type = request_json.value("type", "");
+        std::string request_type = request_json.value("type", "");
         
-        string response;
+        std::string response;
         
         if (request_type == "login") {
             response = process_login_request(request);
@@ -275,16 +271,16 @@ void Connection::handle_request(const string& request) {
         
         do_write(response + "\n\n");
     } catch (const json::exception& e) {
-        do_write(create_error_response("Invalid JSON: " + string(e.what())) + "\n\n");
+        do_write(create_error_response("Invalid JSON: " + std::string(e.what())) + "\n\n");
     } catch (const std::exception& e) {
-        do_write(create_error_response("Request processing error: " + string(e.what())) + "\n\n");
+        do_write(create_error_response("Request processing error: " + std::string(e.what())) + "\n\n");
     }
 }
 
-string Connection::process_login_request(const string& request) {
+std::string Connection::process_login_request(const std::string& request) {
     json request_json = json::parse(request);
-    string username = request_json.value("username", "");
-    string password = request_json.value("password", "");
+    std::string username = request_json.value("username", "");
+    std::string password = request_json.value("password", "");
     
     if (username.empty() || password.empty()) {
         return create_error_response("Username and password required");
@@ -314,7 +310,7 @@ string Connection::process_login_request(const string& request) {
     m_user = user_result.value().value();
     m_authenticated = true;
     
-    string token = auth_result.value();
+    std::string token = auth_result.value();
     
     json response_data = {
         {"token", token},
@@ -327,13 +323,13 @@ string Connection::process_login_request(const string& request) {
     return create_response("success", "Login successful", response_data);
 }
 
-string Connection::process_session_request(const string& request) {
+std::string Connection::process_session_request(const std::string& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }
     
     json request_json = json::parse(request);
-    string target_service = request_json.value("target_service", "");
+    std::string target_service = request_json.value("target_service", "");
     
     if (target_service.empty()) {
         return create_error_response("Target service required");
@@ -361,7 +357,7 @@ string Connection::process_session_request(const string& request) {
     return create_response("success", "Session created", response_data);
 }
 
-string Connection::process_proxy_request(const string& request) {
+std::string Connection::process_proxy_request(const std::string& request) {
     if (!m_authenticated || m_session_id.empty()) {
         return create_error_response("No active session");
     }
@@ -376,7 +372,7 @@ string Connection::process_proxy_request(const string& request) {
     return create_response("success", "Proxy request processed", response_data);
 }
 
-string Connection::process_logout_request(const string& request) {
+std::string Connection::process_logout_request(const std::string& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }

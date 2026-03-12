@@ -2,8 +2,14 @@
 import zerossg.rbac.authorizer;
 import zerossg.constants;
 import zerossg.types;
+import zerossg.result; // Added Result import
 
 namespace zerossg {
+
+// Import type aliases
+using User = zerossg::User;
+using Role = zerossg::Role;
+using Result = zerossg::Result; // Added Result type alias
 
 // Import constants for string literals
 using zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX;
