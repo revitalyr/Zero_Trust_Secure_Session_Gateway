@@ -16,10 +16,10 @@ public:
     ~AuthenticationManager() override;
     
     // IAuthenticator interface with modern error handling
-    Result<string> authenticate(string_view username, string_view password) override;
+    Result<std::string> authenticate(string_view username, string_view password) override;
     Result<bool> validate_token(string_view token) override;
     Result<User> get_user_from_token(string_view token) override;
-    Result<string> generate_token(const User& user) override;
+    Result<TokenString> generate_token(const User& user) override;
     Result<void> revoke_token(string_view token) override;
     
     // Modern user management with move semantics
@@ -27,17 +27,17 @@ public:
     Result<void> update_user(string_view username, User&& user) noexcept;
     Result<void> delete_user(string_view username) noexcept;
     Result<std::optional<User>> get_user(string_view username) const noexcept;
-    Result<vector<User>> list_users() const noexcept;
+    Result<std::vector<User>> list_users() const noexcept;
     
     // Modern password utilities with constexpr support where possible
-    static Result<string> hash_password(string_view password) noexcept;
+    static Result<std::string> hash_password(string_view password) noexcept;
     static Result<bool> verify_password(string_view password, string_view hash) noexcept;
     
     // Modern token management with better security
-    Result<string> generate_token_with_claims(const User& user, 
-                                          const unordered_map<string, string>& claims) noexcept;
+    Result<TokenString> generate_token_with_claims(const User& user, 
+                                          const std::unordered_map<std::string, std::string>& claims) noexcept;
     Result<bool> validate_token_with_claims(string_view token, 
-                                           const unordered_map<string, string>& required_claims) noexcept;
+                                           const std::unordered_map<std::string, std::string>& required_claims) noexcept;
     
     // Security utilities
     Result<void> block_user(string_view username, seconds duration) noexcept;
@@ -47,32 +47,32 @@ public:
     // Statistics and monitoring with semantic return types
     [[nodiscard]] UserCount get_active_user_count() const noexcept;
     [[nodiscard]] UserCount get_blocked_user_count() const noexcept;
-    [[nodiscard]] vector<string> get_recent_failed_attempts(string_view username, size_t count) const noexcept;
+    [[nodiscard]] Strings get_recent_failed_attempts(string_view username, size_t count) const noexcept;
 
 private:
     // Modern JWT operations with better security
-    string create_jwt_payload(const User& user, 
-                               const unordered_map<string, string>& claims = {}) const noexcept;
+    std::string create_jwt_payload(const User& user, 
+                               const std::unordered_map<std::string, std::string>& claims = {}) const noexcept;
     Result<User> parse_jwt_payload(string_view token) const noexcept;
-    string generate_jwt_signature(string_view header_payload) const noexcept;
+    std::string generate_jwt_signature(string_view header_payload) const noexcept;
     bool verify_jwt_signature(string_view header_payload, string_view signature) const noexcept;
     
     // Modern token management with enhanced security
-    string generate_secure_token() noexcept;
-    string generate_session_id() const noexcept;
+    TokenString generate_secure_token() noexcept;
+    SessionId generate_session_id() const noexcept;
     bool is_token_blacklisted(string_view token) const noexcept;
     
     // Modern data storage with better concurrency
-    mutable shared_mutex m_users_mutex;
-    mutable shared_mutex m_tokens_mutex;
-    mutable shared_mutex m_blocked_users_mutex;
+    mutable std::shared_mutex m_users_mutex;
+    mutable std::shared_mutex m_tokens_mutex;
+    mutable std::shared_mutex m_blocked_users_mutex;
     
-    unordered_map<string, User> m_users;
-    unordered_map<string, string> m_revoked_tokens; // token -> expiry_time
-    unordered_map<string, system_clock::time_point> m_blocked_users;
+    std::unordered_map<UserName, User> m_users;
+    std::unordered_map<TokenString, std::string> m_revoked_tokens;
+    std::unordered_map<UserName, system_clock::time_point> m_blocked_users;
     
     // Enhanced JWT secret with rotation support
-    vector<unsigned char> m_jwt_secret;
+    SecretKey m_jwt_secret;
     system_clock::time_point m_secret_rotation_time;
     
     // Modern configuration with constexpr

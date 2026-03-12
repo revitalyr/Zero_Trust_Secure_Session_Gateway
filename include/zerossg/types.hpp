@@ -146,12 +146,12 @@ constexpr string_view security_event_type_to_string(SecurityEventType type) noex
 struct SecurityEvent {
     SecurityEventType m_type;
     system_clock::time_point m_timestamp;
-    string m_username;
-    string m_client_ip;
-    string m_details;
+    UserName m_username;
+    ClientIp m_client_ip;
+    std::string m_details;
     
-    constexpr SecurityEvent(SecurityEventType type, string username, 
-                        string client_ip, string details) noexcept
+    constexpr SecurityEvent(SecurityEventType type, UserName username, 
+                        ClientIp client_ip, std::string details) noexcept
         : m_type(type)
         , m_timestamp(system_clock::now())
         , m_username(std::move(username))
@@ -161,50 +161,50 @@ struct SecurityEvent {
     // Accessors
     [[nodiscard]] constexpr SecurityEventType type() const noexcept { return m_type; }
     [[nodiscard]] constexpr system_clock::time_point timestamp() const noexcept { return m_timestamp; }
-    [[nodiscard]] constexpr const string& username() const noexcept { return m_username; }
-    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
-    [[nodiscard]] constexpr const string& details() const noexcept { return m_details; }
+    [[nodiscard]] constexpr const UserName& username() const noexcept { return m_username; }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const std::string& details() const noexcept { return m_details; }
 };
 
 // Modern ConnectionInfo with better encapsulation
 struct ConnectionInfo {
-    boost::asio::ip::tcp::endpoint m_remote_endpoint;
-    boost::asio::ip::tcp::endpoint m_local_endpoint;
-    string m_client_ip;
-    uint16_t m_client_port;
+    TcpEndpoint m_remote_endpoint;
+    TcpEndpoint m_local_endpoint;
+    ClientIp m_client_ip;
+    PortNo m_client_port;
     
-    constexpr ConnectionInfo(const boost::asio::ip::tcp::endpoint& remote,
-                         const boost::asio::ip::tcp::endpoint& local) noexcept
+    constexpr ConnectionInfo(const TcpEndpoint& remote,
+                         const TcpEndpoint& local) noexcept
         : m_remote_endpoint(remote)
         , m_local_endpoint(local)
         , m_client_ip(remote.address().to_string())
         , m_client_port(remote.port()) {}
     
     // Accessors
-    [[nodiscard]] constexpr const boost::asio::ip::tcp::endpoint& remote_endpoint() const noexcept { 
+    [[nodiscard]] constexpr const TcpEndpoint& remote_endpoint() const noexcept { 
         return m_remote_endpoint; 
     }
-    [[nodiscard]] constexpr const boost::asio::ip::tcp::endpoint& local_endpoint() const noexcept { 
+    [[nodiscard]] constexpr const TcpEndpoint& local_endpoint() const noexcept { 
         return m_local_endpoint; 
     }
-    [[nodiscard]] constexpr const string& client_ip() const noexcept { return m_client_ip; }
-    [[nodiscard]] constexpr uint16_t client_port() const noexcept { return m_client_port; }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr PortNo client_port() const noexcept { return m_client_port; }
 };
 
 // Modern TargetService with better encapsulation and validation
 struct TargetService {
-    string m_name;
-    string m_host;
-    uint16_t m_port;
-    vector<Role> m_allowed_roles;
+    ServiceName m_name;
+    HostAddress m_host;
+    PortNo m_port;
+    Roles<Role> m_allowed_roles;
     bool m_tls_enabled;
     
     constexpr TargetService() noexcept 
         : m_port(0)
         , m_tls_enabled(false) {}
     
-    constexpr TargetService(string name, string host, uint16_t port, 
-                       vector<Role> allowed_roles, bool tls_enabled) noexcept
+    constexpr TargetService(ServiceName name, HostAddress host, PortNo port, 
+                       Roles<Role> allowed_roles, bool tls_enabled) noexcept
         : m_name(std::move(name))
         , m_host(std::move(host))
         , m_port(port)
@@ -212,11 +212,11 @@ struct TargetService {
         , m_tls_enabled(tls_enabled) {}
     
     // Accessors
-    [[nodiscard]] constexpr const string& name() const noexcept { return m_name; }
-    [[nodiscard]] constexpr const string& host() const noexcept { return m_host; }
-    [[nodiscard]] constexpr uint16_t port() const noexcept { return m_port; }
+    [[nodiscard]] constexpr const ServiceName& name() const noexcept { return m_name; }
+    [[nodiscard]] constexpr const HostAddress& host() const noexcept { return m_host; }
+    [[nodiscard]] constexpr PortNo port() const noexcept { return m_port; }
     [[nodiscard]] constexpr bool is_tls_enabled() const noexcept { return m_tls_enabled; }
-    [[nodiscard]] constexpr const vector<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
+    [[nodiscard]] constexpr const Roles<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
     
     // Modern validation method
     [[nodiscard]] bool is_valid() const noexcept {

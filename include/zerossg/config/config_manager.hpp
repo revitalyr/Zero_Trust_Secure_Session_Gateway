@@ -1,67 +1,67 @@
 #pragma once
 
+#include "zerossg/common.hpp"
 #include "zerossg/interfaces.hpp"
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
-#include <string>
 #include <unordered_map>
 #include <mutex>
 
 namespace zerossg {
 
 struct ServerConfig {
-    string listen_address{"0.0.0.0"};
-    uint16_t listen_port{8443};
-    string tls_cert_file{"server.crt"};
-    string tls_key_file{"server.key"};
-    string ca_cert_file{""};
-    size_t thread_count{0}; // 0 = auto-detect
+    HostAddress listen_address{"0.0.0.0"};
+    PortNo listen_port{8443};
+    FileName tls_cert_file{"server.crt"};
+    FileName tls_key_file{"server.key"};
+    FileName ca_cert_file{""};
+    Count thread_count{0}; // 0 = auto-detect
     bool verify_client_certificates{false};
-    string cipher_list{"HIGH:!aNULL:!MD5:!RC4"};
+    std::string cipher_list{"HIGH:!aNULL:!MD5:!RC4"};
 };
 
 struct SecurityConfig {
-    size_t rate_limit_max_requests{100};
-    seconds rate_limit_window{300}; // 5 minutes
-    size_t brute_force_threshold{5};
-    seconds brute_force_window{900}; // 15 minutes
-    milliseconds default_block_duration{3600000}; // 1 hour
+    RateLimit rate_limit_max_requests{100};
+    Minutes rate_limit_window{5}; // 5 minutes
+    Threshold brute_force_threshold{5};
+    Minutes brute_force_window{15}; // 15 minutes
+    Milliseconds default_block_duration{3600000}; // 1 hour
     bool enable_ip_whitelist{false};
-    std::vector<string> allowed_ips;
+    Strings allowed_ips;
     bool enable_ip_blacklist{false};
-    std::vector<string> blocked_ips;
+    Strings blocked_ips;
 };
 
 struct SessionConfig {
-    seconds default_timeout{3600}; // 1 hour
-    size_t max_sessions_per_user{5};
-    seconds cleanup_interval{300}; // 5 minutes
+    Hours default_timeout{1}; // 1 hour
+    SessionCount max_sessions_per_user{5};
+    Minutes cleanup_interval{5}; // 5 minutes
     bool enable_session_persistence{false};
-    string persistence_file{"sessions.json"};
+    ConfigFileName persistence_file{"sessions.json"};
 };
 
 struct LoggingConfig {
-    string level{"info"};
-    string pattern{"[%Y-%m-%d %H:%M:%S.%e] [%l] %v"};
+    std::string level{"info"};
+    std::string pattern{"[%Y-%m-%d %H:%M:%S.%e] [%l] %v"};
     bool enable_console_output{true};
     bool enable_file_output{true};
-    string log_file{"logs/zerossg.log"};
-    size_t max_file_size{5 * 1024 * 1024}; // 5MB
-    size_t max_files{3};
+    LogFileName log_file{"logs/zerossg.log"};
+    Count max_file_size{5 * 1024 * 1024}; // 5MB
+    Count max_files{3};
     bool enable_security_log{true};
-    string security_log_file{"logs/security.log"};
+    LogFileName security_log_file{"logs/security.log"};
     bool enable_audit_log{true};
-    string audit_log_file{"logs/audit.log"};
+    LogFileName audit_log_file{"logs/audit.log"};
 };
 
 struct DatabaseConfig {
-    string type{"memory"}; // memory, file, sqlite, postgresql
-    string connection_string{"localhost:5432/zerossg"};
-    string username{"zerossg"};
-    string password{""};
+    DbType type{"memory"}; // memory, file, sqlite, postgresql
+    ConnectionString connection_string{"localhost:5432/zerossg"};
+    UserName username{"zerossg"};
+    Password password{""};
     bool enable_ssl{false};
-    int connection_pool_size{10};
-    seconds connection_timeout{30};
+    Count connection_pool_size{10};
+    Seconds connection_timeout{30};
 };
 
 class ConfigManager : public IConfigManager {
@@ -70,13 +70,13 @@ public:
     ~ConfigManager() override = default;
     
     // IConfigManager interface
-    Result<void> load_config(const string& config_file) override;
-    string get_string(const string& key, const string& default_value = "") override;
-    int get_int(const string& key, int default_value = 0) override;
-    bool get_bool(const string& key, bool default_value = false) override;
-    vector<string> get_string_array(const string& key) override;
-    Result<TargetService> get_target_service(const string& service_name) override;
-    Result<vector<TargetService>> get_all_target_services() override;
+    Result<void> load_config(const std::string& config_file) override;
+    std::string get_string(const std::string& key, const std::string& default_value = "") override;
+    int get_int(const std::string& key, int default_value = 0) override;
+    bool get_bool(const std::string& key, bool default_value = false) override;
+    Strings get_string_array(const std::string& key) override;
+    Result<TargetService> get_target_service(const ServiceName& service_name) override;
+    Result<std::vector<TargetService>> get_all_target_services() override;
     
     // Configuration accessors
     const ServerConfig& get_server_config() const { return m_server_config; }
@@ -89,12 +89,12 @@ public:
     Result<void> validate_config();
     
     // Configuration management
-    Result<void> save_config(const string& config_file);
+    Result<void> save_config(const std::string& config_file);
     Result<void> reload_config();
     
     // Environment variable support
     void load_from_environment();
-    string get_env_var(const string& key, const string& default_value = "");
+    std::string get_env_var(const std::string& key, const std::string& default_value = "");
     
 private:
     // Configuration data
@@ -105,15 +105,15 @@ private:
     DatabaseConfig m_database_config;
     
     // Target services
-    unordered_map<string, TargetService> m_target_services;
+    std::unordered_map<ServiceName, TargetService> m_target_services;
     
     // Raw configuration data
     nlohmann::json m_config_json;
     mutable std::mutex m_config_mutex;
     
     // Helper methods
-    Result<void> load_yaml_config(const string& config_file);
-    Result<void> load_json_config(const string& config_file);
+    Result<void> load_yaml_config(const std::string& config_file);
+    Result<void> load_json_config(const std::string& config_file);
     
     void parse_server_config(const nlohmann::json& config);
     void parse_security_config(const nlohmann::json& config);

@@ -8,7 +8,7 @@ namespace zerossg {
 // Note: These are deprecated in favor of constexpr versions
 
 [[deprecated("Use constexpr role_to_string instead")]]
-string role_to_string(Role role) {
+std::string role_to_string(Role role) {
     switch (role) {
         case Role::ADMIN: return "admin";
         case Role::OPERATOR: return "operator";
@@ -18,7 +18,7 @@ string role_to_string(Role role) {
 }
 
 [[deprecated("Use constexpr string_to_role instead")]]
-Role string_to_role(const string& role_str) {
+Role string_to_role(const std::string& role_str) {
     if (role_str == "admin") return Role::ADMIN;
     if (role_str == "operator") return Role::OPERATOR;
     if (role_str == "viewer") return Role::VIEWER;
@@ -26,7 +26,7 @@ Role string_to_role(const string& role_str) {
 }
 
 [[deprecated("Use constexpr security_event_type_to_string instead")]]
-string security_event_type_to_string(SecurityEventType type) {
+std::string security_event_type_to_string(SecurityEventType type) {
     switch (type) {
         case SecurityEventType::LOGIN_SUCCESS: return "login_success";
         case SecurityEventType::LOGIN_FAILURE: return "login_failure";

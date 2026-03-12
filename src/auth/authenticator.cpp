@@ -1,3 +1,4 @@
+#include "zerossg/common.hpp"
 #include "zerossg/utils/base64.hpp"
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -142,7 +143,7 @@ Result<User> AuthenticationManager::get_user_from_token(const string& token) {
     
     // Check if token is revoked
     {
-        std::lock_guard<std::mutex> lock(m_tokens_mutex);
+        LockGuard<std::mutex> lock(m_tokens_mutex);
         auto revoked_it = m_revoked_tokens.find(token);
         if (revoked_it != m_revoked_tokens.end()) {
             return Result<User>::error("Token has been revoked");
@@ -182,8 +183,8 @@ Result<string> AuthenticationManager::generate_token(const User& user) {
     }
 }
 
-Result<void> AuthenticationManager::revoke_token(const string& token) {
-    std::lock_guard<std::mutex> lock(m_tokens_mutex);
+Result<void> AuthenticationManager::revoke_token(const std::string& token) {
+    LockGuard<std::mutex> lock(m_tokens_mutex);
     
     // Store token with expiry time for cleanup
     auto expiry_time = std::chrono::duration_cast<std::chrono::seconds>(
@@ -194,7 +195,7 @@ Result<void> AuthenticationManager::revoke_token(const string& token) {
 }
 
 Result<void> AuthenticationManager::add_user(const User& user) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(user.username) != m_users.end()) {
         return Result<void>::error("User already exists");
@@ -204,8 +205,8 @@ Result<void> AuthenticationManager::add_user(const User& user) {
     return Result<void>::success();
 }
 
-Result<void> AuthenticationManager::update_user(const string& username, const User& user) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+Result<void> AuthenticationManager::update_user(const std::string& username, const User& user) {
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(username) == m_users.end()) {
         return Result<void>::error("User not found");
@@ -215,8 +216,8 @@ Result<void> AuthenticationManager::update_user(const string& username, const Us
     return Result<void>::success();
 }
 
-Result<void> AuthenticationManager::delete_user(const string& username) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+Result<void> AuthenticationManager::delete_user(const std::string& username) {
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.erase(username) == 0) {
         return Result<void>::error("User not found");
@@ -225,8 +226,8 @@ Result<void> AuthenticationManager::delete_user(const string& username) {
     return Result<void>::success();
 }
 
-Result<optional<User>> AuthenticationManager::get_user(const string& username) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+Result<std::optional<User>> AuthenticationManager::get_user(const std::string& username) {
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     auto it = m_users.find(username);
     if (it == m_users.end()) {
@@ -236,74 +237,67 @@ Result<optional<User>> AuthenticationManager::get_user(const string& username) {
     return Result<optional<User>>::success(it->second);
 }
 
-Result<vector<User>> AuthenticationManager::list_users() {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+Result<std::vector<User>> AuthenticationManager::list_users() {
+    LockGuard<std::mutex> lock(m_users_mutex);
     
-    vector<User> users;
+    std::vector<User> users;
     users.reserve(m_users.size());
     
     for (const auto& pair : m_users) {
         users.push_back(pair.second);
     }
     
-    return Result<vector<User>>::success(std::move(users));
+    return Result<std::vector<User>>::success(std::move(users));
 }
 
-Result<string> AuthenticationManager::hash_password(const string& password) {
+Result<std::string> AuthenticationManager::hash_password(const std::string& password) {
     // For production, use bcrypt or argon2. This is a simplified implementation using SHA-256 with salt
     vector<unsigned char> salt(16);
     if (RAND_bytes(salt.data(), salt.size()) != 1) {
-        return Result<string>::error("Failed to generate salt");
+        return Result<std::string>::error("Failed to generate salt");
     }
     
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     if (!mdctx) {
-        return Result<string>::error("Failed to create hash context");
+        return Result<std::string>::error("Failed to create hash context");
     }
     
     if (EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<string>::error("Failed to initialize hash");
+        return Result<std::string>::error("Failed to initialize hash");
     }
     
     if (EVP_DigestUpdate(mdctx, salt.data(), salt.size()) != 1 ||
         EVP_DigestUpdate(mdctx, password.data(), password.size()) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<string>::error("Failed to update hash");
+        return Result<std::string>::error("Failed to update hash");
     }
     
     vector<unsigned char> hash(EVP_MD_size(EVP_sha256()));
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, hash.data(), &hash_len) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<string>::error("Failed to finalize hash");
+        return Result<std::string>::error("Failed to finalize hash");
     }
     
     EVP_MD_CTX_free(mdctx);
     
     // Combine salt and hash
-    string result;
+    std::string result;
     result.reserve(salt.size() + hash_len);
     result.append(reinterpret_cast<char*>(salt.data()), salt.size());
     result.append(reinterpret_cast<char*>(hash.data()), hash_len);
     
-    // Convert to hex for storage
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (unsigned char byte : result) {
-        ss << std::setw(2) << static_cast<int>(byte);
-    }
-    
-    return Result<string>::success(ss.str());
+    return Result<std::string>::success(base64_encode(result));
 }
 
-Result<bool> AuthenticationManager::verify_password(const string& password, const string& hash) {
+Result<bool> AuthenticationManager::verify_password(const std::string& password, const std::string& hash) {
     // Convert hex string back to bytes
     if (hash.length() % 2 != 0) {
         return Result<bool>::error("Invalid hash format");
     }
     
-    string hash_bytes;
+    std::string hash_bytes;
     hash_bytes.reserve(hash.length() / 2);
     
     for (size_t i = 0; i < hash.length(); i += 2) {
@@ -447,7 +441,7 @@ string AuthenticationManager::generate_secure_token() {
 void AuthenticationManager::cleanup_expired_tokens() {
     auto now = std::chrono::duration_cast<std::chrono::seconds>(system_clock::now().time_since_epoch()).count();
     
-    std::lock_guard<std::mutex> lock(m_tokens_mutex);
+    LockGuard<std::mutex> lock(m_tokens_mutex);
     auto it = m_revoked_tokens.begin();
     while (it != m_revoked_tokens.end()) {
         try {
