@@ -25,6 +25,12 @@ using zerossg::ClientIp;
 using zerossg::FileName;
 using zerossg::SecurityEvent;
 
+// Import standard library types for clarity
+using std::shared_ptr;
+using std::mutex;
+using std::string;
+using std::lock_guard;
+
 // Import spdlog types for module compatibility
 // Using spdlog::logger and spdlog::level::level_enum directly
 

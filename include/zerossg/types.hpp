@@ -1,10 +1,19 @@
 #pragma once
 
 // C++23 module imports
-import zerossg.common;
 import zerossg.std;
 
 namespace zerossg {
+
+// Basic type aliases
+using UserName = std::string;
+using PasswordHash = std::string;
+using TokenString = std::string;
+using SecretKey = std::vector<unsigned char>;
+using SessionId = std::string;
+using UserCount = size_t;
+using Strings = std::vector<std::string>;
+using TimePoint = std::chrono::system_clock::time_point;
 
 
 // Modern enum class with explicit underlying type
@@ -35,10 +44,11 @@ constexpr Role string_to_role(std::string_view role_str) noexcept {
 struct User {
     UserName m_user_name;
     PasswordHash m_password_hash;
+    PasswordHash m_password_hash_confirm;
     Role m_role;
+    std::chrono::system_clock::time_point m_created_at;
+    std::chrono::system_clock::time_point m_last_login;
     bool m_active;
-    TimePoint m_created_at;
-    TimePoint m_last_login;
     
     constexpr User() noexcept 
         : m_role(Role::VIEWER)

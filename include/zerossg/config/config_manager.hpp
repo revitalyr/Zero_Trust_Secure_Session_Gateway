@@ -14,6 +14,32 @@ import zerossg.std;
 
 namespace zerossg {
 
+// Import semantic aliases for type visibility
+using zerossg::Result;
+using zerossg::String;
+using zerossg::Strings;
+using zerossg::ServiceName;
+using zerossg::ConfigFileName;
+using zerossg::TargetService;
+
+// Import standard library types for clarity
+using std::string;
+using std::vector;
+using std::unordered_map;
+using std::ifstream;
+using std::ofstream;
+using std::filesystem;
+using std::exception;
+using std::to_string;
+using std::stoi;
+using std::transform;
+using std::tolower;
+using std::getenv;
+using std::count;
+using std::istringstream;
+using std::lock_guard;
+using std::mutex;
+
 struct ServerConfig {
     HostAddress listen_address{DEFAULT_LISTEN_ADDRESS};
     PortNo listen_port{DEFAULT_LISTEN_PORT};
