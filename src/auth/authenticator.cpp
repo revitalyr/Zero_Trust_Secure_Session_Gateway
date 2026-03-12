@@ -1,19 +1,23 @@
-// Project headers
-#include "zerossg/common.hpp"
-#include "zerossg/constants.hpp"
-#include "zerossg/utils/base64.hpp"
-#include "zerossg/types.hpp"
-#include "zerossg/auth/authenticator.hpp"
+// C++23 module imports
+import zerossg.common;
+import zerossg.constants;
+import zerossg.types;
+import zerossg.interfaces;
+import zerossg.auth.authenticator;
 
-// Third-party library headers
-#include <nlohmann/json.hpp>
+// Standard library imports for specific functionality
+import <algorithm>;
+import <iomanip>;
+import <random>;
+import <sstream>;
+import <nlohmann/json.hpp>;
 
-// OpenSSL headers
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
+// OpenSSL imports
+import <openssl/bio.h>;
+import <openssl/buffer.h>;
+import <openssl/evp.h>;
+import <openssl/hmac.h>;
+import <openssl/sha.h>;
 
 using json = nlohmann::json;
 

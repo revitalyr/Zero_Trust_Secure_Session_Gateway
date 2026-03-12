@@ -1,9 +1,10 @@
 export module zerossg.common;
 
-// C++ Standard Library exports
+// C++23 Standard Library exports
 export import <chrono>;
 export import <concepts>;
 export import <expected>;
+export import <generator>;
 export import <memory>;
 export import <mutex>;
 export import <optional>;
@@ -123,5 +124,45 @@ export using ConfigFileName = std::string;
 export using DbType = std::string;
 export using ConnectionString = std::string;
 export using HostAddress = std::string;
+
+// C++23 modern features
+export template<typename T>
+concept ResultType = requires(T t) {
+    typename T::value_type;
+    typename T::error_type;
+    { t.has_value() } -> std::convertible_to<bool>;
+    { t.value() } -> std::convertible_to<typename T::value_type>;
+    { t.error() } -> std::convertible_to<typename T::error_type>;
+};
+
+// Modern monadic operations for Result
+export template<typename T, typename F>
+requires std::invocable<F, T>
+constexpr auto transform(const Result<T>& result, F&& func) noexcept {
+    if (result) {
+        return make_result_success(std::invoke(std::forward<F>(func), *result));
+    }
+    return make_result_error<T>(result.error());
+}
+
+export template<typename T, typename F>
+requires std::invocable<F, T>
+constexpr auto and_then(const Result<T>& result, F&& func) noexcept {
+    if (result) {
+        return std::invoke(std::forward<F>(func), *result);
+    }
+    return make_result_error<typename std::invoke_result_t<F, T>::value_type>(result.error());
+}
+
+// C++23 std::expected utilities
+export template<typename T>
+constexpr bool is_success(const Result<T>& result) noexcept {
+    return result.has_value();
+}
+
+export template<typename T>
+constexpr bool is_error(const Result<T>& result) noexcept {
+    return !result.has_value();
+}
 
 } // namespace zerossg
