@@ -31,7 +31,6 @@ using Strings = zerossg::Strings;
 using TimePoint = zerossg::TimePoint;
 using make_result_error = zerossg::make_result_error;
 
-
 namespace zerossg {
     // Import specific std utilities that are needed
     using std::move;
@@ -43,6 +42,26 @@ namespace zerossg {
     using std::mt19937;
     using std::uniform_int_distribution;
     using std::numeric_limits;
+    using std::system_clock;
+    using std::runtime_error;
+    using std::vector;
+    using std::string;
+    
+    // Import constants
+    using zerossg::JWT_SECRET_SIZE;
+
+// Helper function to generate secure random bytes
+Result<vector<unsigned char>> generate_secure_random_bytes(size_t size) {
+    vector<unsigned char> bytes(size);
+    random_device rd;
+    uniform_int_distribution<unsigned char> dist(0, 255);
+    
+    for (size_t i = 0; i < size; ++i) {
+        bytes[i] = dist(rd);
+    }
+    
+    return Result<vector<unsigned char>>::success(move(bytes));
+}
 
 AuthenticationManager::AuthenticationManager() {
     // Initialize with modern C++26 features

@@ -11,10 +11,15 @@ import zerossg.logging.logger;
 import <nlohmann/json.hpp>;
 import <iostream>;
 import <sstream>;
+#include <memory>
 
 using json = nlohmann::json;
 
 namespace zerossg {
+    // Import std utilities
+    using std::make_unique;
+    using std::move;
+    using std::string;
 
 // GatewayServer implementation
 GatewayServer::GatewayServer() = default;

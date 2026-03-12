@@ -2,8 +2,22 @@
 import zerossg.interfaces;
 import zerossg.logging.logger;
 #include <iostream>
+#include <memory>
+#include <string>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 namespace zerossg {
+    // Import std utilities
+    using std::lock_guard;
+    using std::mutex;
+    using std::string;
+    using std::make_shared;
+    using std::unordered_map;
+    using std::vector;
+    using std::exception;
+    using Result = zerossg::Result;
 
 // ProxyManager implementation
 ProxyManager::ProxyManager(boost::asio::io_context& io_context)

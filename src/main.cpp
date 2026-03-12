@@ -1,5 +1,6 @@
 #include <memory>
 #include <csignal>
+#include <iostream>
 
 import zerossg.network.gateway_server;
 import zerossg.cli.cli_interface;

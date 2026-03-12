@@ -29,6 +29,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
         zerossg.interfaces
         zerossg.auth.authenticator
         zerossg.rbac.authorizer
+        zerossg.proxy.proxy_manager
         zerossg.cli.cli_interface
         zerossg.logging.logger
         zerossg.session.session_manager

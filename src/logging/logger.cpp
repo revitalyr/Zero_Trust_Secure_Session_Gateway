@@ -2,10 +2,27 @@
 import zerossg.interfaces;
 import zerossg.constants;
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>;
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <chrono>;
 #include <iomanip>;
 #include <sstream>;
+#include <memory>
+#include <vector>
+#include <mutex>
+#include <algorithm>
+
+namespace zerossg {
+    // Import std utilities
+    using std::lock_guard;
+    using std::mutex;
+    using std::string;
+    using std::make_shared;
+    using std::dynamic_pointer_cast;
+    using std::vector;
+    using std::pair;
+    using std::remove_if;
+    using LogLevel = zerossg::LogLevel;
 
 namespace zerossg {
 

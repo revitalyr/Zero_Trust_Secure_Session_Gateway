@@ -146,6 +146,13 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     target_compile_features(zerossg.rbac.authorizer INTERFACE cxx_std_23)
     target_link_libraries(zerossg.rbac.authorizer INTERFACE zerossg.types zerossg.std)
     
+    # Create interface library for proxy manager
+    add_library(zerossg.proxy.proxy_manager INTERFACE 
+        include/zerossg/proxy/proxy_manager.ixx
+    )
+    target_compile_features(zerossg.proxy.proxy_manager INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.proxy.proxy_manager INTERFACE zerossg.types zerossg.std)
+    
     # Create interface library for CLI interface
     add_library(zerossg.cli.cli_interface INTERFACE 
         include/zerossg/cli/cli_interface.ixx
