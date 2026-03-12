@@ -2,10 +2,14 @@
 
 // C++23 module imports
 import zerossg.interfaces;
+import zerossg.common;
+import zerossg.types;
+import zerossg.std;
 
 // Standard library imports
-import <shared_mutex>;
-import <unordered_map>;
+#include <mutex>
+#include <unordered_map>
+#include <string_view>
 
 // OpenSSL headers
 #include <openssl/evp.h>
@@ -66,10 +70,10 @@ private:
     bool is_token_blacklisted(const TokenString& token) const noexcept;
     
     // Modern data storage with better concurrency
-    mutable std::shared_mutex m_users_mutex;
-    mutable std::shared_mutex m_tokens_mutex;
-    mutable std::shared_mutex m_blocked_users_mutex;
-    mutable std::shared_mutex m_revoked_tokens_mutex;
+    mutable std::mutex m_users_mutex;
+    mutable std::mutex m_tokens_mutex;
+    mutable std::mutex m_blocked_users_mutex;
+    mutable std::mutex m_revoked_tokens_mutex;
     
     UnorderedMap<UserName, User> m_users;
     UnorderedMap<TokenString, String> m_revoked_tokens;
