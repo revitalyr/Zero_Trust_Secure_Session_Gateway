@@ -6,6 +6,22 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Enable C++23 modules support (when available)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    # CMake 3.28+ has native module support
+    set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_STD ON)
+elseif(MSVC AND MSVC_VERSION GREATER_EQUAL 1934)
+    # MSVC 19.34+ supports modules
+    add_compile_options(/experimental:module)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
+    # GCC 13+ supports modules
+    add_compile_options(-fmodules-ts)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "17")
+    # Clang 17+ supports modules
+    add_compile_options(-fmodules-ts)
+endif()
+
 # Compiler flags for security and performance
 if(MSVC)
     add_compile_options(/W4 /WX /utf-8)

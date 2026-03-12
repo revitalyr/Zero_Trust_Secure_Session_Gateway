@@ -1,0 +1,261 @@
+export module zerossg.constants;
+
+export import zerossg.common;
+
+export import <chrono>;
+export import <cstdint>;
+export import <string>;
+
+export namespace zerossg {
+
+// Application constants
+export constexpr const char* APPLICATION_NAME = "Zero Trust Secure Session Gateway";
+export constexpr const char* APPLICATION_VERSION = "1.0.0";
+export constexpr const char* VENDOR_NAME = "ZeroTrust Security";
+
+// Network constants
+export constexpr const char* DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
+export constexpr PortNo DEFAULT_LISTEN_PORT = 8443;
+export constexpr const char* DEFAULT_TLS_CERT_FILE = "server.crt";
+export constexpr const char* DEFAULT_TLS_KEY_FILE = "server.key";
+export constexpr const char* DEFAULT_CA_CERT_FILE = "";
+export constexpr const char* DEFAULT_CIPHER_LIST = "HIGH:!aNULL:!MD5:!RC4";
+
+// Security constants
+export constexpr RateLimit DEFAULT_RATE_LIMIT_MAX_REQUESTS = 100;
+export constexpr Minutes DEFAULT_RATE_LIMIT_WINDOW = 5; // 5 minutes
+export constexpr Threshold DEFAULT_BRUTE_FORCE_THRESHOLD = 5;
+export constexpr Minutes DEFAULT_BRUTE_FORCE_WINDOW = 15; // 15 minutes
+export constexpr Milliseconds DEFAULT_BLOCK_DURATION{3600000}; // 1 hour
+export constexpr Hours DEFAULT_SECRET_ROTATION_INTERVAL = 24; // 24 hours
+
+// Session constants
+export constexpr Hours DEFAULT_SESSION_TIMEOUT = 1; // 1 hour
+export constexpr SessionCount DEFAULT_MAX_SESSIONS_PER_USER = 5;
+export constexpr Minutes DEFAULT_CLEANUP_INTERVAL = 5; // 5 minutes
+
+// JWT constants
+export constexpr size_t JWT_SECRET_SIZE = 32;
+export constexpr Seconds TOKEN_EXPIRY_TIME = 3600; // 1 hour
+export constexpr std::size_t BCRYPT_ROUNDS = 12;
+export constexpr Seconds SECRET_ROTATION_INTERVAL = 86400; // 24 hours
+export constexpr size_t MAX_FAILED_ATTEMPTS = 5;
+export constexpr Seconds FAILED_ATTEMPT_WINDOW = 900; // 15 minutes
+
+// Database constants
+export constexpr Count DEFAULT_CONNECTION_POOL_SIZE = 10;
+export constexpr Seconds DEFAULT_CONNECTION_TIMEOUT = 30;
+
+// Logging constants
+export constexpr Count DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export constexpr Count DEFAULT_MAX_FILES = 3;
+export constexpr const char* DEFAULT_LOG_LEVEL = "info";
+export constexpr const char* DEFAULT_LOG_PATTERN = "[%Y-%m-%d %H:%M:%S.%e] [%l] %v";
+export constexpr const char* DEFAULT_LOG_FILE = "logs/zerossg.log";
+export constexpr const char* DEFAULT_SECURITY_LOG_FILE = "logs/security.log";
+export constexpr const char* DEFAULT_AUDIT_LOG_FILE = "logs/audit.log";
+
+// Configuration file constants
+export constexpr const char* DEFAULT_CONFIG_FILE = "config.json";
+export constexpr const char* DEFAULT_PERSISTENCE_FILE = "sessions.json";
+export constexpr const char* DEFAULT_DB_TYPE = "memory";
+export constexpr const char* DEFAULT_CONNECTION_STRING = "localhost:5432/zerossg";
+export constexpr const char* DEFAULT_DB_USERNAME = "zerossg";
+export constexpr const char* DEFAULT_DB_PASSWORD = "";
+
+// Error messages
+export constexpr const char* ERROR_USER_NOT_FOUND = "User not found";
+export constexpr const char* ERROR_USER_ALREADY_EXISTS = "User already exists";
+export constexpr const char* ERROR_INVALID_CREDENTIALS = "Invalid credentials";
+export constexpr const char* ERROR_TOKEN_EXPIRED = "Token has expired";
+export constexpr const char* ERROR_TOKEN_REVOKED = "Token has been revoked";
+export constexpr const char* ERROR_TOKEN_INVALID = "Invalid token";
+export constexpr const char* ERROR_RATE_LIMIT_EXCEEDED = "Rate limit exceeded";
+export constexpr const char* ERROR_BRUTE_FORCE_DETECTED = "Brute force attack detected";
+export constexpr const char* ERROR_IP_BLOCKED = "IP address blocked";
+export constexpr const char* ERROR_SERVICE_NOT_FOUND = "Service not found";
+export constexpr const char* ERROR_ACCESS_DENIED = "Access denied";
+export constexpr const char* ERROR_SESSION_NOT_FOUND = "Session not found";
+export constexpr const char* ERROR_SESSION_EXPIRED = "Session has expired";
+export constexpr const char* ERROR_CONFIG_LOAD_FAILED = "Failed to load configuration";
+export constexpr const char* ERROR_CONFIG_SAVE_FAILED = "Failed to save configuration";
+export constexpr const char* ERROR_TLS_INITIALIZATION_FAILED = "TLS initialization failed";
+export constexpr const char* ERROR_CERTIFICATE_VERIFICATION_FAILED = "Certificate verification failed";
+
+// Success messages
+export constexpr const char* SUCCESS_AUTHENTICATION = "Authentication successful";
+export constexpr const char* SUCCESS_LOGOUT = "Logout successful";
+export constexpr const char* SUCCESS_SESSION_CREATED = "Session created";
+export constexpr const char* SUCCESS_CONFIG_SAVED = "Configuration saved";
+export constexpr const char* SUCCESS_TLS_INITIALIZED = "TLS initialized";
+
+// JWT claim keys
+export constexpr const char* JWT_CLAIM_ISSUER = "iss";
+export constexpr const char* JWT_CLAIM_SUBJECT = "sub";
+export constexpr const char* JWT_CLAIM_AUDIENCE = "aud";
+export constexpr const char* JWT_CLAIM_EXPIRED = "exp";
+export constexpr const char* JWT_CLAIM_ISSUED_AT = "iat";
+export constexpr const char* JWT_CLAIM_JWT_ID = "jti";
+export constexpr const char* JWT_CLAIM_USERNAME = "username";
+export constexpr const char* JWT_CLAIM_ROLE = "role";
+export constexpr const char* JWT_CLAIM_CLIENT_IP = "client_ip";
+export constexpr const char* JWT_CLAIM_TARGET_SERVICE = "target_service";
+
+// HTTP status codes
+export constexpr int HTTP_STATUS_OK = 200;
+export constexpr int HTTP_STATUS_CREATED = 201;
+export constexpr int HTTP_STATUS_BAD_REQUEST = 400;
+export constexpr int HTTP_STATUS_UNAUTHORIZED = 401;
+export constexpr int HTTP_STATUS_FORBIDDEN = 403;
+export constexpr int HTTP_STATUS_NOT_FOUND = 404;
+export constexpr int HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+export constexpr int HTTP_STATUS_SERVICE_UNAVAILABLE = 503;
+
+// HTTP headers
+export constexpr const char* HTTP_HEADER_AUTHORIZATION = "Authorization";
+export constexpr const char* HTTP_HEADER_CONTENT_TYPE = "Content-Type";
+export constexpr const char* HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
+export constexpr const char* HTTP_HEADER_USER_AGENT = "User-Agent";
+export constexpr const char* HTTP_HEADER_X_FORWARDED_FOR = "X-Forwarded-For";
+export constexpr const char* HTTP_HEADER_X_REAL_IP = "X-Real-IP";
+export constexpr const char* HTTP_HEADER_X_SESSION_ID = "X-Session-ID";
+export constexpr const char* HTTP_HEADER_X_CLIENT_CERT = "X-Client-Cert";
+
+// MIME types
+export constexpr const char* MIME_TYPE_JSON = "application/json";
+export constexpr const char* MIME_TYPE_XML = "application/xml";
+export constexpr const char* MIME_TYPE_TEXT = "text/plain";
+export constexpr const char* MIME_TYPE_HTML = "text/html";
+export constexpr const char* MIME_TYPE_BINARY = "application/octet-stream";
+
+// Protocol versions
+export constexpr const char* HTTP_VERSION_1_1 = "HTTP/1.1";
+export constexpr const char* TLS_VERSION_1_2 = "TLSv1.2";
+export constexpr const char* TLS_VERSION_1_3 = "TLSv1.3";
+
+// Character encodings
+export constexpr const char* ENCODING_UTF8 = "UTF-8";
+export constexpr const char* ENCODING_BASE64 = "Base64";
+
+// Time formats
+export constexpr const char* TIME_FORMAT_ISO_8601 = "%Y-%m-%dT%H:%M:%SZ";
+export constexpr const char* TIME_FORMAT_LOG = "%Y-%m-%d %H:%M:%S";
+export constexpr const char* TIME_FORMAT_DATE_ONLY = "%Y-%m-%d";
+
+// File extensions
+export constexpr const char* FILE_EXTENSION_JSON = ".json";
+export constexpr const char* FILE_EXTENSION_XML = ".xml";
+export constexpr const char* FILE_EXTENSION_YAML = ".yaml";
+export constexpr const char* FILE_EXTENSION_YML = ".yml";
+export constexpr const char* FILE_EXTENSION_CRT = ".crt";
+export constexpr const char* FILE_EXTENSION_KEY = ".key";
+export constexpr const char* FILE_EXTENSION_LOG = ".log";
+
+// Directory names
+export constexpr const char* DIRECTORY_LOGS = "logs";
+export constexpr const char* DIRECTORY_CONFIG = "config";
+export constexpr const char* DIRECTORY_CERTS = "certs";
+export constexpr const char* DIRECTORY_DATA = "data";
+export constexpr const char* DIRECTORY_TEMP = "temp";
+export constexpr const char* DIRECTORY_BACKUP = "backup";
+
+// Environment variable names
+export constexpr const char* ENV_VCPKG_ROOT = "VCPKG_ROOT";
+export constexpr const char* ENV_OPENSSL_ROOT_DIR = "OPENSSL_ROOT_DIR";
+export constexpr const char* ENV_CONFIG_FILE = "ZEROSSG_CONFIG_FILE";
+export constexpr const char* ENV_LOG_LEVEL = "ZEROSSG_LOG_LEVEL";
+export constexpr const char* ENV_DEBUG = "ZEROSSG_DEBUG";
+
+// Service names
+export constexpr const char* SERVICE_SSH = "ssh";
+export constexpr const char* SERVICE_WEB = "web";
+export constexpr const char* SERVICE_DATABASE = "database";
+export constexpr const char* SERVICE_API = "api";
+export constexpr const char* SERVICE_MONITORING = "monitoring";
+
+// Role names
+export constexpr const char* ROLE_ADMIN = "admin";
+export constexpr const char* ROLE_OPERATOR = "operator";
+export constexpr const char* ROLE_VIEWER = "viewer";
+
+// Security event types
+export constexpr const char* EVENT_LOGIN_SUCCESS = "login_success";
+export constexpr const char* EVENT_LOGIN_FAILURE = "login_failure";
+export constexpr const char* EVENT_SESSION_START = "session_start";
+export constexpr const char* EVENT_SESSION_TERMINATION = "session_termination";
+export constexpr const char* EVENT_AUTHENTICATION_ERROR = "authentication_error";
+export constexpr const char* EVENT_ACCESS_VIOLATION = "access_violation";
+export constexpr const char* EVENT_RATE_LIMIT_EXCEEDED = "rate_limit_exceeded";
+export constexpr const char* EVENT_BRUTE_FORCE_DETECTED = "brute_force_detected";
+
+// Permission names
+export constexpr const char* PERMISSION_READ = "read";
+export constexpr const char* PERMISSION_WRITE = "write";
+export constexpr const char* PERMISSION_EXECUTE = "execute";
+export constexpr const char* PERMISSION_ADMIN = "admin";
+
+// CLI commands
+export constexpr const char* CMD_START = "start";
+export constexpr const char* CMD_STOP = "stop";
+export constexpr const char* CMD_STATUS = "status";
+export constexpr const char* CMD_RELOAD = "reload";
+export constexpr const char* CMD_EXPORT_LOGS = "export-logs";
+export constexpr const char* CMD_HELP = "help";
+export constexpr const char* CMD_VERSION = "version";
+
+// Exit codes
+export constexpr int EXIT_SUCCESS = 0;
+export constexpr int EXIT_FAILURE = 1;
+export constexpr int EXIT_CONFIG_ERROR = 2;
+export constexpr int EXIT_TLS_ERROR = 3;
+export constexpr int EXIT_AUTHENTICATION_ERROR = 4;
+export constexpr int EXIT_AUTHORIZATION_ERROR = 5;
+
+// Maximum limits
+export constexpr size_t MAX_USERNAME_LENGTH = 255;
+export constexpr size_t MAX_PASSWORD_LENGTH = 128;
+export constexpr size_t MAX_SESSION_ID_LENGTH = 64;
+export constexpr size_t MAX_TOKEN_LENGTH = 1024;
+export constexpr size_t MAX_FILE_PATH_LENGTH = 4096;
+export constexpr size_t MAX_CONFIG_FILE_SIZE = 1024 * 1024; // 1MB
+export constexpr size_t MAX_LOG_MESSAGE_LENGTH = 8192;
+export constexpr size_t MAX_HEADER_SIZE = 8192;
+export constexpr size_t MAX_REQUEST_SIZE = 1024 * 1024; // 1MB
+export constexpr size_t MAX_RESPONSE_SIZE = 1024 * 1024; // 1MB
+
+// Timeout values
+export constexpr Milliseconds NETWORK_TIMEOUT{30000}; // 30 seconds
+export constexpr Milliseconds TLS_HANDSHAKE_TIMEOUT{10000}; // 10 seconds
+export constexpr Milliseconds READ_TIMEOUT{60000}; // 1 minute
+export constexpr Milliseconds WRITE_TIMEOUT{60000}; // 1 minute
+export constexpr Milliseconds KEEP_ALIVE_TIMEOUT{30000}; // 30 seconds
+
+// Buffer sizes
+export constexpr size_t BUFFER_SIZE_SMALL = 1024;
+export constexpr size_t BUFFER_SIZE_MEDIUM = 4096;
+export constexpr size_t BUFFER_SIZE_LARGE = 8192;
+export constexpr size_t BUFFER_SIZE_XLARGE = 16384;
+
+// Thread pool sizes
+export constexpr Count MIN_THREAD_COUNT = 1;
+export constexpr Count MAX_THREAD_COUNT = 256;
+export constexpr Count DEFAULT_THREAD_COUNT = 0; // Auto-detect
+
+// Cache sizes
+export constexpr size_t DEFAULT_CACHE_SIZE = 1000;
+export constexpr size_t MAX_CACHE_SIZE = 10000;
+
+// Retry configuration
+export constexpr Count MAX_RETRY_ATTEMPTS = 3;
+export constexpr Milliseconds RETRY_DELAY_BASE{1000}; // 1 second
+export constexpr Milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
+
+// Health check intervals
+export constexpr Seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
+export constexpr Seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
+
+// Metrics collection intervals
+export constexpr Seconds METRICS_COLLECTION_INTERVAL{60}; // 1 minute
+export constexpr Seconds STATISTICS_UPDATE_INTERVAL{300}; // 5 minutes
+
+} // namespace zerossg
