@@ -273,54 +273,54 @@ Result<Vector<User>> AuthenticationManager::list_users() {
     return make_result_success<Vector<User>>(std::move(users));
 }
 
-Result<std::string> AuthenticationManager::hash_password(const std::string& password) {
+Result<PasswordHash> AuthenticationManager::hash_password(const String& password) {
     // For production, use bcrypt or argon2. This is a simplified implementation using SHA-256 with salt
     SecretKey salt(16);
     if (RAND_bytes(salt.data(), salt.size()) != 1) {
-        return Result<std::string>::error("Failed to generate salt");
+        return make_result_error<PasswordHash>("Failed to generate salt");
     }
     
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     if (!mdctx) {
-        return Result<std::string>::error("Failed to create hash context");
+        return make_result_error<PasswordHash>("Failed to create hash context");
     }
     
     if (EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<std::string>::error("Failed to initialize hash");
+        return make_result_error<PasswordHash>("Failed to initialize hash");
     }
     
     if (EVP_DigestUpdate(mdctx, salt.data(), salt.size()) != 1 ||
         EVP_DigestUpdate(mdctx, password.data(), password.size()) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<std::string>::error("Failed to update hash");
+        return make_result_error<PasswordHash>("Failed to update hash");
     }
     
     SecretKey hash(EVP_MD_size(EVP_sha256()));
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, hash.data(), &hash_len) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<std::string>::error("Failed to finalize hash");
+        return make_result_error<PasswordHash>("Failed to finalize hash");
     }
     
     EVP_MD_CTX_free(mdctx);
     
     // Combine salt and hash
-    std::string result;
+    String result;
     result.reserve(salt.size() + hash_len);
     result.append(reinterpret_cast<char*>(salt.data()), salt.size());
     result.append(reinterpret_cast<char*>(hash.data()), hash_len);
     
-    return Result<std::string>::success(base64_encode(result));
+    return make_result_success<PasswordHash>(base64_encode(result));
 }
 
-Result<bool> AuthenticationManager::verify_password(const std::string& password, const std::string& hash) {
+Result<bool> AuthenticationManager::verify_password(const String& password, const PasswordHash& hash) {
     // Convert hex string back to bytes
     if (hash.length() % 2 != 0) {
-        return Result<bool>::error("Invalid hash format");
+        return make_result_error<bool>("Invalid hash format");
     }
     
-    std::string hash_bytes;
+    String hash_bytes;
     hash_bytes.reserve(hash.length() / 2);
     
     for (size_t i = 0; i < hash.length(); i += 2) {
@@ -332,64 +332,64 @@ Result<bool> AuthenticationManager::verify_password(const std::string& password,
     }
     
     if (hash_bytes.size() < 16) { // salt + at least some hash
-        return Result<bool>::error("Hash too short");
+        return make_result_error<bool>("Hash too short");
     }
     
     // Extract salt and hash
-    string salt = hash_bytes.substr(0, 16);
-    string stored_hash = hash_bytes.substr(16);
+    String salt = hash_bytes.substr(0, 16);
+    String stored_hash = hash_bytes.substr(16);
     
     // Compute hash of password with salt
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     if (!mdctx) {
-        return Result<bool>::error("Failed to create hash context");
+        return make_result_error<bool>("Failed to create hash context");
     }
     
     if (EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<bool>::error("Failed to initialize hash");
+        return make_result_error<bool>("Failed to initialize hash");
     }
     
     if (EVP_DigestUpdate(mdctx, salt.data(), salt.size()) != 1 ||
         EVP_DigestUpdate(mdctx, password.data(), password.size()) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<bool>::error("Failed to update hash");
+        return make_result_error<bool>("Failed to update hash");
     }
     
-    vector<unsigned char> computed_hash(EVP_MD_size(EVP_sha256()));
+    Vector<unsigned char> computed_hash(EVP_MD_size(EVP_sha256()));
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, computed_hash.data(), &hash_len) != 1) {
         EVP_MD_CTX_free(mdctx);
-        return Result<bool>::error("Failed to finalize hash");
+        return make_result_error<bool>("Failed to finalize hash");
     }
     
     EVP_MD_CTX_free(mdctx);
     
     // Compare hashes
     if (stored_hash.size() != hash_len) {
-        return Result<bool>::success(false);
+        return make_result_success(false);
     }
     
-    return Result<bool>::success(std::equal(stored_hash.begin(), stored_hash.end(),
+    return make_result_success(std::equal(stored_hash.begin(), stored_hash.end(),
                                            computed_hash.begin(), computed_hash.end()));
 }
 
-string AuthenticationManager::create_jwt_payload(const User& user) {
+String AuthenticationManager::create_jwt_payload(const User& user) {
     json payload = {
         {"username", user.username},
         {"role", role_to_string(user.role)},
-        {"iat", std::chrono::duration_cast<std::chrono::seconds>(system_clock::now().time_since_epoch()).count()},
-        {"exp", std::chrono::duration_cast<std::chrono::seconds>((system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count()}
+        {"iat", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()},
+        {"exp", std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count()}
     };
     return payload.dump();
 }
 
-Result<User> AuthenticationManager::parse_jwt_payload(const string& token) {
+Result<User> AuthenticationManager::parse_jwt_payload(const TokenString& token) {
     size_t first_dot = token.find('.');
     size_t second_dot = token.find('.', first_dot + 1);
     
-    if (first_dot == string::npos || second_dot == string::npos) {
-        return Result<User>::error("Invalid token format");
+    if (first_dot == String::npos || second_dot == String::npos) {
+        return make_result_error<User>("Invalid token format");
     }
     
     string payload_b64 = token.substr(first_dot + 1, second_dot - first_dot - 1);
