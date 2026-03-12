@@ -32,6 +32,7 @@ using std::transform;
 using std::tolower;
 using std::filesystem::exists;
 using std::to_string;
+using std::getenv;
 
 ConfigManager::ConfigManager() {
     set_default_config();
@@ -72,7 +73,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
         
         return Result<void>::success();
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load configuration: " + string(e.what()));
+        return Result<void>::error("Failed to load configuration: " + String(e.what()));
     }
 }
 
@@ -838,6 +839,178 @@ String ConfigManager::get_file_extension(const String& filename) {
         return "";
     }
     return filename.substr(pos + 1);
+}
+
+Result<void> ConfigManager::load_yaml_config(const ConfigFileName& config_file) {
+    try {
+        // Simple YAML parsing for now - in production would use yaml-cpp
+        std::ifstream file(config_file);
+        if (!file.is_open()) {
+            return Result<void>::error("Failed to open YAML configuration file");
+        }
+        
+        // For now, just load as JSON (simplified approach)
+        return load_json_config(config_file);
+    } catch (const std::exception& e) {
+        return Result<void>::error("Failed to load YAML configuration: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::load_json_config(const ConfigFileName& config_file) {
+    try {
+        std::ifstream file(config_file);
+        if (!file.is_open()) {
+            return Result<void>::error("Failed to open JSON configuration file");
+        }
+        
+        file >> m_config_json;
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Failed to load JSON configuration: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::validate_server_config() {
+    try {
+        int port = get_int("server.port", 8080);
+        if (port < 1 || port > 65535) {
+            return Result<void>::error("Server port must be between 1 and 65535");
+        }
+        
+        int workers = get_int("server.workers", 4);
+        if (workers < 1 || workers > 64) {
+            return Result<void>::error("Server workers must be between 1 and 64");
+        }
+        
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Server configuration validation failed: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::validate_security_config() {
+    try {
+        String jwt_secret = get_string("security.jwt_secret", "");
+        if (jwt_secret.length() < 16) {
+            return Result<void>::error("JWT secret must be at least 16 characters long");
+        }
+        
+        int token_expiry = get_int("security.token_expiry_hours", 24);
+        if (token_expiry < 1 || token_expiry > 168) { // 1 hour to 1 week
+            return Result<void>::error("Token expiry must be between 1 and 168 hours");
+        }
+        
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Security configuration validation failed: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::validate_session_config() {
+    try {
+        int timeout = get_int("session.timeout_seconds", 3600);
+        if (timeout < 60 || timeout > 86400) { // 1 minute to 24 hours
+            return Result<void>::error("Session timeout must be between 60 and 86400 seconds");
+        }
+        
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Session configuration validation failed: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::validate_logging_config() {
+    try {
+        String level = get_string("logging.level", "info");
+        if (level != "trace" && level != "debug" && level != "info" && 
+            level != "warn" && level != "error" && level != "critical") {
+            return Result<void>::error("Invalid log level: " + level);
+        }
+        
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Logging configuration validation failed: " + String(e.what()));
+    }
+}
+
+Result<void> ConfigManager::validate_database_config() {
+    try {
+        String host = get_string("database.host", "localhost");
+        if (host.empty()) {
+            return Result<void>::error("Database host cannot be empty");
+        }
+        
+        int port = get_int("database.port", 5432);
+        if (port < 1 || port > 65535) {
+            return Result<void>::error("Database port must be between 1 and 65535");
+        }
+        
+        return Result<void>::success();
+    } catch (const std::exception& e) {
+        return Result<void>::error("Database configuration validation failed: " + String(e.what()));
+    }
+}
+
+void ConfigManager::load_from_environment() {
+    // Override configuration with environment variables
+    if (const char* env_log_level = std::getenv("ZEROSSG_LOG_LEVEL")) {
+        m_config_json["logging"]["level"] = String(env_log_level);
+    }
+    
+    if (const char* env_server_port = std::getenv("ZEROSSG_SERVER_PORT")) {
+        m_config_json["server"]["port"] = String(env_server_port);
+    }
+    
+    if (const char* env_session_timeout = std::getenv("ZEROSSG_SESSION_TIMEOUT")) {
+        m_config_json["session"]["timeout_seconds"] = String(env_session_timeout);
+    }
+    
+    if (const char* env_db_host = std::getenv("ZEROSSG_DB_HOST")) {
+        m_config_json["database"]["host"] = String(env_db_host);
+    }
+    
+    if (const char* env_db_port = std::getenv("ZEROSSG_DB_PORT")) {
+        m_config_json["database"]["port"] = String(env_db_port);
+    }
+}
+
+void ConfigManager::set_default_config() {
+    m_config_json = get_default_config_json();
+}
+
+nlohmann::json ConfigManager::get_default_config_json() {
+    return {
+        {"server", {
+            {"host", "0.0.0.0"},
+            {"port", 8080},
+            {"workers", 4},
+            {"max_connections", 1000}
+        }},
+        {"security", {
+            {"jwt_secret", "default-secret-change-in-production"},
+            {"token_expiry_hours", 24},
+            {"max_login_attempts", 5},
+            {"lockout_duration_minutes", 15}
+        }},
+        {"session", {
+            {"timeout_seconds", 3600},
+            {"cleanup_interval_seconds", 300},
+            {"max_sessions", 10000}
+        }},
+        {"logging", {
+            {"level", "info"},
+            {"file_path", "logs/zerossg.log"},
+            {"max_file_size_mb", 100},
+            {"max_files", 10}
+        }},
+        {"database", {
+            {"host", "localhost"},
+            {"port", 5432},
+            {"name", "zerossg"},
+            {"username", "zerossg_user"},
+            {"password", "zerossg_password"}
+        }}
+    };
 }
 
 } // namespace zerossg
