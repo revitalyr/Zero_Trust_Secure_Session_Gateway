@@ -1,5 +1,6 @@
 #pragma once
 
+// Project headers
 #include "zerossg/interfaces.hpp"
 #include "zerossg/tls/tls_handler.hpp"
 #include "zerossg/auth/authenticator.hpp"
@@ -7,11 +8,11 @@
 #include "zerossg/session/session_manager.hpp"
 #include "zerossg/security/security_manager.hpp"
 #include "zerossg/logging/logger.hpp"
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
+
+// C++ Standard Library headers
+#include <atomic>
 #include <memory>
 #include <thread>
-#include <atomic>
 
 namespace zerossg {
 

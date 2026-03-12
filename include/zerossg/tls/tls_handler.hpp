@@ -3,9 +3,6 @@
 // Project headers
 #include "zerossg/interfaces.hpp"
 
-// Boost headers
-#include <boost/asio/ssl.hpp>
-
 // C++ Standard Library headers
 #include <string>
 

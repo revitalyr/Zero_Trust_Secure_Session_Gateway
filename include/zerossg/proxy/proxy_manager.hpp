@@ -1,13 +1,14 @@
 #pragma once
 
+// Project headers
 #include "zerossg/interfaces.hpp"
 #include "zerossg/types.hpp"
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <unordered_map>
+
+// C++ Standard Library headers
+#include <atomic>
 #include <memory>
 #include <thread>
-#include <atomic>
+#include <unordered_map>
 
 namespace zerossg {
 

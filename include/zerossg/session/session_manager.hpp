@@ -1,10 +1,12 @@
 #pragma once
 
+// Project headers
 #include "zerossg/interfaces.hpp"
-#include <unordered_map>
+
+// C++ Standard Library headers
 #include <mutex>
 #include <random>
-#include <boost/asio.hpp>
+#include <unordered_map>
 
 namespace zerossg {
 
