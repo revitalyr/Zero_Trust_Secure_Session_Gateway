@@ -4,6 +4,12 @@ import zerossg.types;
 
 using namespace zerossg;
 
+// Import needed types for tests
+using zerossg::User;
+using zerossg::Role;
+using zerossg::UserName;
+using zerossg::PasswordHash;
+
 class AuthenticationTest : public ::testing::Test {
 protected:
     void SetUp() override {

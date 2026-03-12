@@ -35,6 +35,9 @@ using std::vector;
 // Import zerossg SharedPtr
 using zerossg::SharedPtr;
 
+// Import SecurityEvent type
+using zerossg::SecurityEvent;
+
 // Import spdlog types for module compatibility
 using spdlog::logger;
 using spdlog::level::level_enum;

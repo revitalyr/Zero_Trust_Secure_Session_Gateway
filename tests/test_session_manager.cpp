@@ -6,6 +6,12 @@ import zerossg.types;
 
 using namespace zerossg;
 
+// Import needed types for tests
+using zerossg::User;
+using zerossg::Role;
+using zerossg::ClientIp;
+using zerossg::ServiceName;
+
 class SessionManagerTest : public ::testing::Test {
 protected:
     void SetUp() override {
