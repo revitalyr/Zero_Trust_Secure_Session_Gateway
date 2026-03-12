@@ -32,6 +32,7 @@ using zerossg::Strings;
 using zerossg::TimePoint;
 using zerossg::make_result_error;
 
+
 namespace zerossg {
     // Import specific std utilities that are needed
     using std::move;
@@ -46,7 +47,7 @@ namespace zerossg {
 
 AuthenticationManager::AuthenticationManager() {
     // Initialize with modern C++26 features
-    m_secret_rotation_time = system_clock::now();
+    m_secret_rotation_time = std::system_clock::now();
     
     // Generate JWT secret key with better randomness
     const auto secret_result = generate_secure_random_bytes(JWT_SECRET_SIZE);

@@ -7,6 +7,7 @@ import zerossg.types;
 
 namespace zerossg {
 
+
 // Forward declarations
 class AuthenticationManager;
 class AuthorizationManager;
