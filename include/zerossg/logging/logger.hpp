@@ -1,19 +1,19 @@
 #pragma once
 
-// Project headers
-#include "zerossg/interfaces.hpp"
+// C++23 module imports
+import zerossg.common;
+import zerossg.interfaces;
 
-// Third-party library headers
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/daily_file_sink.h>
+// Third-party library imports
+import <spdlog/spdlog.h>;
+import <spdlog/sinks/stdout_color_sinks.h>;
+import <spdlog/sinks/rotating_file_sink.h>;
+import <spdlog/sinks/daily_file_sink.h>;
 
-// C++ Standard Library headers
-#include <memory>
-#include <mutex>
-#include <string>
-#include <chrono>
+// Standard library imports
+import <memory>;
+import <mutex>;
+import <chrono>;
 
 namespace zerossg {
 
