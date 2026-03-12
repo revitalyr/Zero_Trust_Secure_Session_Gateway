@@ -13,6 +13,7 @@ import <cctype>;
 import <vector>;
 import <string_view>;
 import <filesystem>;
+import <expected>;
 
 namespace zerossg {
 
@@ -33,6 +34,7 @@ using std::tolower;
 using std::filesystem::exists;
 using std::to_string;
 using std::getenv;
+using std::unexpected;
 
 ConfigManager::ConfigManager() {
     set_default_config();
