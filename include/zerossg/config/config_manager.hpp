@@ -1,7 +1,8 @@
 #pragma once
 
 #include "zerossg/common.hpp"
-#include "zerossg/interfaces.hpp"
+#include "zerossg/types.hpp"
+#include "zerossg/constants.hpp"
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
 #include <unordered_map>
@@ -10,22 +11,22 @@
 namespace zerossg {
 
 struct ServerConfig {
-    HostAddress listen_address{"0.0.0.0"};
-    PortNo listen_port{8443};
-    FileName tls_cert_file{"server.crt"};
-    FileName tls_key_file{"server.key"};
-    FileName ca_cert_file{""};
-    Count thread_count{0}; // 0 = auto-detect
+    HostAddress listen_address{DEFAULT_LISTEN_ADDRESS};
+    PortNo listen_port{DEFAULT_LISTEN_PORT};
+    FileName tls_cert_file{DEFAULT_TLS_CERT_FILE};
+    FileName tls_key_file{DEFAULT_TLS_KEY_FILE};
+    FileName ca_cert_file{DEFAULT_CA_CERT_FILE};
+    Count thread_count{DEFAULT_THREAD_COUNT}; // 0 = auto-detect
     bool verify_client_certificates{false};
-    std::string cipher_list{"HIGH:!aNULL:!MD5:!RC4"};
+    std::string cipher_list{DEFAULT_CIPHER_LIST};
 };
 
 struct SecurityConfig {
-    RateLimit rate_limit_max_requests{100};
-    Minutes rate_limit_window{5}; // 5 minutes
-    Threshold brute_force_threshold{5};
-    Minutes brute_force_window{15}; // 15 minutes
-    Milliseconds default_block_duration{3600000}; // 1 hour
+    RateLimit rate_limit_max_requests{DEFAULT_RATE_LIMIT_MAX_REQUESTS};
+    Minutes rate_limit_window{DEFAULT_RATE_LIMIT_WINDOW}; // 5 minutes
+    Threshold brute_force_threshold{DEFAULT_BRUTE_FORCE_THRESHOLD};
+    Minutes brute_force_window{DEFAULT_BRUTE_FORCE_WINDOW}; // 15 minutes
+    Milliseconds default_block_duration{DEFAULT_BLOCK_DURATION};
     bool enable_ip_whitelist{false};
     Strings allowed_ips;
     bool enable_ip_blacklist{false};
@@ -33,35 +34,35 @@ struct SecurityConfig {
 };
 
 struct SessionConfig {
-    Hours default_timeout{1}; // 1 hour
-    SessionCount max_sessions_per_user{5};
-    Minutes cleanup_interval{5}; // 5 minutes
+    Hours default_timeout{DEFAULT_SESSION_TIMEOUT};
+    SessionCount max_sessions_per_user{DEFAULT_MAX_SESSIONS_PER_USER};
+    Minutes cleanup_interval{DEFAULT_CLEANUP_INTERVAL};
     bool enable_session_persistence{false};
-    ConfigFileName persistence_file{"sessions.json"};
+    ConfigFileName persistence_file{DEFAULT_PERSISTENCE_FILE};
 };
 
 struct LoggingConfig {
-    std::string level{"info"};
-    std::string pattern{"[%Y-%m-%d %H:%M:%S.%e] [%l] %v"};
+    std::string level{DEFAULT_LOG_LEVEL};
+    std::string pattern{DEFAULT_LOG_PATTERN};
     bool enable_console_output{true};
     bool enable_file_output{true};
-    LogFileName log_file{"logs/zerossg.log"};
-    Count max_file_size{5 * 1024 * 1024}; // 5MB
-    Count max_files{3};
+    LogFileName log_file{DEFAULT_LOG_FILE};
+    Count max_file_size{DEFAULT_MAX_FILE_SIZE};
+    Count max_files{DEFAULT_MAX_FILES};
     bool enable_security_log{true};
-    LogFileName security_log_file{"logs/security.log"};
+    LogFileName security_log_file{DEFAULT_SECURITY_LOG_FILE};
     bool enable_audit_log{true};
-    LogFileName audit_log_file{"logs/audit.log"};
+    LogFileName audit_log_file{DEFAULT_AUDIT_LOG_FILE};
 };
 
 struct DatabaseConfig {
-    DbType type{"memory"}; // memory, file, sqlite, postgresql
-    ConnectionString connection_string{"localhost:5432/zerossg"};
-    UserName username{"zerossg"};
-    Password password{""};
+    DbType type{DEFAULT_DB_TYPE}; // memory, file, sqlite, postgresql
+    ConnectionString connection_string{DEFAULT_CONNECTION_STRING};
+    UserName username{DEFAULT_DB_USERNAME};
+    Password password{DEFAULT_DB_PASSWORD};
     bool enable_ssl{false};
-    Count connection_pool_size{10};
-    Seconds connection_timeout{30};
+    Count connection_pool_size{DEFAULT_CONNECTION_POOL_SIZE};
+    Seconds connection_timeout{DEFAULT_CONNECTION_TIMEOUT};
 };
 
 class ConfigManager : public IConfigManager {
