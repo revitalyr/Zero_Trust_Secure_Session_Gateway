@@ -23,6 +23,16 @@ using zerossg::Strings;
 using zerossg::ServiceName;
 using zerossg::ConfigFileName;
 
+// Import standard library types for module compatibility
+using std::lock_guard;
+using std::mutex;
+using std::stoi;
+using std::exception;
+using std::transform;
+using std::tolower;
+using std::filesystem::exists;
+using std::to_string;
+
 ConfigManager::ConfigManager() {
     set_default_config();
 }

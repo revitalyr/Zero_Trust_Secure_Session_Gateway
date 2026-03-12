@@ -14,8 +14,15 @@ import <spdlog/sinks/daily_file_sink.h>;
 import <memory>;
 import <mutex>;
 import <chrono>;
+import <utility>;
+import <unordered_map>;
 
 namespace zerossg {
+
+// Import standard library types for module compatibility
+using std::shared_ptr;
+using std::pair;
+using std::mutex;
 
 enum class LogLevel {
     TRACE = 0,
