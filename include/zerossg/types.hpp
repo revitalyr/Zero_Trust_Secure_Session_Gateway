@@ -100,7 +100,7 @@ struct Session {
         , m_target_service(std::move(target_service))
         , m_active(true)
         , m_created_at(systemClock::now())
-        , m_last_login(systemClock::now()) {}
+        , m_expires_at(systemClock::now() + std::chrono::minutes(30)) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
