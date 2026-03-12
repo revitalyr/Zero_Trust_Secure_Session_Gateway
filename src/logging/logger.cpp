@@ -4,13 +4,15 @@ import zerossg.constants;
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <chrono>;
-#include <iomanip>;
-#include <sstream>;
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <memory>
 #include <vector>
 #include <mutex>
 #include <algorithm>
+#include <ctime>
 
 namespace zerossg {
     // Import std utilities
@@ -21,18 +23,59 @@ namespace zerossg {
     using std::dynamic_pointer_cast;
     using std::vector;
     using std::pair;
-    using std::remove_if;
     using LogLevel = zerossg::LogLevel;
+    using String = zerossg::String;
 
-namespace zerossg {
-
-Logger::Logger() {
+// Logger class implementation
+Logger::Logger() : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks();
 }
 
-Logger::Logger(const string& name) {
+Logger::Logger(const string& name) : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks();
     m_logger->set_name(name);
+}
+
+// Private helper methods
+void Logger::initialize_default_sinks() {
+    // Create default file sink
+    auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/zerossg.log", 1024*1024, 3);
+    file_sink->set_level(spdlog::level::info);
+    
+    m_logger = std::make_shared<spdlog::logger>("zerossg", file_sink);
+    m_logger->set_level(spdlog::level::info);
+    m_logger->flush_on(spdlog::level::info);
+}
+
+string Logger::format_timestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
+string Logger::format_fields(const std::vector<std::pair<string, string>>& fields) {
+    std::stringstream ss;
+    for (const auto& field : fields) {
+        ss << field.first << "=" << field.second;
+        if (&field != &fields.back()) {
+            ss << ", ";
+        }
+    }
+    return ss.str();
+}
+
+spdlog::level::level_enum Logger::convert_log_level(LogLevel level) {
+    switch (level) {
+        case LogLevel::TRACE: return spdlog::level::trace;
+        case LogLevel::DEBUG: return spdlog::level::debug;
+        case LogLevel::INFO: return spdlog::level::info;
+        case LogLevel::WARN: return spdlog::level::warn;
+        case LogLevel::ERROR: return spdlog::level::err;
+        case LogLevel::CRITICAL: return spdlog::level::critical;
+        default: return spdlog::level::info;
+    }
 }
 
 void Logger::log_security_event(const SecurityEvent& event) {
@@ -109,7 +152,7 @@ void Logger::enable_console_output(bool enable) {
         // Remove console sinks
         auto& sinks = m_logger->sinks();
         sinks.erase(std::remove_if(sinks.begin(), sinks.end(),
-            [](const std::shared_ptr<spdlog::sinks::sink>& sink) {
+            [](const std::shared_ptr<spdlog::sinks::sink>& sink) -> bool {
                 return std::dynamic_pointer_cast<spdlog::sinks::stdout_color_sink_mt>(sink) != nullptr;
             }), sinks.end());
     }

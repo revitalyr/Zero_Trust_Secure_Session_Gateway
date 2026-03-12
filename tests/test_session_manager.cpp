@@ -42,11 +42,11 @@ TEST_F(SessionManagerTest, CreateSession) {
     EXPECT_FALSE(session_result.value().empty());
     
     // Get session
-    auto get_result = session_manager->get_session(session_result.value());
+    auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_EQ(get_result.value().username, "testuser");
-    EXPECT_EQ(get_result.value().client_ip, client_ip);
-    EXPECT_EQ(get_result.value().target_service, target_service);
+    EXPECT_EQ(get_result.value().client_ip, *client_ip);
+    EXPECT_EQ(get_result.value().target_service, *target_service);
     EXPECT_TRUE(get_result.value().active);
 }
 
@@ -59,6 +59,14 @@ TEST_F(SessionManagerTest, SessionValidation) {
     auto session_result = session_manager->create_session(test_user, client_ip, target_service);
     EXPECT_TRUE(session_result.is_success());
     
+    // Get session
+    auto get_result = session_manager->get_session(*session_result.value());
+    EXPECT_TRUE(get_result.is_success());
+    EXPECT_EQ(get_result.value().username, "testuser");
+    EXPECT_EQ(get_result.value().client_ip, *client_ip);
+    EXPECT_EQ(get_result.value().target_service, *target_service);
+    EXPECT_TRUE(get_result.value().active);
+    
     // Validate session
     auto validate_result = session_manager->is_session_valid(*session_result.value());
     EXPECT_TRUE(validate_result.is_success());
@@ -69,7 +77,7 @@ TEST_F(SessionManagerTest, SessionValidation) {
     EXPECT_TRUE(terminate_result.is_success());
     
     // Validate terminated session
-    validate_result = session_manager->is_session_valid(session_result.value());
+    validate_result = session_manager->is_session_valid(*session_result.value());
     EXPECT_TRUE(validate_result.is_error());
 }
 
@@ -83,7 +91,7 @@ TEST_F(SessionManagerTest, SessionUpdate) {
     EXPECT_TRUE(session_result.is_success());
     
     // Get session
-    auto get_result = session_manager->get_session(session_result.value());
+    auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     Session session = get_result.value();
     
@@ -93,22 +101,22 @@ TEST_F(SessionManagerTest, SessionUpdate) {
     EXPECT_TRUE(update_result.is_success());
     
     // Verify update
-    get_result = session_manager->get_session(session_result.value());
+    get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_FALSE(get_result.value().active);
 }
 
 TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
     User test_user("testuser", "hash", zerossg::Role::OPERATOR);
-    string client_ip = "192.168.1.103";
-    string target_service = "ssh";
+    String client_ip = "192.168.1.103";
+    String target_service = "ssh";
     
     // Create maximum allowed sessions (5)
-    std::vector<string> session_ids;
+    std::vector<String> session_ids;
     for (int i = 0; i < 5; ++i) {
         auto session_result = session_manager->create_session(test_user, client_ip, target_service);
         EXPECT_TRUE(session_result.is_success());
-        session_ids.push_back(session_result.value());
+        session_ids.push_back(*session_result.value());
     }
     
     // Try to create one more session (should fail)
@@ -117,7 +125,7 @@ TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
     EXPECT_EQ(session_result.error(), "Maximum session limit reached for user: testuser");
     
     // Terminate one session
-    auto terminate_result = session_manager->terminate_session(session_ids[0]);
+    auto terminate_result = session_manager->terminate_session(*session_ids[0]);
     EXPECT_TRUE(terminate_result.is_success());
     
     // Now should be able to create a new session
