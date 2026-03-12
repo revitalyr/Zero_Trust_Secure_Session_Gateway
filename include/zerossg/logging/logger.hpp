@@ -32,12 +32,14 @@ using std::pair;
 using std::unordered_map;
 using std::vector;
 
+// Import zerossg shared_ptr
+using zerossg::shared_ptr;
+
 // Import spdlog types for module compatibility
 using spdlog::logger;
 using spdlog::level::level_enum;
 
 // Import standard library types for module compatibility
-using std::shared_ptr;
 using std::pair;
 using std::mutex;
 using std::unordered_map;

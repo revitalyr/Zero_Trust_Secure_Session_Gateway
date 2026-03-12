@@ -21,6 +21,9 @@ using std::string_view;
 using std::chrono::system_clock;
 using std::chrono::minutes;
 
+// Import zerossg.std module
+import zerossg.std;
+
 
 // Modern enum class with explicit underlying type
 enum class Role : uint8_t {
