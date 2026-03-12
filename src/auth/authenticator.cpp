@@ -18,21 +18,25 @@ import <openssl/sha.h>;
 
 using json = nlohmann::json;
 
+// Import semantic aliases for cleaner code
+using zerossg::Result;
+using zerossg::String;
+using zerossg::UserName;
+using zerossg::PasswordHash;
+using zerossg::TokenString;
+using zerossg::User;
+using zerossg::SecretKey;
+using zerossg::SessionId;
+using zerossg::UserCount;
+using zerossg::Strings;
+using zerossg::TimePoint;
+using zerossg::make_result_error;
+
 namespace zerossg {
-    // Import semantic aliases for cleaner code
-    using zerossg::Result;
-    using zerossg::String;
-    using zerossg::TokenString;
-    using zerossg::UserName;
-    using zerossg::PasswordHash;
-    using zerossg::Optional;
-    using zerossg::Vector;
-    using zerossg::UnorderedMap;
-    using zerossg::SecretKey;
-    using zerossg::LockGuard;
-    using zerossg::system_clock;
-    
     // Import specific std utilities that are needed
+    using std::move;
+    using std::make_unique;
+    using std::make_shared;
     using std::to_string;
     using std::hash;
     using std::random_device;

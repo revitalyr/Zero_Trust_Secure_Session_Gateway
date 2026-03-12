@@ -6,10 +6,6 @@ import zerossg.std;
 
 namespace zerossg {
 
-// Import standard library types
-using std::string_view;
-using std::system_clock;
-
 // Modern enum class with explicit underlying type
 enum class Role : uint8_t {
     ADMIN = 0,
@@ -18,13 +14,16 @@ enum class Role : uint8_t {
 };
 
 // Modern constexpr functions for enum conversion
-constexpr std::string_view role_to_string(Role role) noexcept {
-    constexpr std::array<const char*, 3> role_names = {"admin", "operator", "viewer"};
-    const auto index = static_cast<std::size_t>(role);
-    return index < role_names.size() ? std::string_view{role_names[index]} : std::string_view{};
+constexpr string_view role_to_string(Role role) noexcept {
+    switch (role) {
+        case Role::ADMIN: return string_view{"admin"};
+        case Role::OPERATOR: return string_view{"operator"};
+        case Role::VIEWER: return string_view{"viewer"};
+        default: return string_view{};
+    }
 }
 
-constexpr Role string_to_role(std::string_view role_str) noexcept {
+constexpr Role string_to_role(string_view role_str) noexcept {
     if (role_str == "admin") return Role::ADMIN;
     if (role_str == "operator") return Role::OPERATOR;
     if (role_str == "viewer") return Role::VIEWER;
