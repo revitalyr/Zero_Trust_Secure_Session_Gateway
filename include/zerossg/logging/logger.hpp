@@ -18,7 +18,6 @@ namespace zerossg {
 
 // Import semantic aliases for type visibility
 using zerossg::String;
-using zerossg::Vector;
 using zerossg::SessionId;
 using zerossg::UserName;
 using zerossg::ClientIp;
@@ -30,9 +29,13 @@ using std::shared_ptr;
 using std::mutex;
 using std::string;
 using std::lock_guard;
+using std::pair;
+using std::unordered_map;
+using std::vector;
 
 // Import spdlog types for module compatibility
-// Using spdlog::logger and spdlog::level::level_enum directly
+using spdlog::logger;
+using spdlog::level::level_enum;
 
 // Import standard library types for module compatibility
 using std::shared_ptr;
@@ -92,13 +95,13 @@ public:
     void log_throughput(size_t bytes_transferred, const String& direction = "total");
     
     // Static factory methods
-    static shared_ptr<Logger> create(const String& name = "zerossg");
-    static shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
-    static shared_ptr<Logger> create_security_logger();
-    static shared_ptr<Logger> create_audit_logger();
+    static std::shared_ptr<Logger> create(const String& name = "zerossg");
+    static std::shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
+    static std::shared_ptr<Logger> create_security_logger();
+    static std::shared_ptr<Logger> create_audit_logger();
     
 private:
-    shared_ptr<spdlog::logger> m_logger;
+    std::shared_ptr<spdlog::logger> m_logger;
     mutable mutex m_mutex;
     
     // Helper methods
@@ -107,7 +110,7 @@ private:
     String format_security_event(const SecurityEvent& event) const;
     
     // Field formatting for structured logging
-    String format_fields(const Vector<pair<String, String>>& fields) const;
+    String format_fields(const std::vector<std::pair<String, String>>& fields) const;
     
     // Initialize default sinks
     void initialize_default_sinks();
