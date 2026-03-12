@@ -2,7 +2,7 @@
 #include "zerossg/cli/cli_interface.hpp"
 #include "zerossg/config/config_manager.hpp"
 #include "zerossg/logging/logger.hpp"
-#include <iostream>
+#include "zerossg/common.hpp"
 #include <memory>
 #include <csignal>
 
@@ -14,7 +14,7 @@ std::atomic<bool> g_shutdown_requested{false};
 
 // Signal handler for graceful shutdown
 void signal_handler(int signal) {
-    std::cout << "\nReceived signal " << signal << ", shutting down gracefully..." << std::endl;
+    LOG_INFO("main", "Received signal " + std::to_string(signal) + ", shutting down gracefully...");
     g_shutdown_requested.store(true);
     
     if (g_server && g_server->is_running()) {
@@ -38,46 +38,54 @@ void setup_signal_handlers() {
 
 // Print application banner
 void print_banner() {
-    std::cout << R"(
+    LOG_INFO("main", R"(
  _____ _   _ _   _    _    _   _  ____ _____ ____  
 | ____| \ | | | | |  / \  | \ | |/ ___| ____|  _ \ 
 |  _| |  \| | |_| | / _ \ |  \| | |   |  _| | | | |
-| |___| |\  |  _  |/ ___ \| |\  | |___| |___| |_| |
+| |___| |\  |  _  |/ ___ \| |\  | |___| |___| |_| | 
 |_____|_| \_|_| |_/_/   \_\_| \_|\____|_____|____/ 
-
-Secure Session Gateway - Zero Trust Architecture
-================================================
-)" << std::endl;
+        _____      _   _   _   _  ____ _____ 
+       |  __ \    / \ | | | | | | |/ ___| ____|
+       | |__) |  / _ \| | | | | | | |   |  _|  
+       |  _  /  / ___ \ |_| | |_| | |___| |___ 
+       |_| \_\/_/   \_\___/ \___/ \____|_____|
+    
+    Zero Trust Secure Session Gateway v1.0.0
+    Modern C++20 implementation with enterprise-grade security
+)");
 }
 
 // Print usage information
 void print_usage(const char* program_name) {
-    std::cout << "Usage: " << program_name << " [command] [options]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Commands:" << std::endl;
-    std::cout << "  start [config-file]     Start the gateway server" << std::endl;
-    std::cout << "  stop                    Stop the gateway server" << std::endl;
-    std::cout << "  status                  Show server status" << std::endl;
-    std::cout << "  interactive             Enter interactive CLI mode" << std::endl;
-    std::cout << "  help                    Show this help message" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Options:" << std::endl;
-    std::cout << "  --config <file>         Configuration file path (default: config.json)" << std::endl;
-    std::cout << "  --log-level <level>     Log level: trace, debug, info, warn, error, critical" << std::endl;
-    std::cout << "  --daemon                Run as daemon (Unix only)" << std::endl;
-    std::cout << "  --version               Show version information" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Examples:" << std::endl;
-    std::cout << "  " << program_name << " start config.json" << std::endl;
-    std::cout << "  " << program_name << " interactive" << std::endl;
-    std::cout << "  " << program_name << " --config production.json start" << std::endl;
+    String usage = R"(
+Usage: )" + String(program_name) + R"( [command] [options]
+
+Commands:
+  start [config-file]     Start the gateway server
+  stop                    Stop the gateway server
+  status                  Show server status
+  interactive             Enter interactive CLI mode
+  help                    Show this help message
+
+Options:
+  --config <file>         Configuration file path (default: config.json)
+  --log-level <level>     Log level: trace, debug, info, warn, error, critical
+  --daemon                Run as daemon (Unix only)
+  --version               Show version information
+
+Examples:
+  )" + String(program_name) + R"( start config.json
+  )" + String(program_name) + R"( interactive
+  )" + String(program_name) + R"( --config production.json start)";
+    
+    LOG_INFO("main", usage);
 }
 
 // Parse command line arguments
 struct CommandLineArgs {
-    string command;
-    string config_file{"config.json"};
-    string log_level{"info"};
+    String command;
+    String config_file{"config.json"};
+    String log_level{"info"};
     bool daemon_mode{false};
     bool show_version{false};
     bool show_help{false};
@@ -157,7 +165,7 @@ int run_server(const CommandLineArgs& args) {
         }
         
         LOG_INFO("main", "Server started successfully");
-        std::cout << "Server is running. Press Ctrl+C to stop." << std::endl;
+        LOG_INFO("main", "Server is running. Press Ctrl+C to stop.");
         
         // Wait for shutdown signal
         while (g_server->is_running() && !g_shutdown_requested.load()) {
@@ -222,7 +230,7 @@ int run_daemon(const CommandLineArgs& args) {
     
     if (pid > 0) {
         // Parent process exits
-        std::cout << "Daemon started with PID: " << pid << std::endl;
+        LOG_INFO("main", "Daemon started with PID: " + std::to_string(pid));
         return 0;
     }
     
@@ -262,8 +270,8 @@ int main(int argc, char* argv[]) {
     }
     
     if (args.show_version) {
-        std::cout << "Zero Trust Secure Session Gateway v1.0.0" << std::endl;
-        std::cout << "Built with modern C++20 and enterprise-grade security features" << std::endl;
+        LOG_INFO("main", "Zero Trust Secure Session Gateway v1.0.0");
+        LOG_INFO("main", "Built with modern C++20 and enterprise-grade security features");
         return 0;
     }
     

@@ -119,8 +119,8 @@ Result<String> AuthenticationManager::authenticate(const UserName& username, con
     // Generate JWT token with enhanced security
     // Generate simple JWT token for now
     auto now = system_clock::now();
-    auto iat = std::chrono::duration_cast<Duration>(now.time_since_epoch()).count();
-    auto exp = std::chrono::duration_cast<Duration>((now + Duration(3600)).time_since_epoch()).count();
+    auto iat = std::chrono::duration_cast<Seconds>(now.time_since_epoch()).count();
+    auto exp = std::chrono::duration_cast<Seconds>((now + Seconds(3600)).time_since_epoch()).count();
     
     json payload = {
         {"username", user.m_user_name},

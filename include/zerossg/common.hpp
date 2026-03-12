@@ -77,7 +77,7 @@ using Count = std::size_t;
 
 // Semantic type aliases for time-related types
 using TimePoint = std::chrono::system_clock::time_point;
-using Duration = std::chrono::seconds;
+using Seconds = std::chrono::seconds;
 using TimeoutDuration = std::chrono::seconds;
 using Milliseconds = std::chrono::milliseconds;
 using Hours = std::chrono::hours;
