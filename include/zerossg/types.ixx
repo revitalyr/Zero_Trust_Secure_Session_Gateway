@@ -308,4 +308,16 @@ export using Milliseconds = std::chrono::milliseconds;
 export using Seconds = std::chrono::seconds;
 export using TimeoutDuration = std::chrono::seconds;
 
+// Additional type aliases for logging
+export using LogFileName = std::string;
+
+// Additional type aliases for database
+export using DbType = int;
+export using ConnectionString = std::string;
+export using Password = std::string;
+
+// Additional type aliases for sessions
+export using Hours = std::chrono::hours;
+export using SessionCount = size_t;
+
 } // namespace zerossg

@@ -57,34 +57,35 @@ using zerossg::strings;
 using zerossg::unorderedMap;
 
 struct ServerConfig {
-    HostAddress listen_address{DEFAULT_LISTEN_ADDRESS};
-    PortNo listen_port{DEFAULT_LISTEN_PORT};
-    FileName tls_cert_file{DEFAULT_TLS_CERT_FILE};
-    FileName tls_key_file{DEFAULT_TLS_KEY_FILE};
-    FileName ca_cert_file{DEFAULT_CA_CERT_FILE};
-    Count thread_count{DEFAULT_THREAD_COUNT}; // 0 = auto-detect
+    zerossg::HostAddress listen_address{DEFAULT_LISTEN_ADDRESS};
+    zerossg::PortNo listen_port{DEFAULT_LISTEN_PORT};
+    zerossg::FileName tls_cert_file{DEFAULT_TLS_CERT_FILE};
+    zerossg::FileName tls_key_file{DEFAULT_TLS_KEY_FILE};
+    zerossg::FileName ca_cert_file{DEFAULT_CA_CERT_FILE};
+    zerossg::Count thread_count{DEFAULT_THREAD_COUNT}; // 0 = auto-detect
     bool verify_client_certificates{false};
     std::string cipher_list{DEFAULT_CIPHER_LIST};
 };
 
 struct SecurityConfig {
-    RateLimit rate_limit_max_requests{DEFAULT_RATE_LIMIT_MAX_REQUESTS};
-    Minutes rate_limit_window{DEFAULT_RATE_LIMIT_WINDOW}; // 5 minutes
-    Threshold brute_force_threshold{DEFAULT_BRUTE_FORCE_THRESHOLD};
-    Minutes brute_force_window{DEFAULT_BRUTE_FORCE_WINDOW}; // 15 minutes
-    Milliseconds default_block_duration{DEFAULT_BLOCK_DURATION};
+    zerossg::RateLimit rate_limit_max_requests{DEFAULT_RATE_LIMIT_MAX_REQUESTS};
+    zerossg::Minutes rate_limit_window{DEFAULT_RATE_LIMIT_WINDOW}; // 5 minutes
+    zerossg::Threshold brute_force_threshold{DEFAULT_BRUTE_FORCE_THRESHOLD};
+    zerossg::Minutes brute_force_window{DEFAULT_BRUTE_FORCE_WINDOW}; // 15 minutes
+    zerossg::Milliseconds default_block_duration{DEFAULT_BLOCK_DURATION};
     bool enable_ip_whitelist{false};
-    Strings allowed_ips;
-    bool enable_ip_blacklist{false};
-    Strings blocked_ips;
+    bool enable_rate_limiting{true};
+    bool enable_brute_force_protection{true};
+    zerossg::strings allowed_ips{};
+    zerossg::strings blocked_ips{};
 };
 
 struct SessionConfig {
-    Hours default_timeout{DEFAULT_SESSION_TIMEOUT};
-    SessionCount max_sessions_per_user{DEFAULT_MAX_SESSIONS_PER_USER};
-    Minutes cleanup_interval{DEFAULT_CLEANUP_INTERVAL};
+    zerossg::Hours default_timeout{DEFAULT_SESSION_TIMEOUT};
+    zerossg::SessionCount max_sessions_per_user{DEFAULT_MAX_SESSIONS_PER_USER};
+    zerossg::Minutes cleanup_interval{DEFAULT_CLEANUP_INTERVAL};
     bool enable_session_persistence{false};
-    ConfigFileName persistence_file{DEFAULT_PERSISTENCE_FILE};
+    zerossg::ConfigFileName persistence_file{DEFAULT_PERSISTENCE_FILE};
 };
 
 struct LoggingConfig {
@@ -92,23 +93,19 @@ struct LoggingConfig {
     std::string pattern{DEFAULT_LOG_PATTERN};
     bool enable_console_output{true};
     bool enable_file_output{true};
-    LogFileName log_file{DEFAULT_LOG_FILE};
-    Count max_file_size{DEFAULT_MAX_FILE_SIZE};
-    Count max_files{DEFAULT_MAX_FILES};
-    bool enable_security_log{true};
-    LogFileName security_log_file{DEFAULT_SECURITY_LOG_FILE};
-    bool enable_audit_log{true};
-    LogFileName audit_log_file{DEFAULT_AUDIT_LOG_FILE};
+    zerossg::LogFileName log_file{DEFAULT_LOG_FILE};
+    zerossg::Count max_file_size{DEFAULT_MAX_FILE_SIZE};
+    zerossg::Count max_files{DEFAULT_MAX_FILES};
 };
 
 struct DatabaseConfig {
-    DbType type{DEFAULT_DB_TYPE}; // memory, file, sqlite, postgresql
-    ConnectionString connection_string{DEFAULT_CONNECTION_STRING};
-    UserName username{DEFAULT_DB_USERNAME};
-    Password password{DEFAULT_DB_PASSWORD};
+    zerossg::DbType type{DEFAULT_DB_TYPE}; // memory, file, sqlite, postgresql
+    zerossg::ConnectionString connection_string{DEFAULT_CONNECTION_STRING};
+    zerossg::UserName username{DEFAULT_DB_USERNAME};
+    zerossg::Password password{DEFAULT_DB_PASSWORD};
     bool enable_ssl{false};
-    Count connection_pool_size{DEFAULT_CONNECTION_POOL_SIZE};
-    Seconds connection_timeout{DEFAULT_CONNECTION_TIMEOUT};
+    zerossg::Count connection_pool_size{DEFAULT_CONNECTION_POOL_SIZE};
+    zerossg::Seconds connection_timeout{DEFAULT_CONNECTION_TIMEOUT};
 };
 
 class ConfigManager : public IConfigManager {
