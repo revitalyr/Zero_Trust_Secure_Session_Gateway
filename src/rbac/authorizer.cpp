@@ -1,5 +1,8 @@
-#include "zerossg/rbac/authorizer.hpp"
-#include <algorithm>
+// C++23 module imports
+import zerossg.rbac.authorizer;
+
+// Standard library imports
+import <algorithm>;
 
 namespace zerossg {
 
@@ -8,7 +11,7 @@ AuthorizationManager::AuthorizationManager() {
     initialize_default_services();
 }
 
-Result<bool> AuthorizationManager::can_access_service(const User& user, const string& service_name) {
+Result<bool> AuthorizationManager::can_access_service(const User& user, const ServiceName& service_name) {
     std::lock_guard<std::mutex> lock(m_services_mutex);
     
     auto service_it = m_services.find(service_name);
@@ -17,36 +20,36 @@ Result<bool> AuthorizationManager::can_access_service(const User& user, const st
     }
     
     const TargetService& service = service_it->second;
-    return Result<bool>::success(can_role_access_service(user.role, service));
+    return Result<bool>::success(can_role_access_service(user.m_role, service));
 }
 
-Result<bool> AuthorizationManager::has_permission(const User& user, const string& permission) {
-    return Result<bool>::success(role_has_permission(user.role, permission));
+Result<bool> AuthorizationManager::has_permission(const User& user, const String& permission) {
+    return Result<bool>::success(role_has_permission(user.m_role, permission));
 }
 
-Result<vector<string>> AuthorizationManager::get_allowed_services(const User& user) {
+Result<Strings> AuthorizationManager::get_allowed_services(const User& user) {
     std::lock_guard<std::mutex> lock(m_services_mutex);
     
-    vector<string> allowed_services;
+    Strings allowed_services;
     
     for (const auto& pair : m_services) {
         const TargetService& service = pair.second;
-        if (can_role_access_service(user.role, service)) {
-            allowed_services.push_back(service.name);
+        if (can_role_access_service(user.m_role, service)) {
+            allowed_services.push_back(service.m_name);
         }
     }
     
-    return Result<vector<string>>::success(std::move(allowed_services));
+    return Result<Strings>::success(std::move(allowed_services));
 }
 
 Result<void> AuthorizationManager::add_service(const TargetService& service) {
     std::lock_guard<std::mutex> lock(m_services_mutex);
     
-    m_services[service.name] = service;
+    m_services[service.m_name] = service;
     return Result<void>::success();
 }
 
-Result<void> AuthorizationManager::update_service(const string& service_name, const TargetService& service) {
+Result<void> AuthorizationManager::update_service(const ServiceName& service_name, const TargetService& service) {
     std::lock_guard<std::mutex> lock(m_services_mutex);
     
     auto it = m_services.find(service_name);

@@ -1,11 +1,16 @@
-// Project headers
-#include "zerossg/config/config_manager.hpp"
+// C++23 module imports
+import zerossg.config.config_manager;
 
-// C++ Standard Library headers (alphabetical order)
-#include <algorithm>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
+// Standard library imports
+import <algorithm>;
+import <cstdlib>;
+import <fstream>;
+import <iostream>;
+import <string>;
+import <mutex>;
+import <stdexcept>;
+import <cctype>;
+import <vector>;
 
 namespace zerossg {
 
@@ -13,7 +18,7 @@ ConfigManager::ConfigManager() {
     set_default_config();
 }
 
-Result<void> ConfigManager::load_config(const string& config_file) {
+Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {

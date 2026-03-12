@@ -1,24 +1,27 @@
-#include "zerossg/session/session_manager.hpp"
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-#include <algorithm>
+// C++23 module imports
+import zerossg.session.session_manager;
+
+// Standard library imports
+import <chrono>;
+import <iomanip>;
+import <sstream>;
+import <algorithm>;
 
 namespace zerossg {
 
 SessionManager::SessionManager() : m_random_generator(m_random_device()) {
 }
 
-Result<string> SessionManager::create_session(const User& user, const string& client_ip, const string& target_service) {
+Result<SessionId> SessionManager::create_session(const User& user, const ClientIp& client_ip, const ServiceName& target_service) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     // Check if user has reached session limit
-    if (is_user_at_session_limit(user.username)) {
-        return Result<string>::error("Maximum session limit reached for user: " + user.username);
+    if (is_user_at_session_limit(user.m_user_name)) {
+        return Result<SessionId>::error("Maximum session limit reached for user: " + user.m_user_name);
     }
     
     // Generate unique session ID
-    string session_id = generate_session_id();
+    SessionId session_id = generate_session_id();
     
     // Check for collision (very unlikely, but handle it)
     while (m_sessions.find(session_id) != m_sessions.end()) {
@@ -26,17 +29,17 @@ Result<string> SessionManager::create_session(const User& user, const string& cl
     }
     
     // Create session
-    Session session(session_id, user.username, user.role, client_ip, target_service);
-    session.expires_at = system_clock::now() + DEFAULT_SESSION_TIMEOUT;
+    Session session(session_id, user.m_user_name, user.m_role, client_ip, target_service);
+    session.m_expires_at = std::chrono::system_clock::now() + DEFAULT_SESSION_TIMEOUT;
     
     // Store session
     m_sessions[session_id] = session;
     m_total_sessions.fetch_add(1);
     
-    return Result<string>::success(session_id);
+    return Result<SessionId>::success(session_id);
 }
 
-Result<Session> SessionManager::get_session(const string& session_id) {
+Result<Session> SessionManager::get_session(const SessionId& session_id) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
@@ -47,7 +50,7 @@ Result<Session> SessionManager::get_session(const string& session_id) {
     const Session& session = it->second;
     
     // Check if session has expired
-    if (system_clock::now() > session.expires_at) {
+    if (std::chrono::system_clock::now() > session.m_expires_at) {
         // Remove expired session
         m_sessions.erase(it);
         return Result<Session>::error("Session has expired: " + session_id);
@@ -56,7 +59,7 @@ Result<Session> SessionManager::get_session(const string& session_id) {
     return Result<Session>::success(session);
 }
 
-Result<void> SessionManager::update_session(const string& session_id, const Session& session) {
+Result<void> SessionManager::update_session(const SessionId& session_id, const Session& session) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
