@@ -104,24 +104,35 @@ Result<String> AuthenticationManager::authenticate(const UserName& username, con
     }
     
     // Generate JWT token with enhanced security
-    auto token_result = generate_token_with_claims(user, {
-        {"iat", std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())},
-        {"exp", std::to_string(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count())},
+    // Generate simple JWT token for now
+    auto now = std::chrono::system_clock::now();
+    auto iat = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+    auto exp = std::chrono::duration_cast<std::chrono::seconds>((now + TOKEN_EXPIRY_TIME).time_since_epoch()).count();
+    
+    json payload = {
+        {"username", user.username},
+        {"role", role_to_string(user.role)},
+        {"iat", iat},
+        {"exp", exp},
         {"sub", "zerossg"},
-        {"jti", generate_session_id()}
-    });
+        {"jti", std::to_string(std::hash<std::string>{}(user.username + std::to_string(iat)))}
+    };
     
-    if (!token_result.is_success()) {
-        return make_result_error<String>("Token generation failed: " + token_result.error());
-    }
+    // Create JWT header
+    json header = {
+        {"alg", "HS256"},
+        {"typ", "JWT"}
+    };
     
-    // Reset failed attempts on successful authentication
-    {
-        std::shared_lock lock(m_rate_limits_mutex);
-        m_rate_limits[string(username)].reset();
-    }
+    // Encode header and payload
+    String header_b64 = base64_encode(header.dump());
+    String payload_b64 = base64_encode(payload.dump());
     
-    return token_result;
+    // Create signature
+    String header_payload = header_b64 + "." + payload_b64;
+    String signature = generate_jwt_signature(header_payload);
+    
+    return make_result_success<TokenString>(header_payload + "." + signature);
 }
 
 Result<bool> AuthenticationManager::validate_token(const TokenString& token) {
