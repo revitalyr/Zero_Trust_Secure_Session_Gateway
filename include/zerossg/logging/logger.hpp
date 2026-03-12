@@ -37,14 +37,14 @@ class Logger : public ILogger {
 public:
     Logger();
     explicit Logger(const String& name);
-    ~Logger() override = default;
+    ~Logger() = default;
     
     // ILogger interface
-    void log_security_event(const SecurityEvent& event) override;
-    void log_session_event(const SessionId& session_id, const String& event_type, const String& details) override;
-    void log_error(const String& component, const ErrorMessage& error) override;
-    void log_info(const String& component, const String& message) override;
-    void log_debug(const String& component, const String& message) override;
+    void log_security_event(const SecurityEvent& event);
+    void log_session_event(const SessionId& session_id, const String& event_type, const String& details);
+    void log_error(const String& component, const ErrorMessage& error);
+    void log_info(const String& component, const String& message);
+    void log_debug(const String& component, const String& message);
     
     // Configuration
     void set_level(LogLevel level);

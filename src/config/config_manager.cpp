@@ -43,7 +43,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
     
     try {
         if (!file_exists(config_file)) {
-            return Result<void>::error("Configuration file not found: " + config_file);
+            return std::unexpected<void>("Configuration file not found: " + config_file);
         }
         
         string extension = get_file_extension(config_file);
@@ -59,7 +59,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
                 return result;
             }
         } else {
-            return Result<void>::error("Unsupported configuration file format: " + extension);
+            return std::unexpected<void>("Unsupported configuration file format: " + extension);
         }
         
         // Load environment variables (override config file)
@@ -71,9 +71,9 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
             return validation_result;
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load configuration: " + String(e.what()));
+        return std::unexpected<void>("Failed to load configuration: " + String(e.what()));
     }
 }
 
@@ -145,10 +145,10 @@ Result<TargetService> ConfigManager::get_target_service(const ServiceName& servi
     
     auto it = m_target_services.find(service_name);
     if (it == m_target_services.end()) {
-        return Result<TargetService>::error("Target service not found: " + service_name);
+        return std::unexpected<TargetService>("Target service not found: " + service_name);
     }
     
-    return Result<TargetService>::success(it->second);
+    return Result<TargetService>{it->second);
 }
 
 Result<vector<TargetService>> ConfigManager::get_all_target_services() {
@@ -195,7 +195,7 @@ Result<void> ConfigManager::validate_config() {
         return services_result;
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::save_config(const string& config_file) {
@@ -254,22 +254,22 @@ Result<void> ConfigManager::save_config(const string& config_file) {
         string json_str = config.dump(4);
         std::ofstream file(config_file);
         if (!file.is_open()) {
-            return Result<void>::error("Failed to open configuration file for writing: " + config_file);
+            return std::unexpected<void>("Failed to open configuration file for writing: " + config_file);
         }
         
         file << json_str;
         file.close();
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to save configuration: " + string(e.what()));
+        return std::unexpected<void>("Failed to save configuration: " + string(e.what()));
     }
 }
 
 Result<void> ConfigManager::reload_config() {
     // This would reload from the last loaded file
     // For now, return success as a placeholder
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 void ConfigManager::load_from_environment() {
@@ -333,11 +333,11 @@ Result<void> ConfigManager::load_yaml_config(const string& config_file) {
         parse_database_config(config_json);
         parse_target_services(config_json);
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const YAML::Exception& e) {
-        return Result<void>::error("YAML parsing error: " + string(e.what()));
+        return std::unexpected<void>("YAML parsing error: " + string(e.what()));
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load YAML configuration: " + string(e.what()));
+        return std::unexpected<void>("Failed to load YAML configuration: " + string(e.what()));
     }
 }
 
@@ -345,7 +345,7 @@ Result<void> ConfigManager::load_json_config(const string& config_file) {
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
-            return Result<void>::error("Failed to open configuration file: " + config_file);
+            return std::unexpected<void>("Failed to open configuration file: " + config_file);
         }
         
         nlohmann::json config_json;
@@ -360,11 +360,11 @@ Result<void> ConfigManager::load_json_config(const string& config_file) {
         parse_database_config(config_json);
         parse_target_services(config_json);
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const nlohmann::json::exception& e) {
-        return Result<void>::error("JSON parsing error: " + string(e.what()));
+        return std::unexpected<void>("JSON parsing error: " + string(e.what()));
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load JSON configuration: " + string(e.what()));
+        return std::unexpected<void>("Failed to load JSON configuration: " + string(e.what()));
     }
 }
 
@@ -487,96 +487,96 @@ Result<TargetService> ConfigManager::parse_target_service(const nlohmann::json& 
         }
         
         if (service.host.empty() || service.port == 0) {
-            return Result<TargetService>::error("Target service must have host and port");
+            return std::unexpected<TargetService>("Target service must have host and port");
         }
         
-        return Result<TargetService>::success(service);
+        return Result<TargetService>{service);
     } catch (const std::exception& e) {
-        return Result<TargetService>::error("Failed to parse target service: " + string(e.what()));
+        return std::unexpected<TargetService>("Failed to parse target service: " + string(e.what()));
     }
 }
 
 Result<void> ConfigManager::validate_server_config() {
     if (!ConfigUtils::is_valid_ip_address(m_server_config.listen_address) && 
         m_server_config.listen_address != "0.0.0.0") {
-        return Result<void>::error("Invalid listen address: " + m_server_config.listen_address);
+        return std::unexpected<void>("Invalid listen address: " + m_server_config.listen_address);
     }
     
     if (!ConfigUtils::is_valid_port(m_server_config.listen_port)) {
-        return Result<void>::error("Invalid listen port: " + std::to_string(m_server_config.listen_port));
+        return std::unexpected<void>("Invalid listen port: " + std::to_string(m_server_config.listen_port));
     }
     
     if (m_server_config.tls_cert_file.empty() || m_server_config.tls_key_file.empty()) {
-        return Result<void>::error("TLS certificate and key files must be specified");
+        return std::unexpected<void>("TLS certificate and key files must be specified");
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_security_config() {
     if (m_security_config.rate_limit_max_requests == 0) {
-        return Result<void>::error("Rate limit max requests must be greater than 0");
+        return std::unexpected<void>("Rate limit max requests must be greater than 0");
     }
     
     if (m_security_config.rate_limit_window.count() == 0) {
-        return Result<void>::error("Rate limit window must be greater than 0");
+        return std::unexpected<void>("Rate limit window must be greater than 0");
     }
     
     if (m_security_config.brute_force_threshold == 0) {
-        return Result<void>::error("Brute force threshold must be greater than 0");
+        return std::unexpected<void>("Brute force threshold must be greater than 0");
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_session_config() {
     if (m_session_config.default_timeout.count() == 0) {
-        return Result<void>::error("Session default timeout must be greater than 0");
+        return std::unexpected<void>("Session default timeout must be greater than 0");
     }
     
     if (m_session_config.max_sessions_per_user == 0) {
-        return Result<void>::error("Max sessions per user must be greater than 0");
+        return std::unexpected<void>("Max sessions per user must be greater than 0");
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_logging_config() {
     if (!ConfigUtils::is_valid_log_level(m_logging_config.level)) {
-        return Result<void>::error("Invalid log level: " + m_logging_config.level);
+        return std::unexpected<void>("Invalid log level: " + m_logging_config.level);
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_database_config() {
     if (m_database_config.type.empty()) {
-        return Result<void>::error("Database type must be specified");
+        return std::unexpected<void>("Database type must be specified");
     }
     
     if (m_database_config.connection_string.empty()) {
-        return Result<void>::error("Database connection string must be specified");
+        return std::unexpected<void>("Database connection string must be specified");
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_target_services() {
     for (const auto& [name, service] : m_target_services) {
         if (service.host.empty()) {
-            return Result<void>::error("Target service '" + name + "' must have a host");
+            return std::unexpected<void>("Target service '" + name + "' must have a host");
         }
         
         if (!ConfigUtils::is_valid_port(service.port)) {
-            return Result<void>::error("Target service '" + name + "' has invalid port: " + std::to_string(service.port));
+            return std::unexpected<void>("Target service '" + name + "' has invalid port: " + std::to_string(service.port));
         }
         
         if (service.allowed_roles.empty()) {
-            return Result<void>::error("Target service '" + name + "' must have at least one allowed role");
+            return std::unexpected<void>("Target service '" + name + "' must have at least one allowed role");
         }
     }
     
-    return Result<void>::success();
+    return Result<void>{};
 }
 
 string ConfigManager::get_config_value(const string& key, const string& default_value) {
@@ -771,30 +771,30 @@ nlohmann::json ConfigUtils::serialize_string_array(const vector<string>& array) 
 Result<string> ConfigUtils::read_file(const string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        return Result<string>::error("Failed to open file: " + filename);
+        return std::unexpected<string>("Failed to open file: " + filename);
     }
     
     try {
         string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         file.close();
-        return Result<string>::success(content);
+        return Result<string>{content);
     } catch (const std::exception& e) {
-        return Result<string>::error("Failed to read file: " + string(e.what()));
+        return std::unexpected<string>("Failed to read file: " + string(e.what()));
     }
 }
 
 Result<void> ConfigUtils::write_file(const string& filename, const string& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
-        return Result<void>::error("Failed to open file for writing: " + filename);
+        return std::unexpected<void>("Failed to open file for writing: " + filename);
     }
     
     try {
         file << content;
         file.close();
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to write file: " + string(e.what()));
+        return std::unexpected<void>("Failed to write file: " + string(e.what()));
     }
 }
 
@@ -846,13 +846,13 @@ Result<void> ConfigManager::load_yaml_config(const ConfigFileName& config_file) 
         // Simple YAML parsing for now - in production would use yaml-cpp
         std::ifstream file(config_file);
         if (!file.is_open()) {
-            return Result<void>::error("Failed to open YAML configuration file");
+            return std::unexpected<void>("Failed to open YAML configuration file");
         }
         
         // For now, just load as JSON (simplified approach)
         return load_json_config(config_file);
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load YAML configuration: " + String(e.what()));
+        return std::unexpected<void>("Failed to load YAML configuration: " + String(e.what()));
     }
 }
 
@@ -860,13 +860,13 @@ Result<void> ConfigManager::load_json_config(const ConfigFileName& config_file) 
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
-            return Result<void>::error("Failed to open JSON configuration file");
+            return std::unexpected<void>("Failed to open JSON configuration file");
         }
         
         file >> m_config_json;
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Failed to load JSON configuration: " + String(e.what()));
+        return std::unexpected<void>("Failed to load JSON configuration: " + String(e.what()));
     }
 }
 
@@ -874,17 +874,17 @@ Result<void> ConfigManager::validate_server_config() {
     try {
         int port = get_int("server.port", 8080);
         if (port < 1 || port > 65535) {
-            return Result<void>::error("Server port must be between 1 and 65535");
+            return std::unexpected<void>("Server port must be between 1 and 65535");
         }
         
         int workers = get_int("server.workers", 4);
         if (workers < 1 || workers > 64) {
-            return Result<void>::error("Server workers must be between 1 and 64");
+            return std::unexpected<void>("Server workers must be between 1 and 64");
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Server configuration validation failed: " + String(e.what()));
+        return std::unexpected<void>("Server configuration validation failed: " + String(e.what()));
     }
 }
 
@@ -892,17 +892,17 @@ Result<void> ConfigManager::validate_security_config() {
     try {
         String jwt_secret = get_string("security.jwt_secret", "");
         if (jwt_secret.length() < 16) {
-            return Result<void>::error("JWT secret must be at least 16 characters long");
+            return std::unexpected<void>("JWT secret must be at least 16 characters long");
         }
         
         int token_expiry = get_int("security.token_expiry_hours", 24);
         if (token_expiry < 1 || token_expiry > 168) { // 1 hour to 1 week
-            return Result<void>::error("Token expiry must be between 1 and 168 hours");
+            return std::unexpected<void>("Token expiry must be between 1 and 168 hours");
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Security configuration validation failed: " + String(e.what()));
+        return std::unexpected<void>("Security configuration validation failed: " + String(e.what()));
     }
 }
 
@@ -910,12 +910,12 @@ Result<void> ConfigManager::validate_session_config() {
     try {
         int timeout = get_int("session.timeout_seconds", 3600);
         if (timeout < 60 || timeout > 86400) { // 1 minute to 24 hours
-            return Result<void>::error("Session timeout must be between 60 and 86400 seconds");
+            return std::unexpected<void>("Session timeout must be between 60 and 86400 seconds");
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Session configuration validation failed: " + String(e.what()));
+        return std::unexpected<void>("Session configuration validation failed: " + String(e.what()));
     }
 }
 
@@ -924,12 +924,12 @@ Result<void> ConfigManager::validate_logging_config() {
         String level = get_string("logging.level", "info");
         if (level != "trace" && level != "debug" && level != "info" && 
             level != "warn" && level != "error" && level != "critical") {
-            return Result<void>::error("Invalid log level: " + level);
+            return std::unexpected<void>("Invalid log level: " + level);
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Logging configuration validation failed: " + String(e.what()));
+        return std::unexpected<void>("Logging configuration validation failed: " + String(e.what()));
     }
 }
 
@@ -937,17 +937,17 @@ Result<void> ConfigManager::validate_database_config() {
     try {
         String host = get_string("database.host", "localhost");
         if (host.empty()) {
-            return Result<void>::error("Database host cannot be empty");
+            return std::unexpected<void>("Database host cannot be empty");
         }
         
         int port = get_int("database.port", 5432);
         if (port < 1 || port > 65535) {
-            return Result<void>::error("Database port must be between 1 and 65535");
+            return std::unexpected<void>("Database port must be between 1 and 65535");
         }
         
-        return Result<void>::success();
+        return Result<void>{};
     } catch (const std::exception& e) {
-        return Result<void>::error("Database configuration validation failed: " + String(e.what()));
+        return std::unexpected<void>("Database configuration validation failed: " + String(e.what()));
     }
 }
 
