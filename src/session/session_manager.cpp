@@ -24,7 +24,7 @@ Result<SessionId> SessionManager::create_session(const User& user, const ClientI
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.m_user_name)) {
-        return Result<SessionId>::error(ERROR_MAXIMUM_SESSION_LIMIT + user.m_user_name);
+        return Result<SessionId>::error(ERROR_MAXIMUM_SESSION_LIMIT + std::string(user.m_user_name));
     }
     
     // Generate unique session ID
