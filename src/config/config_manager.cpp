@@ -12,8 +12,16 @@ import <stdexcept>;
 import <cctype>;
 import <vector>;
 import <string_view>;
+import <filesystem>;
 
 namespace zerossg {
+
+// Import semantic aliases for cleaner code
+using zerossg::Result;
+using zerossg::String;
+using zerossg::Strings;
+using zerossg::ServiceName;
+using zerossg::ConfigFileName;
 
 ConfigManager::ConfigManager() {
     set_default_config();
@@ -781,6 +789,45 @@ Result<void> ConfigUtils::write_file(const string& filename, const string& conte
 
 bool ConfigUtils::create_directory(const string& path) {
     return std::filesystem::create_directories(path);
+}
+
+// Helper methods for ConfigManager
+String ConfigManager::get_config_value(const String& key, const String& default_value) {
+    auto json_value = m_config_json;
+    Strings keys;
+    size_t pos = 0;
+    String key_copy = key;
+    
+    while ((pos = key_copy.find('.')) != String::npos) {
+        keys.push_back(key_copy.substr(0, pos));
+        key_copy.erase(0, pos + 1);
+    }
+    keys.push_back(key_copy);
+    
+    for (const auto& k : keys) {
+        if (!json_value.contains(k)) {
+            return default_value;
+        }
+        json_value = json_value[k];
+    }
+    
+    if (json_value.is_string()) {
+        return json_value.get<String>();
+    }
+    
+    return default_value;
+}
+
+bool ConfigManager::file_exists(const String& filename) {
+    return std::filesystem::exists(filename);
+}
+
+String ConfigManager::get_file_extension(const String& filename) {
+    size_t pos = filename.find_last_of('.');
+    if (pos == String::npos) {
+        return "";
+    }
+    return filename.substr(pos + 1);
 }
 
 } // namespace zerossg

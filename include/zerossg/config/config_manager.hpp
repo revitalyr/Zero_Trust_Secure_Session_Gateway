@@ -140,9 +140,9 @@ private:
     Result<void> validate_target_services();
     
     // Utility methods
-    String get_config_value(const std::string& key, const std::string& default_value = "");
-    bool file_exists(const FileName& filename);
-    String get_file_extension(const FileName& filename);
+    String get_config_value(const String& key, const String& default_value = "");
+    bool file_exists(const String& filename);
+    String get_file_extension(const String& filename);
     
     // Default configuration
     void set_default_config();
