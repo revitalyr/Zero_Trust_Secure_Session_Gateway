@@ -237,22 +237,22 @@ Result<std::optional<User>> AuthenticationManager::get_user(const std::string& u
     return Result<optional<User>>::success(it->second);
 }
 
-Result<std::vector<User>> AuthenticationManager::list_users() {
+Result<Users<User>> AuthenticationManager::list_users() {
     LockGuard<std::mutex> lock(m_users_mutex);
     
-    std::vector<User> users;
+    Users<User> users;
     users.reserve(m_users.size());
     
     for (const auto& pair : m_users) {
         users.push_back(pair.second);
     }
     
-    return Result<std::vector<User>>::success(std::move(users));
+    return Result<Users<User>>::success(std::move(users));
 }
 
 Result<std::string> AuthenticationManager::hash_password(const std::string& password) {
     // For production, use bcrypt or argon2. This is a simplified implementation using SHA-256 with salt
-    vector<unsigned char> salt(16);
+    SecretKey salt(16);
     if (RAND_bytes(salt.data(), salt.size()) != 1) {
         return Result<std::string>::error("Failed to generate salt");
     }
@@ -273,7 +273,7 @@ Result<std::string> AuthenticationManager::hash_password(const std::string& pass
         return Result<std::string>::error("Failed to update hash");
     }
     
-    vector<unsigned char> hash(EVP_MD_size(EVP_sha256()));
+    SecretKey hash(EVP_MD_size(EVP_sha256()));
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, hash.data(), &hash_len) != 1) {
         EVP_MD_CTX_free(mdctx);
@@ -425,17 +425,17 @@ bool AuthenticationManager::verify_jwt_signature(const string& header_payload, c
     }
 }
 
-string AuthenticationManager::generate_secure_token() {
+TokenString AuthenticationManager::generate_secure_token() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 255);
     
-    vector<unsigned char> token_data(32);
+    SecretKey token_data(32);
     for (auto& byte : token_data) {
-        byte = static_cast<unsigned char>(dis(gen));
+        byte = static_cast<unsigned char>(dis(gen()));
     }
     
-    return base64_encode(string(reinterpret_cast<char*>(token_data.data()), token_data.size()));
+    return base64_encode(std::string(reinterpret_cast<char*>(token_data.data()), token_data.size()));
 }
 
 void AuthenticationManager::cleanup_expired_tokens() {
@@ -468,11 +468,11 @@ UserCount AuthenticationManager::get_blocked_user_count() const noexcept {
     return m_blocked_users.size();
 }
 
-vector<string> AuthenticationManager::get_recent_failed_attempts(string_view username, AttemptCount count) const noexcept {
+Strings AuthenticationManager::get_recent_failed_attempts(string_view username, AttemptCount count) const noexcept {
     // Modern rate limiting with better tracking and semantic return type
     std::shared_lock lock(m_rate_limits_mutex);
     
-    vector<string> attempts;
+    Strings attempts;
     const auto it = m_rate_limits.find(UserName{username});
     if (it != m_rate_limits.end()) {
         // Return recent failed attempt timestamps with semantic type
@@ -483,6 +483,14 @@ vector<string> AuthenticationManager::get_recent_failed_attempts(string_view use
     }
     
     return attempts;
+}
+
+SessionId AuthenticationManager::generate_session_id() const noexcept {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint64_t> dis(1, std::numeric_limits<uint64_t>::max());
+    
+    return std::to_string(dis(gen()));
 }
 
 } // namespace zerossg

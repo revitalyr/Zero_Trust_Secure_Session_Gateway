@@ -27,7 +27,7 @@ public:
     Result<void> update_user(string_view username, User&& user) noexcept;
     Result<void> delete_user(string_view username) noexcept;
     Result<std::optional<User>> get_user(string_view username) const noexcept;
-    Result<std::vector<User>> list_users() const noexcept;
+    Result<Users<User>> list_users() const noexcept;
     
     // Modern password utilities with constexpr support where possible
     static Result<std::string> hash_password(string_view password) noexcept;

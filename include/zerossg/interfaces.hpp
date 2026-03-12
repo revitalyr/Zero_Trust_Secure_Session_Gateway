@@ -41,7 +41,7 @@ public:
     virtual Result<Session> get_session(const SessionId& session_id) = 0;
     virtual Result<void> update_session(const SessionId& session_id, const Session& session) = 0;
     virtual Result<void> terminate_session(const SessionId& session_id) = 0;
-    virtual Result<std::vector<Session>> get_active_sessions() = 0;
+    virtual Result<Sessions> get_active_sessions() = 0;
     virtual Result<void> cleanup_expired_sessions() = 0;
 };
 
@@ -78,7 +78,7 @@ public:
     virtual bool get_bool(const std::string& key, bool default_value = false) = 0;
     virtual Strings get_string_array(const std::string& key) = 0;
     virtual Result<TargetService> get_target_service(const ServiceName& service_name) = 0;
-    virtual Result<std::vector<TargetService>> get_all_target_services() = 0;
+    virtual Result<TargetServices> get_all_target_services() = 0;
 };
 
 // Interface for TLS handling

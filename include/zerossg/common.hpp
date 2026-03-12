@@ -86,6 +86,14 @@ using Strings = std::vector<std::string>;
 template<typename T>
 using Roles = std::vector<T>;
 
+// Semantic type aliases for plural collections
+template<typename T>
+using Users = std::vector<T>;
+using Sessions = std::vector<Session>;
+using TargetServices = std::vector<TargetService>;
+using SecurityEvents = std::vector<SecurityEvent>;
+using ConnectionInfos = std::vector<ConnectionInfo>;
+
 // Smart pointer aliases
 template<typename T>
 using SessionManagerPtr = std::unique_ptr<T>;
