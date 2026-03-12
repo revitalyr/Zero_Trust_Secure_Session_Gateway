@@ -1,5 +1,6 @@
 // Project headers
 #include "zerossg/common.hpp"
+#include "zerossg/constants.hpp"
 #include "zerossg/utils/base64.hpp"
 
 // C++ Standard Library headers (alphabetical order)
@@ -7,6 +8,9 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 // Third-party library headers
 #include <nlohmann/json.hpp>
@@ -43,14 +47,14 @@ AuthenticationManager::AuthenticationManager() {
 
 AuthenticationManager::~AuthenticationManager() = default;
 
-Result<string> AuthenticationManager::authenticate(string_view username, string_view password) {
+Result<String> AuthenticationManager::authenticate(const UserName& username, const PasswordHash& password) {
     // Modern input validation
     if (!is_valid_username(username)) {
-        return make_result_error<string>("Invalid username format");
+        return make_result_error<String>("Invalid username format");
     }
     
-    if (!is_valid_password(password)) {
-        return make_result_error<string>("Password does not meet security requirements");
+    if (!is_valid_password_format(password)) {
+        return make_result_error<String>("Password does not meet security requirements");
     }
     
     // Check rate limiting first
@@ -59,7 +63,7 @@ Result<string> AuthenticationManager::authenticate(string_view username, string_
         auto& rate_info = m_rate_limits[string(username)];
         
         if (rate_info.should_block()) {
-            return make_result_error<string>("Account temporarily blocked due to too many failed attempts");
+            return make_result_error<String>("Account temporarily blocked due to too many failed attempts");
         }
         
         // Record attempt
@@ -71,7 +75,7 @@ Result<string> AuthenticationManager::authenticate(string_view username, string_
     {
         std::shared_lock lock(m_blocked_users_mutex);
         if (m_blocked_users.contains(string(username))) {
-            return make_result_error<string>("Account is blocked");
+            return make_result_error<String>("Account is blocked");
         }
     }
     
@@ -79,12 +83,12 @@ Result<string> AuthenticationManager::authenticate(string_view username, string_
     std::shared_lock lock(m_users_mutex);
     const auto user_it = m_users.find(string(username));
     if (user_it == m_users.end()) {
-        return make_result_error<string>("User not found");
+        return make_result_error<String>("User not found");
     }
     
     const User& user = user_it->second;
     if (!user.is_active()) {
-        return make_result_error<string>("User account is inactive");
+        return make_result_error<String>("User account is inactive");
     }
     
     // Modern password verification with timing-safe comparison
@@ -92,23 +96,23 @@ Result<string> AuthenticationManager::authenticate(string_view username, string_
     if (!verify_result.is_success()) {
         // Record failed attempt for security monitoring
         detect_suspicious_activity(username, "");
-        return make_result_error<string>("Authentication failed: " + verify_result.error());
+        return make_result_error<String>("Authentication failed: " + verify_result.error());
     }
     
     if (!verify_result.value()) {
-        return make_result_error<string>("Invalid credentials");
+        return make_result_error<String>("Invalid credentials");
     }
     
     // Generate JWT token with enhanced security
     auto token_result = generate_token_with_claims(user, {
-        {"iat", std::to_string(std::chrono::duration_cast<std::chrono::seconds>(system_clock::now().time_since_epoch()).count())},
-        {"exp", std::to_string(std::chrono::duration_cast<std::chrono::seconds>((system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count())},
+        {"iat", std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count())},
+        {"exp", std::to_string(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + TOKEN_EXPIRY_TIME).time_since_epoch()).count())},
         {"sub", "zerossg"},
         {"jti", generate_session_id()}
     });
     
     if (!token_result.is_success()) {
-        return make_result_error<string>("Token generation failed: " + token_result.error());
+        return make_result_error<String>("Token generation failed: " + token_result.error());
     }
     
     // Reset failed attempts on successful authentication
