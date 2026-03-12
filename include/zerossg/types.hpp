@@ -1,7 +1,12 @@
 #pragma once
 
+// Project headers
 #include "common.hpp"
+
+// Boost headers
 #include <boost/asio.hpp>
+
+// C++ Standard Library headers
 #include <array>
 #include <span>
 

@@ -1,12 +1,17 @@
 #pragma once
 
+// Project headers
 #include "zerossg/common.hpp"
 #include "zerossg/types.hpp"
 #include "zerossg/constants.hpp"
+
+// Third-party library headers
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
-#include <unordered_map>
+
+// C++ Standard Library headers
 #include <mutex>
+#include <unordered_map>
 
 namespace zerossg {
 

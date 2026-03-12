@@ -1,7 +1,10 @@
 #pragma once
 
+// Project headers
 #include "common.hpp"
 #include "types.hpp"
+
+// Boost headers
 #include <boost/asio.hpp>
 
 namespace zerossg {

@@ -1,16 +1,19 @@
 #pragma once
 
+// C++ Standard Library headers (alphabetical order)
+#include <chrono>
+#include <concepts>
+#include <expected>
+#include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <vector>
-#include <memory>
-#include <chrono>
-#include <mutex>
-#include <expected>
-#include <concepts>
 #include <unordered_map>
-#include <optional>
 #include <variant>
+#include <vector>
+
+// Boost headers
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 

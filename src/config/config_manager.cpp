@@ -1,8 +1,11 @@
+// Project headers
 #include "zerossg/config/config_manager.hpp"
-#include <fstream>
+
+// C++ Standard Library headers (alphabetical order)
 #include <algorithm>
-#include <iostream>
 #include <cstdlib>
+#include <fstream>
+#include <iostream>
 
 namespace zerossg {
 

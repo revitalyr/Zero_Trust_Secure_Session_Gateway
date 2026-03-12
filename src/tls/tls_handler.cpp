@@ -1,7 +1,12 @@
+// Project headers
 #include "zerossg/tls/tls_handler.hpp"
-#include <openssl/err.h>
+
+// C++ Standard Library headers
 #include <fstream>
 #include <sstream>
+
+// OpenSSL headers
+#include <openssl/err.h>
 
 namespace zerossg {
 

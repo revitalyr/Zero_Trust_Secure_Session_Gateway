@@ -1,9 +1,12 @@
 #pragma once
 
+// Project headers
 #include "common.hpp"
-#include <string>
+
+// C++ Standard Library headers
 #include <chrono>
 #include <cstdint>
+#include <string>
 
 namespace zerossg {
 

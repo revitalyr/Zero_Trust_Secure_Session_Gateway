@@ -1,16 +1,23 @@
+// Project headers
 #include "zerossg/common.hpp"
 #include "zerossg/utils/base64.hpp"
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
+
+// C++ Standard Library headers (alphabetical order)
+#include <algorithm>
+#include <iomanip>
+#include <random>
+#include <ranges>
+#include <sstream>
+
+// Third-party library headers
+#include <nlohmann/json.hpp>
+
+// OpenSSL headers
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
-#include <nlohmann/json.hpp>
-#include <random>
-#include <sstream>
-#include <iomanip>
-#include <ranges>
-#include <algorithm>
+#include <openssl/hmac.h>
+#include <openssl/sha.h>
 
 using json = nlohmann::json;
 
