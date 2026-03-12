@@ -3,6 +3,7 @@
 // C++23 module imports
 import zerossg.common;
 import zerossg.interfaces;
+import zerossg.constants;
 
 // Third-party library imports
 import <spdlog/spdlog.h>;

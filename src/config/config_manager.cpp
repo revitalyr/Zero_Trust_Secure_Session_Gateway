@@ -1,5 +1,6 @@
 // C++23 module imports
-import zerossg.config_manager;
+import zerossg.common;
+import zerossg.constants;
 import zerossg.std;
 
 namespace zerossg {
@@ -10,6 +11,14 @@ using zerossg::String;
 using zerossg::Strings;
 using zerossg::ServiceName;
 using zerossg::ConfigFileName;
+
+// Import constants for string literals
+using zerossg::ERROR_CONFIG_FILE_NOT_FOUND;
+using zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT;
+using zerossg::ERROR_FAILED_TO_LOAD_CONFIG;
+using zerossg::FORMAT_YAML;
+using zerossg::FORMAT_YML;
+using zerossg::FORMAT_JSON;
 
 // Import standard library types for module compatibility
 using std::lock_guard;
@@ -42,23 +51,23 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
     
     try {
         if (!file_exists(config_file)) {
-            return make_result_error("Configuration file not found: " + config_file);
+            return make_result_error(ERROR_CONFIG_FILE_NOT_FOUND + config_file);
         }
         
         string extension = get_file_extension(config_file);
         
-        if (extension == "yaml" || extension == "yml") {
+        if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
             if (!result.is_success()) {
                 return result;
             }
-        } else if (extension == "json") {
+        } else if (extension == FORMAT_JSON) {
             auto result = load_json_config(config_file);
             if (!result.is_success()) {
                 return result;
             }
         } else {
-            return make_result_error("Unsupported configuration file format: " + extension);
+            return make_result_error(ERROR_UNSUPPORTED_CONFIG_FORMAT + extension);
         }
         
         // Load environment variables (override config file)
@@ -72,7 +81,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
         
         return Result<void>{};
     } catch (const std::exception& e) {
-        return make_result_error("Failed to load configuration: " + String(e.what()));
+        return make_result_error(ERROR_FAILED_TO_LOAD_CONFIG + String(e.what()));
     }
 }
 

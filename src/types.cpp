@@ -2,6 +2,22 @@
 #include <stdexcept>
 #include <algorithm>
 
+// Import constants for string literals
+using zerossg::ROLE_ADMIN;
+using zerossg::ROLE_OPERATOR;
+using zerossg::ROLE_VIEWER;
+using zerossg::ERROR_UNKNOWN_ROLE;
+using zerossg::ERROR_ROLE_STRING_EMPTY;
+using zerossg::EVENT_LOGIN_SUCCESS;
+using zerossg::EVENT_LOGIN_FAILURE;
+using zerossg::EVENT_SESSION_START;
+using zerossg::EVENT_SESSION_TERMINATION;
+using zerossg::EVENT_AUTHENTICATION_ERROR;
+using zerossg::EVENT_ACCESS_VIOLATION;
+using zerossg::EVENT_RATE_LIMIT_EXCEEDED;
+using zerossg::EVENT_BRUTE_FORCE_DETECTED;
+using zerossg::ERROR_UNKNOWN_EVENT;
+
 namespace zerossg {
 
 // Legacy functions for backward compatibility
@@ -10,33 +26,33 @@ namespace zerossg {
 [[deprecated("Use constexpr role_to_string instead")]]
 std::string role_to_string(Role role) {
     switch (role) {
-        case Role::ADMIN: return "admin";
-        case Role::OPERATOR: return "operator";
-        case Role::VIEWER: return "viewer";
-        default: return "unknown";
+        case Role::ADMIN: return ROLE_ADMIN;
+        case Role::OPERATOR: return ROLE_OPERATOR;
+        case Role::VIEWER: return ROLE_VIEWER;
+        default: return ERROR_UNKNOWN_ROLE;
     }
 }
 
 [[deprecated("Use constexpr string_to_role instead")]]
 Role string_to_role(const std::string& role_str) {
-    if (role_str == "admin") return Role::ADMIN;
-    if (role_str == "operator") return Role::OPERATOR;
-    if (role_str == "viewer") return Role::VIEWER;
+    if (role_str == ROLE_ADMIN) return Role::ADMIN;
+    if (role_str == ROLE_OPERATOR) return Role::OPERATOR;
+    if (role_str == ROLE_VIEWER) return Role::VIEWER;
     return Role::VIEWER; // Default fallback
 }
 
 [[deprecated("Use constexpr security_event_type_to_string instead")]]
 std::string security_event_type_to_string(SecurityEventType type) {
     switch (type) {
-        case SecurityEventType::LOGIN_SUCCESS: return "login_success";
-        case SecurityEventType::LOGIN_FAILURE: return "login_failure";
-        case SecurityEventType::SESSION_START: return "session_start";
-        case SecurityEventType::SESSION_TERMINATION: return "session_termination";
-        case SecurityEventType::AUTHENTICATION_ERROR: return "authentication_error";
-        case SecurityEventType::ACCESS_VIOLATION: return "access_violation";
-        case SecurityEventType::RATE_LIMIT_EXCEEDED: return "rate_limit_exceeded";
-        case SecurityEventType::BRUTE_FORCE_DETECTED: return "brute_force_detected";
-        default: return "unknown";
+        case SecurityEventType::LOGIN_SUCCESS: return EVENT_LOGIN_SUCCESS;
+        case SecurityEventType::LOGIN_FAILURE: return EVENT_LOGIN_FAILURE;
+        case SecurityEventType::SESSION_START: return EVENT_SESSION_START;
+        case SecurityEventType::SESSION_TERMINATION: return EVENT_SESSION_TERMINATION;
+        case SecurityEventType::AUTHENTICATION_ERROR: return EVENT_AUTHENTICATION_ERROR;
+        case SecurityEventType::ACCESS_VIOLATION: return EVENT_ACCESS_VIOLATION;
+        case SecurityEventType::RATE_LIMIT_EXCEEDED: return EVENT_RATE_LIMIT_EXCEEDED;
+        case SecurityEventType::BRUTE_FORCE_DETECTED: return EVENT_BRUTE_FORCE_DETECTED;
+        default: return ERROR_UNKNOWN_EVENT;
     }
 }
 

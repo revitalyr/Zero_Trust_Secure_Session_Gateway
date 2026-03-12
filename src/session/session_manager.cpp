@@ -1,10 +1,20 @@
 // C++23 module imports
 import zerossg.session.session_manager;
+import zerossg.constants;
 
 // Standard library imports
 import zerossg.std;
 
 namespace zerossg {
+
+// Import constants for string literals
+using zerossg::ERROR_MAXIMUM_SESSION_LIMIT;
+using zerossg::ERROR_SESSION_NOT_FOUND_PREFIX;
+using zerossg::ERROR_SESSION_EXPIRED_PREFIX;
+using zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX;
+using zerossg::TIME_FORMAT_SECONDS_SUFFIX;
+using zerossg::TIME_FORMAT_MINUTES_SUFFIX;
+using zerossg::TIME_FORMAT_HOURS_SUFFIX;
 
 SessionManager::SessionManager() : m_random_generator(m_random_device()) {
 }
@@ -14,7 +24,7 @@ Result<SessionId> SessionManager::create_session(const User& user, const ClientI
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.m_user_name)) {
-        return Result<SessionId>::error("Maximum session limit reached for user: " + user.m_user_name);
+        return Result<SessionId>::error(ERROR_MAXIMUM_SESSION_LIMIT + user.m_user_name);
     }
     
     // Generate unique session ID
@@ -41,7 +51,7 @@ Result<Session> SessionManager::get_session(const SessionId& session_id) {
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return Result<Session>::error("Session not found: " + session_id);
+        return Result<Session>::error(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     const Session& session = it->second;
@@ -50,7 +60,7 @@ Result<Session> SessionManager::get_session(const SessionId& session_id) {
     if (std::chrono::system_clock::now() > session.m_expires_at) {
         // Remove expired session
         m_sessions.erase(it);
-        return Result<Session>::error("Session has expired: " + session_id);
+        return Result<Session>::error(ERROR_SESSION_EXPIRED_PREFIX + session_id);
     }
     
     return Result<Session>::success(session);
@@ -61,7 +71,7 @@ Result<void> SessionManager::update_session(const SessionId& session_id, const S
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return Result<void>::error("Session not found: " + session_id);
+        return Result<void>::error(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     m_sessions[session_id] = session;
@@ -72,7 +82,7 @@ Result<void> SessionManager::terminate_session(const string& session_id) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
-        return Result<void>::error("Session not found: " + session_id);
+        return Result<void>::error(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     return Result<void>::success();
@@ -125,14 +135,14 @@ Result<void> SessionManager::extend_session(const string& session_id, seconds ad
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return Result<void>::error("Session not found: " + session_id);
+        return Result<void>::error(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     Session& session = it->second;
     
     // Check if session is still active
     if (!session.active || system_clock::now() > session.expires_at) {
-        return Result<void>::error("Session is not active: " + session_id);
+        return Result<void>::error(ERROR_SESSION_NOT_ACTIVE_PREFIX + session_id);
     }
     
     // Extend session
@@ -244,15 +254,15 @@ string SessionManager::format_session_duration(const system_clock::time_point& s
     auto duration = std::chrono::duration_cast<seconds>(end - start);
     
     if (duration.count() < 60) {
-        return std::to_string(duration.count()) + "s";
+        return std::to_string(duration.count()) + TIME_FORMAT_SECONDS_SUFFIX;
     } else if (duration.count() < 3600) {
         auto minutes = duration.count() / 60;
         auto seconds = duration.count() % 60;
-        return std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
+        return std::to_string(minutes) + TIME_FORMAT_MINUTES_SUFFIX + std::to_string(seconds) + TIME_FORMAT_SECONDS_SUFFIX;
     } else {
         auto hours = duration.count() / 3600;
         auto minutes = (duration.count() % 3600) / 60;
-        return std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+        return std::to_string(hours) + TIME_FORMAT_HOURS_SUFFIX + std::to_string(minutes) + TIME_FORMAT_MINUTES_SUFFIX;
     }
 }
 

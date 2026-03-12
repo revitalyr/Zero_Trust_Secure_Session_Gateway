@@ -1,10 +1,38 @@
 // C++23 module imports
 import zerossg.rbac.authorizer;
+import zerossg.constants;
 
 // Standard library imports
 import zerossg.std;
 
 namespace zerossg {
+
+// Import constants for string literals
+using zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX;
+using zerossg::PERMISSION_USER_CREATE;
+using zerossg::PERMISSION_USER_READ;
+using zerossg::PERMISSION_USER_UPDATE;
+using zerossg::PERMISSION_USER_DELETE;
+using zerossg::PERMISSION_SERVICE_CREATE;
+using zerossg::PERMISSION_SERVICE_READ;
+using zerossg::PERMISSION_SERVICE_UPDATE;
+using zerossg::PERMISSION_SERVICE_DELETE;
+using zerossg::PERMISSION_SESSION_CREATE;
+using zerossg::PERMISSION_SESSION_DELETE;
+using zerossg::PERMISSION_CONFIG_READ;
+using zerossg::PERMISSION_CONFIG_UPDATE;
+using zerossg::PERMISSION_LOGS_READ;
+using zerossg::PERMISSION_LOGS_EXPORT;
+using zerossg::PERMISSION_SYSTEM_ADMIN;
+using zerossg::HOST_SSH_SERVER;
+using zerossg::HOST_WEB_SERVER;
+using zerossg::HOST_DB_SERVER;
+using zerossg::SERVICE_WEB_ADMIN;
+using zerossg::SERVICE_SSH_INTERNAL;
+using zerossg::SERVICE_DATABASE_INTERNAL;
+using zerossg::DEFAULT_SSH_PORT;
+using zerossg::DEFAULT_WEB_PORT;
+using zerossg::DEFAULT_DATABASE_PORT;
 
 AuthorizationManager::AuthorizationManager() {
     initialize_default_permissions();
@@ -16,7 +44,7 @@ Result<bool> AuthorizationManager::can_access_service(const User& user, const Se
     
     auto service_it = m_services.find(service_name);
     if (service_it == m_services.end()) {
-        return Result<bool>::error("Service not found: " + service_name);
+        return Result<bool>::error(ERROR_SERVICE_NOT_FOUND_PREFIX + service_name);
     }
     
     const TargetService& service = service_it->second;
@@ -163,29 +191,29 @@ Result<bool> AuthorizationManager::is_role_superior(Role role_a, Role role_b) {
 void AuthorizationManager::initialize_default_permissions() {
     // Admin permissions - full access
     m_role_permissions[Role::ADMIN] = {
-        "user.create", "user.read", "user.update", "user.delete",
-        "service.create", "service.read", "service.update", "service.delete",
-        "session.create", "session.read", "session.update", "session.delete",
-        "config.read", "config.update",
-        "logs.read", "logs.export",
-        "system.admin"
+        PERMISSION_USER_CREATE, PERMISSION_USER_READ, PERMISSION_USER_UPDATE, PERMISSION_USER_DELETE,
+        PERMISSION_SERVICE_CREATE, PERMISSION_SERVICE_READ, PERMISSION_SERVICE_UPDATE, PERMISSION_SERVICE_DELETE,
+        PERMISSION_SESSION_CREATE, PERMISSION_SESSION_READ, PERMISSION_SESSION_DELETE,
+        PERMISSION_CONFIG_READ, PERMISSION_CONFIG_UPDATE,
+        PERMISSION_LOGS_READ, PERMISSION_LOGS_EXPORT,
+        PERMISSION_SYSTEM_ADMIN
     };
     
     // Operator permissions - operational access
     m_role_permissions[Role::OPERATOR] = {
-        "user.read",
-        "service.read",
-        "session.create", "session.read", "session.delete",
-        "config.read",
-        "logs.read"
+        PERMISSION_USER_READ,
+        PERMISSION_SERVICE_READ,
+        PERMISSION_SESSION_CREATE, PERMISSION_SESSION_READ, PERMISSION_SESSION_DELETE,
+        PERMISSION_CONFIG_READ,
+        PERMISSION_LOGS_READ
     };
     
     // Viewer permissions - read-only access
     m_role_permissions[Role::VIEWER] = {
-        "user.read",
-        "service.read",
-        "session.read",
-        "config.read"
+        PERMISSION_USER_READ,
+        PERMISSION_SERVICE_READ,
+        PERMISSION_SESSION_READ,
+        PERMISSION_CONFIG_READ
     };
     
     // Set role hierarchy: ADMIN > OPERATOR > VIEWER
@@ -197,30 +225,30 @@ void AuthorizationManager::initialize_default_permissions() {
 void AuthorizationManager::initialize_default_services() {
     // SSH service example
     TargetService ssh_service;
-    ssh_service.name = "ssh";
-    ssh_service.host = "internal-ssh-server";
-    ssh_service.port = 22;
+    ssh_service.name = SERVICE_SSH_INTERNAL;
+    ssh_service.host = HOST_SSH_SERVER;
+    ssh_service.port = DEFAULT_SSH_PORT;
     ssh_service.allowed_roles = {Role::ADMIN, Role::OPERATOR};
     ssh_service.tls_enabled = false;
-    m_services["ssh"] = ssh_service;
+    m_services[SERVICE_SSH_INTERNAL] = ssh_service;
     
     // Web service example
     TargetService web_service;
-    web_service.name = "web-admin";
-    web_service.host = "internal-web-server";
-    web_service.port = 443;
+    web_service.name = SERVICE_WEB_ADMIN;
+    web_service.host = HOST_WEB_SERVER;
+    web_service.port = DEFAULT_WEB_PORT;
     web_service.allowed_roles = {Role::ADMIN, Role::OPERATOR, Role::VIEWER};
     web_service.tls_enabled = true;
-    m_services["web-admin"] = web_service;
+    m_services[SERVICE_WEB_ADMIN] = web_service;
     
     // Database service example
     TargetService db_service;
-    db_service.name = "database";
-    db_service.host = "internal-db-server";
-    db_service.port = 5432;
+    db_service.name = SERVICE_DATABASE_INTERNAL;
+    db_service.host = HOST_DB_SERVER;
+    db_service.port = DEFAULT_DATABASE_PORT;
     db_service.allowed_roles = {Role::ADMIN};
     db_service.tls_enabled = true;
-    m_services["database"] = db_service;
+    m_services[SERVICE_DATABASE_INTERNAL] = db_service;
 }
 
 bool AuthorizationManager::can_role_access_service(Role role, const TargetService& service) {
