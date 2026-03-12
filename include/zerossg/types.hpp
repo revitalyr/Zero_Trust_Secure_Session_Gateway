@@ -11,6 +11,9 @@ using SecretKey = std::vector<unsigned char>;
 using SessionId = std::string;
 using UserCount = size_t;
 using Strings = std::vector<std::string>;
+// Import zerossg.std module
+import zerossg.std;
+
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 using ClientIp = std::string;
 using ServiceName = std::string;
@@ -20,9 +23,6 @@ using systemClock = std::chrono::system_clock;
 using std::string_view;
 using std::chrono::system_clock;
 using std::chrono::minutes;
-
-// Import zerossg.std module
-import zerossg.std;
 
 
 // Modern enum class with explicit underlying type

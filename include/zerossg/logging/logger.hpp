@@ -32,20 +32,12 @@ using std::pair;
 using std::unordered_map;
 using std::vector;
 
-// Import zerossg shared_ptr
-using zerossg::shared_ptr;
+// Import zerossg SharedPtr
+using zerossg::SharedPtr;
 
 // Import spdlog types for module compatibility
 using spdlog::logger;
 using spdlog::level::level_enum;
-
-// Import standard library types for module compatibility
-using std::pair;
-using std::mutex;
-using std::unordered_map;
-
-// Import additional types from common module
-using zerossg::shared_ptr;
 
 enum class LogLevel {
     TRACE = 0,
@@ -56,36 +48,24 @@ enum class LogLevel {
     CRITICAL = 5
 };
 
-class Logger : public ILogger {
+// Modern Logger class with structured logging support
+class Logger {
 public:
-    Logger();
-    explicit Logger(const String& name);
-    ~Logger() = default;
+    explicit Logger(String name = "zerossg");
+    ~Logger();
     
-    // ILogger interface
-    void log_security_event(const SecurityEvent& event);
-    void log_session_event(const SessionId& session_id, const String& event_type, const String& details);
-    void log_error(const String& component, const ErrorMessage& error);
-    void log_info(const String& component, const String& message);
-    void log_debug(const String& component, const String& message);
+    // Core logging methods with semantic types
+    void trace(const String& message);
+    void debug(const String& message);
+    void info(const String& message);
+    void warn(const String& message);
+    void error(const String& message);
+    void critical(const String& message);
     
-    // Configuration
-    void set_level(LogLevel level);
-    void set_pattern(const String& pattern);
-    void add_file_sink(const FileName& filename, size_t max_file_size = 1024 * 1024 * 5, size_t max_files = 3);
-    void add_daily_file_sink(const FileName& filename, int hour = 0, int minute = 0);
-    void enable_console_output(bool enable = true);
-    
-    // Structured logging helpers
-    template<typename... Args>
-    void log_structured(LogLevel level, const String& component, const String& message, Args&&... args);
-    
-    void log_with_fields(LogLevel level, const String& component, const String& message,
-                         const Vector<std::pair<String, String>>& fields);
-    
-    // Audit logging
-    void log_authentication_attempt(const UserName& username, const ClientIp& client_ip, bool success, const String& reason = "");
-    void log_session_creation(const SessionId& session_id, const UserName& username, const ClientIp& client_ip, const ServiceName& target_service);
+    // Structured logging with semantic types
+    void log_user_action(const UserName& username, const String& action, const ClientIp& client_ip = "");
+    void log_session_start(const SessionId& session_id, const UserName& username, const ClientIp& client_ip);
+    void log_session_end(const SessionId& session_id, const String& reason = "");
     void log_session_termination(const SessionId& session_id, const String& reason = "");
     void log_access_denied(const UserName& username, const ClientIp& client_ip, const String& resource, const String& reason = "");
     void log_security_violation(const ClientIp& client_ip, const String& violation_type, const String& details = "");
@@ -96,13 +76,13 @@ public:
     void log_throughput(size_t bytes_transferred, const String& direction = "total");
     
     // Static factory methods
-    static zerossg::shared_ptr<Logger> create(const String& name = "zerossg");
-    static zerossg::shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
-    static zerossg::shared_ptr<Logger> create_security_logger();
-    static zerossg::shared_ptr<Logger> create_audit_logger();
+    static SharedPtr<Logger> create(const String& name = "zerossg");
+    static SharedPtr<Logger> create_with_file_output(const String& name, const FileName& log_file);
+    static SharedPtr<Logger> create_security_logger();
+    static SharedPtr<Logger> create_audit_logger();
     
 private:
-    zerossg::shared_ptr<spdlog::logger> m_logger;
+    SharedPtr<spdlog::logger> m_logger;
     mutable mutex m_mutex;
     
     // Helper methods
@@ -111,7 +91,7 @@ private:
     String format_security_event(const SecurityEvent& event) const;
     
     // Field formatting for structured logging
-    String format_fields(const std::vector<std::pair<String, String>>& fields) const;
+    String format_fields(const vector<pair<String, String>>& fields) const;
     
     // Initialize default sinks
     void initialize_default_sinks();
@@ -122,36 +102,35 @@ class LoggerManager {
 public:
     static LoggerManager& instance();
     
-    shared_ptr<Logger> get_logger(const String& name = "default");
-    void set_global_logger(shared_ptr<Logger> logger);
-    
-    // Convenience methods for global logging
-    void info(const String& message);
-    void error(const String& message);
-    void warn(const String& message);
-    void debug(const String& message);
+    SharedPtr<Logger> get_logger(const String& name = "default");
+    void set_default_level(LogLevel level);
+    void add_file_sink(const FileName& filename, size_t max_size = 1048576, size_t max_files = 3);
+    void add_console_sink();
     
 private:
     LoggerManager() = default;
-    unordered_map<String, shared_ptr<Logger>> m_loggers;
-    shared_ptr<Logger> m_global_logger;
+    ~LoggerManager() = default;
+    
+    unordered_map<String, SharedPtr<Logger>> m_loggers;
     mutable mutex m_mutex;
+    LogLevel m_default_level = LogLevel::INFO;
 };
 
-// Convenience macros for logging
-#define LOG_INFO(component, message) \
-    zerossg::LoggerManager::instance().get_logger()->log_info(component, message)
+// Convenience functions for global logging
+inline void log_info(const String& message) {
+    LoggerManager::instance().get_logger()->info(message);
+}
 
-#define LOG_ERROR(component, message) \
-    zerossg::LoggerManager::instance().get_logger()->log_error(component, message)
+inline void log_error(const String& message) {
+    LoggerManager::instance().get_logger()->error(message);
+}
 
-#define LOG_DEBUG(component, message) \
-    zerossg::LoggerManager::instance().get_logger()->log_debug(component, message)
+inline void log_debug(const String& message) {
+    LoggerManager::instance().get_logger()->debug(message);
+}
 
-#define LOG_SECURITY_EVENT(event) \
-    zerossg::LoggerManager::instance().get_logger()->log_security_event(event)
-
-#define LOG_SESSION_EVENT(session_id, event_type, details) \
-    zerossg::LoggerManager::instance().get_logger()->log_session_event(session_id, event_type, details)
+inline void log_warn(const String& message) {
+    LoggerManager::instance().get_logger()->warn(message);
+}
 
 } // namespace zerossg
