@@ -1,8 +1,8 @@
 #pragma once
 
-// Project headers
-#include "common.hpp"
-#include "types.hpp"
+// C++23 module imports
+import zerossg.common;
+import zerossg.types;
 
 namespace zerossg {
 

@@ -1,19 +1,18 @@
 #pragma once
 
-// Project headers
-#include "zerossg/common.hpp"
-#include "zerossg/types.hpp"
-#include "zerossg/constants.hpp"
+// C++23 module imports
+import zerossg.common;
+import zerossg.types;
+import zerossg.constants;
 
-// Third-party library headers
-#include <nlohmann/json.hpp>
-#include <yaml-cpp/yaml.h>
+// Third-party library imports
+import <nlohmann/json.hpp>;
+import <yaml-cpp/yaml.h>;
 
-// C++ Standard Library headers
-#include <mutex>
-#include <string>
-#include <fstream>
-#include <chrono>
+// Standard library imports
+import <mutex>;
+import <fstream>;
+import <chrono>;
 
 namespace zerossg {
 

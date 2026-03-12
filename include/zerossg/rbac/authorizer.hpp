@@ -1,15 +1,13 @@
 #pragma once
 
-// Project headers
-#include "zerossg/interfaces.hpp"
+// C++23 module imports
+import zerossg.interfaces;
 
-// C++ Standard Library headers
-#include <mutex>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+// Standard library imports
+import <mutex>;
+import <unordered_map>;
+import <unordered_set>;
+import <vector>;
 
 namespace zerossg {
 

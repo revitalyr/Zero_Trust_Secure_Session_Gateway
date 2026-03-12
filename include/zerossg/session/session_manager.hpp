@@ -1,14 +1,14 @@
 #pragma once
 
-// Project headers
-#include "zerossg/interfaces.hpp"
+// C++23 module imports
+import zerossg.interfaces;
 
-// C++ Standard Library headers
-#include <atomic>
-#include <chrono>
-#include <mutex>
-#include <random>
-#include <string>
+// Standard library imports
+import <atomic>;
+import <chrono>;
+import <mutex>;
+import <random>;
+import <string>;
 
 namespace zerossg {
 

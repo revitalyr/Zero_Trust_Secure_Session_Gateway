@@ -1,11 +1,11 @@
 #pragma once
 
-// Project headers
-#include "zerossg/interfaces.hpp"
+// C++23 module imports
+import zerossg.interfaces;
 
-// C++ Standard Library headers
-#include <shared_mutex>
-#include <unordered_map>
+// Standard library imports
+import <shared_mutex>;
+import <unordered_map>;
 
 // OpenSSL headers
 #include <openssl/evp.h>
