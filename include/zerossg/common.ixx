@@ -45,6 +45,7 @@ export using milliseconds = std::chrono::milliseconds;
 export using seconds = std::chrono::seconds;
 
 // Semantic type aliases for basic types
+export using String = std::string;
 export using UserName = std::string;
 export using StringId = std::string;
 export using ServiceName = std::string;

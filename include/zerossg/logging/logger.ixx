@@ -1,7 +1,6 @@
 export module zerossg.logging.logger;
 
 // C++23 module imports
-import zerossg.common;
 import zerossg.interfaces;
 
 // Third-party library imports

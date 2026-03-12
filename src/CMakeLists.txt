@@ -39,6 +39,19 @@ target_link_libraries(zerossg_gateway
     ${YAML_CPP_LIBRARIES}
 )
 
+# Link against interface libraries for C++23 modules (only if CMake version supports modules)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    target_link_libraries(zerossg_gateway
+        zerossg.std
+        zerossg.common
+        zerossg.types
+        zerossg.interfaces
+        zerossg.auth.authenticator
+        zerossg.logging.logger
+        zerossg.session.session_manager
+    )
+endif()
+
 # Windows specific libraries
 if(WIN32)
     target_link_libraries(zerossg_gateway ws2_32 wsock32)

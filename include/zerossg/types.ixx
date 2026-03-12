@@ -1,11 +1,16 @@
 export module zerossg.types;
 
 export import zerossg.std;
-export import zerossg.common;
 
 export namespace zerossg {
 
+// Result template for error handling
+template<typename T>
+export using Result = std::expected<T, std::string>;
+
 // Basic type aliases
+export using String = std::string;
+export using ErrorMessage = std::string;
 export using UserName = std::string;
 export using PasswordHash = std::string;
 export using TokenString = std::string;
@@ -298,7 +303,9 @@ concept ValidTargetService = requires(T service) {
 };
 
 // Additional type aliases for config
+export using ConfigFileName = std::string;
 export using HostAddress = std::string;
+export using FileName = std::string;
 export using PortNo = uint16_t;
 export using Count = size_t;
 export using RateLimit = size_t;
@@ -319,5 +326,11 @@ export using Password = std::string;
 // Additional type aliases for sessions
 export using Hours = std::chrono::hours;
 export using SessionCount = size_t;
+
+// Additional type aliases for sessions and connections
+export using Sessions = std::vector<Session>;
+export using TargetServices = std::vector<TargetService>;
+export using TcpEndpoint = boost::asio::ip::tcp::endpoint;
+export using SslContext = boost::asio::ssl::context;
 
 } // namespace zerossg

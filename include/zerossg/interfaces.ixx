@@ -1,7 +1,6 @@
 export module zerossg.interfaces;
 
 // C++23 module imports
-import zerossg.common;
 export import zerossg.types;
 export import <memory>;
 

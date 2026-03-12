@@ -3,7 +3,7 @@ export module zerossg.auth.authenticator;
 // C++23 module imports
 export import zerossg.common;
 export import zerossg.types;
-export import zerossg.interfaces;
+import zerossg.interfaces;
 export import <memory>;
 export import <shared_mutex>;
 export import <unordered_map>;

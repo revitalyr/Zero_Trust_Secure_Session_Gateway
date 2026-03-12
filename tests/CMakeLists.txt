@@ -20,6 +20,19 @@ target_link_libraries(zerossg_tests
     ${YAML_CPP_LIBRARIES}
 )
 
+# Link against interface libraries for C++23 modules (only if CMake version supports modules)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    target_link_libraries(zerossg_tests
+        zerossg.std
+        zerossg.common
+        zerossg.types
+        zerossg.interfaces
+        zerossg.auth.authenticator
+        zerossg.logging.logger
+        zerossg.session.session_manager
+    )
+endif()
+
 # Include directories
 target_include_directories(zerossg_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
