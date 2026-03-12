@@ -2,8 +2,8 @@
 
 // C++23 module imports
 import zerossg.common;
-import zerossg.types;
 import zerossg.std;
+import zerossg.types;
 
 namespace zerossg {
 

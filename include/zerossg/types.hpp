@@ -2,12 +2,13 @@
 
 // C++23 module imports
 import zerossg.common;
-
-// Standard library imports
-#include <array>
-#include <span>
+import zerossg.std;
 
 namespace zerossg {
+
+// Import standard library types
+using std::string_view;
+using std::system_clock;
 
 // Modern enum class with explicit underlying type
 enum class Role : uint8_t {

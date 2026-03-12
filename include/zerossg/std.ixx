@@ -1,7 +1,8 @@
-export module std;
+export module zerossg.std;
 
 // Standard Library headers (alphabetical order)
 export import <algorithm>;
+export import <array>;
 export import <atomic>;
 export import <chrono>;
 export import <concepts>;
@@ -36,6 +37,7 @@ export namespace std {
     using std::string_view;
     
     // Container types
+    using std::array;
     using std::vector;
     using std::unordered_map;
     using std::unordered_set;
@@ -49,6 +51,7 @@ export namespace std {
     using std::lock_guard;
     
     // Time types
+    using std::chrono::system_clock;
     using std::chrono::seconds;
     using std::chrono::milliseconds;
     using std::chrono::hours;

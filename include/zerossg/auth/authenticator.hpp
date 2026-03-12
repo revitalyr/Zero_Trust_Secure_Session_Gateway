@@ -4,18 +4,26 @@
 import zerossg.interfaces;
 import zerossg.common;
 import zerossg.types;
-import zerossg.std;
-
-// Standard library imports
-#include <mutex>
-#include <unordered_map>
-#include <string_view>
-
-// OpenSSL headers
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 
 namespace zerossg {
+
+// Import semantic aliases for cleaner code
+using zerossg::Result;
+using zerossg::String;
+using zerossg::UserName;
+using zerossg::PasswordHash;
+using zerossg::TokenString;
+using zerossg::User;
+using zerossg::UnorderedMap;
+using zerossg::SecretKey;
+using zerossg::SessionId;
+using zerossg::UserCount;
+using zerossg::Strings;
+
+// Import standard library types
+using std::string_view;
+using std::seconds;
+using std::system_clock;
 
 class AuthenticationManager : public IAuthenticator {
 public:
