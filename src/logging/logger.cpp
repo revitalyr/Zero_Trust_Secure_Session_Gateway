@@ -1,6 +1,7 @@
 // C++23 module imports
 import zerossg.interfaces;
 import zerossg.constants;
+import zerossg.logging.logger;
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -381,7 +382,7 @@ void Logger::initialize_default_sinks() {
     sinks.push_back(console_sink);
     
     // Create logger with sinks
-    m_logger = std::make_shared<spdlog::logger>("zerossg", sinks.begin(), sinks.end());
+    m_logger = std::make_shared<spdlog::logger>("zerossg", sinks.begin(), sinks.end()), sinks.end());;
     
     // Set default pattern and level
     m_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");

@@ -45,8 +45,8 @@ TEST_F(SessionManagerTest, CreateSession) {
     auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_EQ(get_result.value().username, "testuser");
-    EXPECT_EQ(get_result.value().client_ip, *client_ip);
-    EXPECT_EQ(get_result.value().target_service, *target_service);
+    EXPECT_EQ(get_result.value().client_ip, client_ip);
+    EXPECT_EQ(get_result.value().target_service, target_service);
     EXPECT_TRUE(get_result.value().active);
 }
 
@@ -63,8 +63,8 @@ TEST_F(SessionManagerTest, SessionValidation) {
     auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_EQ(get_result.value().username, "testuser");
-    EXPECT_EQ(get_result.value().client_ip, *client_ip);
-    EXPECT_EQ(get_result.value().target_service, *target_service);
+    EXPECT_EQ(get_result.value().client_ip, client_ip);
+    EXPECT_EQ(get_result.value().target_service, target_service);
     EXPECT_TRUE(get_result.value().active);
     
     // Validate session
@@ -170,7 +170,7 @@ TEST_F(SessionManagerTest, SessionExtension) {
     EXPECT_TRUE(session_result.is_success());
     
     // Get original expiry time
-    auto get_result = session_manager->get_session(session_result.value());
+    auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     auto original_expiry = get_result.value().expires_at;
     
@@ -179,7 +179,7 @@ TEST_F(SessionManagerTest, SessionExtension) {
     EXPECT_TRUE(extend_result.is_success());
     
     // Verify extension
-    get_result = session_manager->get_session(session_result.value());
+    get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     auto new_expiry = get_result.value().expires_at;
     EXPECT_GT(new_expiry, original_expiry);
@@ -254,7 +254,7 @@ TEST_F(SessionManagerTest, CleanupExpiredSessions) {
     EXPECT_TRUE(session_result.is_success());
     
     // Manually expire the session by setting expiry time in the past
-    auto get_result = session_manager->get_session(session_result.value());
+    auto get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_success());
     Session session = get_result.value();
     session.expires_at = std::chrono::system_clock::now() - std::chrono::seconds(1);
@@ -276,7 +276,7 @@ TEST_F(SessionManagerTest, CleanupExpiredSessions) {
     EXPECT_EQ(active_result.value().size(), 0);
     
     // Trying to get expired session should fail
-    get_result = session_manager->get_session(session_result.value());
+    get_result = session_manager->get_session(*session_result.value());
     EXPECT_TRUE(get_result.is_error());
     EXPECT_EQ(get_result.error(), "Session has expired: " + session_result.value());
 }

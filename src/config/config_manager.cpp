@@ -3,10 +3,8 @@ import zerossg.constants;
 import zerossg.interfaces;
 import zerossg.std;
 import zerossg.config.config_manager;
-
-// Third-party library imports
-import <nlohmann/json.hpp>;
-import <yaml-cpp/yaml.h>;
+import zerossg.third_party.nlohmann_json;
+import zerossg.third_party.yaml_cpp;
 
 namespace zerossg {
 

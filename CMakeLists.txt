@@ -160,6 +160,27 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     target_compile_features(zerossg.cli.cli_interface INTERFACE cxx_std_23)
     target_link_libraries(zerossg.cli.cli_interface INTERFACE zerossg.std)
     
+    # Create interface library for third-party nlohmann/json
+    add_library(zerossg.third_party.nlohmann_json INTERFACE 
+        include/zerossg/third_party/nlohmann_json.ixx
+    )
+    target_compile_features(zerossg.third_party.nlohmann_json INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.third_party.nlohmann_json INTERFACE)
+    
+    # Create interface library for third-party OpenSSL
+    add_library(zerossg.third_party.openssl INTERFACE 
+        include/zerossg/third_party/openssl.ixx
+    )
+    target_compile_features(zerossg.third_party.openssl INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.third_party.openssl INTERFACE)
+    
+    # Create interface library for third-party yaml-cpp
+    add_library(zerossg.third_party.yaml_cpp INTERFACE 
+        include/zerossg/third_party/yaml_cpp.ixx
+    )
+    target_compile_features(zerossg.third_party.yaml_cpp INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.third_party.yaml_cpp INTERFACE)
+    
     # Create interface library for session manager
     add_library(zerossg.session.session_manager INTERFACE 
         include/zerossg/session/session_manager.ixx

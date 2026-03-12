@@ -1,12 +1,10 @@
 // Project headers
 import zerossg.interfaces;
 import zerossg.logging.logger;
-#include <iostream>
-#include <memory>
-#include <string>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
+import zerossg.proxy.proxy_manager;
+
+// Standard library imports
+import zerossg.std;
 
 namespace zerossg {
     // Import std utilities

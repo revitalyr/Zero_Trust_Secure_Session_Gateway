@@ -3,17 +3,11 @@ import zerossg.constants;
 import zerossg.types;
 import zerossg.interfaces;
 import zerossg.auth.authenticator;
+import zerossg.third_party.nlohmann_json;
+import zerossg.third_party.openssl;
 
 // Standard library imports
 import zerossg.std;
-import <nlohmann/json.hpp>;
-
-// OpenSSL imports
-import <openssl/bio.h>;
-import <openssl/buffer.h>;
-import <openssl/evp.h>;
-import <openssl/hmac.h>;
-import <openssl/sha.h>;
 
 using json = nlohmann::json;
 
