@@ -80,6 +80,11 @@ endif()
 include_directories(include)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Add vcpkg include directories if using vcpkg
+if(DEFINED ENV{VCPKG_ROOT})
+    include_directories($ENV{VCPKG_ROOT}/installed/x64-windows/include)
+endif()
+
 # Add subdirectories
 add_subdirectory(src)
 

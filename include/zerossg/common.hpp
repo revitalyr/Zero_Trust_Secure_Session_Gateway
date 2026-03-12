@@ -91,10 +91,30 @@ using Roles = std::vector<T>;
 // Semantic type aliases for plural collections
 template<typename T>
 using Users = std::vector<T>;
+
+// Forward declarations for types that will be defined elsewhere
+struct Session;
+struct TargetService;
+struct SecurityEvent;
+struct ConnectionInfo;
+
+// Semantic type aliases for plural collections (using forward declarations)
 using Sessions = std::vector<Session>;
 using TargetServices = std::vector<TargetService>;
 using SecurityEvents = std::vector<SecurityEvent>;
 using ConnectionInfos = std::vector<ConnectionInfo>;
+
+// Additional semantic aliases for standard library types
+template<typename T>
+using Vector = std::vector<T>;
+template<typename T>
+using Optional = std::optional<T>;
+template<typename Key, typename Value>
+using UnorderedMap = std::unordered_map<Key, Value>;
+template<typename T>
+using UnorderedSet = std::unordered_set<T>;
+using String = std::string;
+using StringView = std::string_view;
 
 // Smart pointer aliases
 template<typename T>
@@ -128,7 +148,7 @@ constexpr Result<T> make_result_success(T&& value) noexcept {
 
 template<typename T>
 constexpr Result<T> make_result_error(std::string error) noexcept {
-    return std::unexpected<T>(std::move(error));
+    return std::unexpected(std::move(error));
 }
 
 // Specialization for void using std::expected
@@ -139,7 +159,26 @@ inline constexpr ResultVoid make_result_success() noexcept {
 }
 
 inline constexpr ResultVoid make_result_error(std::string error) noexcept {
-    return std::unexpected<void>(std::move(error));
+    return std::unexpected(std::move(error));
+}
+
+// Helper functions for Result checking (MSVC compatibility)
+template<typename T>
+constexpr bool is_success(const Result<T>& result) noexcept {
+    return result.has_value();
+}
+
+template<typename T>
+constexpr bool is_error(const Result<T>& result) noexcept {
+    return !result.has_value();
+}
+
+constexpr bool is_success(const ResultVoid& result) noexcept {
+    return result.has_value();
+}
+
+constexpr bool is_error(const ResultVoid& result) noexcept {
+    return !result.has_value();
 }
 
 // Concepts for type constraints
