@@ -26,23 +26,9 @@ using zerossg::FORMAT_YML;
 using zerossg::FORMAT_JSON;
 
 // Import standard library types for module compatibility
-using std::lock_guard;
-using std::mutex;
-using std::stoi;
-using std::exception;
-using std::transform;
-using std::tolower;
-using std::filesystem::exists;
-using std::to_string;
-using std::getenv;
 using zerossg::make_result_error;
 
 // Additional standard library types needed
-using std::string;
-using std::vector;
-using std::unordered_map;
-using std::ifstream;
-using std::ofstream;
 using json = nlohmann::json;
 using YAML::Node;
 using YAML::Exception;
@@ -59,7 +45,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
             return make_result_error(ERROR_CONFIG_FILE_NOT_FOUND + config_file);
         }
         
-        string extension = get_file_extension(config_file);
+        std::string extension = get_file_extension(config_file);
         
         if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
@@ -120,11 +106,11 @@ Strings ConfigManager::get_string_array(const String& key) {
     
     try {
         auto json_value = m_config_json;
-        std::vector<string> keys;
+        std::vector<std::string> keys;
         size_t pos = 0;
-        string key_copy = key;
+        std::string key_copy = key;
         
-        while ((pos = key_copy.find('.')) != string::npos) {
+        while ((pos = key_copy.find('.')) != std::string::npos) {
             keys.push_back(key_copy.substr(0, pos));
             key_copy.erase(0, pos + 1);
         }
@@ -161,20 +147,20 @@ Result<TargetService> ConfigManager::get_target_service(const ServiceName& servi
         return make_result_error("Target service not found: " + service_name);
     }
     
-    return Result<TargetService>{it->second);
+    return Result<TargetService>{it->second};
 }
 
-Result<vector<TargetService>> ConfigManager::get_all_target_services() {
+Result<std::vector<TargetService>> ConfigManager::get_all_target_services() {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
-    vector<TargetService> services;
+    std::vector<TargetService> services;
     services.reserve(m_target_services.size());
     
     for (const auto& pair : m_target_services) {
         services.push_back(pair.second);
     }
     
-    return Result<vector<TargetService>>::success(std::move(services));
+    return Result<std::vector<TargetService>>::success(std::move(services));
 }
 
 Result<void> ConfigManager::validate_config() {
@@ -211,7 +197,7 @@ Result<void> ConfigManager::validate_config() {
     return Result<void>{};
 }
 
-Result<void> ConfigManager::save_config(const string& config_file) {
+Result<void> ConfigManager::save_config(const std::string& config_file) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
@@ -223,48 +209,44 @@ Result<void> ConfigManager::save_config(const string& config_file) {
         config["server"]["tls_cert_file"] = m_server_config.tls_cert_file;
         config["server"]["tls_key_file"] = m_server_config.tls_key_file;
         config["server"]["ca_cert_file"] = m_server_config.ca_cert_file;
-        config["server"]["thread_count"] = m_server_config.thread_count;
-        config["server"]["verify_client_certificates"] = m_server_config.verify_client_certificates;
-        config["server"]["cipher_list"] = m_server_config.cipher_list;
         
-        config["security"]["rate_limit_max_requests"] = m_security_config.rate_limit_max_requests;
-        config["security"]["rate_limit_window"] = m_security_config.rate_limit_window.count();
-        config["security"]["brute_force_threshold"] = m_security_config.brute_force_threshold;
-        config["security"]["brute_force_window"] = m_security_config.brute_force_window.count();
-        config["security"]["default_block_duration"] = m_security_config.default_block_duration.count();
-        config["security"]["enable_ip_whitelist"] = m_security_config.enable_ip_whitelist;
-        config["security"]["allowed_ips"] = m_security_config.allowed_ips;
-        config["security"]["enable_ip_blacklist"] = m_security_config.enable_ip_blacklist;
-        config["security"]["blocked_ips"] = m_security_config.blocked_ips;
+        config["security"]["jwt_secret"] = m_security_config.jwt_secret;
+        config["security"]["token_expiry_hours"] = m_security_config.token_expiry_hours;
+        config["security"]["max_login_attempts"] = m_security_config.max_login_attempts;
+        config["security"]["lockout_duration_minutes"] = m_security_config.lockout_duration_minutes;
         
-        config["session"]["default_timeout"] = m_session_config.default_timeout.count();
-        config["session"]["max_sessions_per_user"] = m_session_config.max_sessions_per_user;
-        config["session"]["cleanup_interval"] = m_session_config.cleanup_interval.count();
-        config["session"]["enable_session_persistence"] = m_session_config.enable_session_persistence;
-        config["session"]["persistence_file"] = m_session_config.persistence_file;
+        config["session"]["timeout_seconds"] = m_session_config.timeout_seconds;
+        config["session"]["max_concurrent_sessions"] = m_session_config.max_concurrent_sessions;
         
         config["logging"]["level"] = m_logging_config.level;
-        config["logging"]["pattern"] = m_logging_config.pattern;
-        config["logging"]["enable_console_output"] = m_logging_config.enable_console_output;
-        config["logging"]["enable_file_output"] = m_logging_config.enable_file_output;
-        config["logging"]["log_file"] = m_logging_config.log_file;
-        config["logging"]["max_file_size"] = m_logging_config.max_file_size;
+        config["logging"]["file_path"] = m_logging_config.file_path;
+        config["logging"]["max_file_size_mb"] = m_logging_config.max_file_size_mb;
         config["logging"]["max_files"] = m_logging_config.max_files;
-        config["logging"]["enable_security_log"] = m_logging_config.enable_security_log;
-        config["logging"]["security_log_file"] = m_logging_config.security_log_file;
-        config["logging"]["enable_audit_log"] = m_logging_config.enable_audit_log;
-        config["logging"]["audit_log_file"] = m_logging_config.audit_log_file;
         
-        config["database"]["type"] = m_database_config.type;
-        config["database"]["connection_string"] = m_database_config.connection_string;
+        config["database"]["host"] = m_database_config.host;
+        config["database"]["port"] = m_database_config.port;
+        config["database"]["name"] = m_database_config.name;
         config["database"]["username"] = m_database_config.username;
         config["database"]["password"] = m_database_config.password;
-        config["database"]["enable_ssl"] = m_database_config.enable_ssl;
-        config["database"]["connection_pool_size"] = m_database_config.connection_pool_size;
-        config["database"]["connection_timeout"] = m_database_config.connection_timeout.count();
+        config["database"]["ssl_mode"] = m_database_config.ssl_mode;
         
-        // Write to file
-        string json_str = config.dump(4);
+        // Save target services
+        config["target_services"] = nlohmann::json::array();
+        for (const auto& pair : m_target_services) {
+            const auto& service = pair.second;
+            nlohmann::json service_json;
+            service_json["name"] = service.name;
+            service_json["host"] = service.host;
+            service_json["port"] = service.port;
+            service_json["tls_enabled"] = service.tls_enabled;
+            service_json["allowed_roles"] = nlohmann::json::array();
+            for (const auto& role : service.allowed_roles) {
+                service_json["allowed_roles"].push_back(role_to_string(role));
+            }
+            config["target_services"].push_back(service_json);
+        }
+        
+        std::string json_str = config.dump(4);
         std::ofstream file(config_file);
         if (!file.is_open()) {
             return make_result_error("Failed to open configuration file for writing: " + config_file);
@@ -275,7 +257,7 @@ Result<void> ConfigManager::save_config(const string& config_file) {
         
         return Result<void>{};
     } catch (const std::exception& e) {
-        return make_result_error("Failed to save configuration: " + string(e.what()));
+        return make_result_error("Failed to save configuration: " + std::string(e.what()));
     }
 }
 
@@ -285,99 +267,53 @@ Result<void> ConfigManager::reload_config() {
     return Result<void>{};
 }
 
-void ConfigManager::load_from_environment() {
-    // Server configuration
-    string env_listen_address = get_env_var("ZEROSSG_LISTEN_ADDRESS");
-    if (!env_listen_address.empty()) {
-        m_server_config.listen_address = env_listen_address;
-    }
-    
-    string env_listen_port = get_env_var("ZEROSSG_LISTEN_PORT");
-    if (!env_listen_port.empty()) {
-        m_server_config.listen_port = static_cast<uint16_t>(std::stoi(env_listen_port));
-    }
-    
-    string env_tls_cert = get_env_var("ZEROSSG_TLS_CERT_FILE");
-    if (!env_tls_cert.empty()) {
-        m_server_config.tls_cert_file = env_tls_cert;
-    }
-    
-    string env_tls_key = get_env_var("ZEROSSG_TLS_KEY_FILE");
-    if (!env_tls_key.empty()) {
-        m_server_config.tls_key_file = env_tls_key;
-    }
-    
-    // Security configuration
-    string env_rate_limit = get_env_var("ZEROSSG_RATE_LIMIT_MAX_REQUESTS");
-    if (!env_rate_limit.empty()) {
-        m_security_config.rate_limit_max_requests = static_cast<size_t>(std::stoi(env_rate_limit));
-    }
-    
-    // Logging configuration
-    string env_log_level = get_env_var("ZEROSSG_LOG_LEVEL");
-    if (!env_log_level.empty()) {
-        m_logging_config.level = env_log_level;
-    }
-    
-    string env_log_file = get_env_var("ZEROSSG_LOG_FILE");
-    if (!env_log_file.empty()) {
-        m_logging_config.log_file = env_log_file;
-    }
-}
+// Private methods implementation
 
-string ConfigManager::get_env_var(const string& key, const string& default_value) {
-    const char* value = std::getenv(key.c_str());
-    return value ? string(value) : default_value;
-}
-
-Result<void> ConfigManager::load_yaml_config(const string& config_file) {
+Result<void> ConfigManager::load_yaml_config(const std::string& config_file) {
     try {
-        YAML::Node yaml_config = YAML::LoadFile(config_file);
+        YAML::Node config = YAML::LoadFile(config_file);
         
         // Convert YAML to JSON for easier processing
-        nlohmann::json config_json = nlohmann::json::parse(YAML::Dump(yaml_config));
-        m_config_json = config_json;
+        // This is a simplified approach - in production would use proper YAML parsing
+        std::string json_str = YAML::Dump(config);
+        m_config_json = json.parse(json_str);
         
-        // Parse configuration sections
-        parse_server_config(config_json);
-        parse_security_config(config_json);
-        parse_session_config(config_json);
-        parse_logging_config(config_json);
-        parse_database_config(config_json);
-        parse_target_services(config_json);
+        parse_server_config(m_config_json);
+        parse_security_config(m_config_json);
+        parse_session_config(m_config_json);
+        parse_logging_config(m_config_json);
+        parse_database_config(m_config_json);
+        parse_target_services(m_config_json);
         
         return Result<void>{};
     } catch (const YAML::Exception& e) {
-        return make_result_error("YAML parsing error: " + string(e.what()));
+        return make_result_error("YAML parsing error: " + std::string(e.what()));
     } catch (const std::exception& e) {
-        return make_result_error("Failed to load YAML configuration: " + string(e.what()));
+        return make_result_error("Failed to load YAML configuration: " + std::string(e.what()));
     }
 }
 
-Result<void> ConfigManager::load_json_config(const string& config_file) {
+Result<void> ConfigManager::load_json_config(const std::string& config_file) {
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
             return make_result_error("Failed to open configuration file: " + config_file);
         }
         
-        nlohmann::json config_json;
-        file >> config_json;
-        m_config_json = config_json;
+        file >> m_config_json;
         
-        // Parse configuration sections
-        parse_server_config(config_json);
-        parse_security_config(config_json);
-        parse_session_config(config_json);
-        parse_logging_config(config_json);
-        parse_database_config(config_json);
-        parse_target_services(config_json);
+        parse_server_config(m_config_json);
+        parse_security_config(m_config_json);
+        parse_session_config(m_config_json);
+        parse_logging_config(m_config_json);
+        parse_database_config(m_config_json);
+        parse_target_services(m_config_json);
         
         return Result<void>{};
     } catch (const nlohmann::json::exception& e) {
-        return make_result_error("JSON parsing error: " + string(e.what()));
+        return make_result_error("JSON parsing error: " + std::string(e.what()));
     } catch (const std::exception& e) {
-        return make_result_error("Failed to load JSON configuration: " + string(e.what()));
+        return make_result_error("Failed to load JSON configuration: " + std::string(e.what()));
     }
 }
 
@@ -390,9 +326,6 @@ void ConfigManager::parse_server_config(const nlohmann::json& config) {
         m_server_config.tls_cert_file = server.value("tls_cert_file", m_server_config.tls_cert_file);
         m_server_config.tls_key_file = server.value("tls_key_file", m_server_config.tls_key_file);
         m_server_config.ca_cert_file = server.value("ca_cert_file", m_server_config.ca_cert_file);
-        m_server_config.thread_count = server.value("thread_count", m_server_config.thread_count);
-        m_server_config.verify_client_certificates = server.value("verify_client_certificates", m_server_config.verify_client_certificates);
-        m_server_config.cipher_list = server.value("cipher_list", m_server_config.cipher_list);
     }
 }
 
@@ -400,15 +333,10 @@ void ConfigManager::parse_security_config(const nlohmann::json& config) {
     if (config.contains("security")) {
         const auto& security = config["security"];
         
-        m_security_config.rate_limit_max_requests = security.value("rate_limit_max_requests", m_security_config.rate_limit_max_requests);
-        m_security_config.rate_limit_window = seconds(security.value("rate_limit_window", static_cast<int>(m_security_config.rate_limit_window.count())));
-        m_security_config.brute_force_threshold = security.value("brute_force_threshold", m_security_config.brute_force_threshold);
-        m_security_config.brute_force_window = seconds(security.value("brute_force_window", static_cast<int>(m_security_config.brute_force_window.count())));
-        m_security_config.default_block_duration = milliseconds(security.value("default_block_duration", static_cast<int>(m_security_config.default_block_duration.count())));
-        m_security_config.enable_ip_whitelist = security.value("enable_ip_whitelist", m_security_config.enable_ip_whitelist);
-        m_security_config.allowed_ips = ConfigUtils::parse_string_array(security.value("allowed_ips", nlohmann::json::array()));
-        m_security_config.enable_ip_blacklist = security.value("enable_ip_blacklist", m_security_config.enable_ip_blacklist);
-        m_security_config.blocked_ips = ConfigUtils::parse_string_array(security.value("blocked_ips", nlohmann::json::array()));
+        m_security_config.jwt_secret = security.value("jwt_secret", m_security_config.jwt_secret);
+        m_security_config.token_expiry_hours = security.value("token_expiry_hours", m_security_config.token_expiry_hours);
+        m_security_config.max_login_attempts = security.value("max_login_attempts", m_security_config.max_login_attempts);
+        m_security_config.lockout_duration_minutes = security.value("lockout_duration_minutes", m_security_config.lockout_duration_minutes);
     }
 }
 
@@ -416,11 +344,8 @@ void ConfigManager::parse_session_config(const nlohmann::json& config) {
     if (config.contains("session")) {
         const auto& session = config["session"];
         
-        m_session_config.default_timeout = seconds(session.value("default_timeout", static_cast<int>(m_session_config.default_timeout.count())));
-        m_session_config.max_sessions_per_user = session.value("max_sessions_per_user", m_session_config.max_sessions_per_user);
-        m_session_config.cleanup_interval = seconds(session.value("cleanup_interval", static_cast<int>(m_session_config.cleanup_interval.count())));
-        m_session_config.enable_session_persistence = session.value("enable_session_persistence", m_session_config.enable_session_persistence);
-        m_session_config.persistence_file = session.value("persistence_file", m_session_config.persistence_file);
+        m_session_config.timeout_seconds = session.value("timeout_seconds", m_session_config.timeout_seconds);
+        m_session_config.max_concurrent_sessions = session.value("max_concurrent_sessions", m_session_config.max_concurrent_sessions);
     }
 }
 
@@ -429,16 +354,9 @@ void ConfigManager::parse_logging_config(const nlohmann::json& config) {
         const auto& logging = config["logging"];
         
         m_logging_config.level = logging.value("level", m_logging_config.level);
-        m_logging_config.pattern = logging.value("pattern", m_logging_config.pattern);
-        m_logging_config.enable_console_output = logging.value("enable_console_output", m_logging_config.enable_console_output);
-        m_logging_config.enable_file_output = logging.value("enable_file_output", m_logging_config.enable_file_output);
-        m_logging_config.log_file = logging.value("log_file", m_logging_config.log_file);
-        m_logging_config.max_file_size = logging.value("max_file_size", m_logging_config.max_file_size);
+        m_logging_config.file_path = logging.value("file_path", m_logging_config.file_path);
+        m_logging_config.max_file_size_mb = logging.value("max_file_size_mb", m_logging_config.max_file_size_mb);
         m_logging_config.max_files = logging.value("max_files", m_logging_config.max_files);
-        m_logging_config.enable_security_log = logging.value("enable_security_log", m_logging_config.enable_security_log);
-        m_logging_config.security_log_file = logging.value("security_log_file", m_logging_config.security_log_file);
-        m_logging_config.enable_audit_log = logging.value("enable_audit_log", m_logging_config.enable_audit_log);
-        m_logging_config.audit_log_file = logging.value("audit_log_file", m_logging_config.audit_log_file);
     }
 }
 
@@ -446,27 +364,26 @@ void ConfigManager::parse_database_config(const nlohmann::json& config) {
     if (config.contains("database")) {
         const auto& database = config["database"];
         
-        m_database_config.type = database.value("type", m_database_config.type);
-        m_database_config.connection_string = database.value("connection_string", m_database_config.connection_string);
+        m_database_config.host = database.value("host", m_database_config.host);
+        m_database_config.port = database.value("port", m_database_config.port);
+        m_database_config.name = database.value("name", m_database_config.name);
         m_database_config.username = database.value("username", m_database_config.username);
         m_database_config.password = database.value("password", m_database_config.password);
-        m_database_config.enable_ssl = database.value("enable_ssl", m_database_config.enable_ssl);
-        m_database_config.connection_pool_size = database.value("connection_pool_size", m_database_config.connection_pool_size);
-        m_database_config.connection_timeout = seconds(database.value("connection_timeout", static_cast<int>(m_database_config.connection_timeout.count())));
+        m_database_config.ssl_mode = database.value("ssl_mode", m_database_config.ssl_mode);
     }
 }
 
 void ConfigManager::parse_target_services(const nlohmann::json& config) {
+    m_target_services.clear();
+    
     if (config.contains("target_services")) {
         const auto& services = config["target_services"];
-        
-        if (services.is_object()) {
-            for (auto& [name, service_json] : services.items()) {
+        if (services.is_array()) {
+            for (const auto& service_json : services) {
                 auto service_result = parse_target_service(service_json);
                 if (service_result.is_success()) {
-                    auto service = service_result.value();
-                    service.name = name; // Use the key as the service name
-                    m_target_services[name] = service;
+                    const auto& service = service_result.value();
+                    m_target_services[service.name] = service;
                 }
             }
         }
@@ -477,6 +394,7 @@ Result<TargetService> ConfigManager::parse_target_service(const nlohmann::json& 
     try {
         TargetService service;
         
+        service.name = service_json.value("name", "");
         service.host = service_json.value("host", "");
         service.port = service_json.value("port", 0);
         service.tls_enabled = service_json.value("tls_enabled", false);
@@ -487,7 +405,7 @@ Result<TargetService> ConfigManager::parse_target_service(const nlohmann::json& 
             if (roles_json.is_array()) {
                 for (const auto& role_json : roles_json) {
                     if (role_json.is_string()) {
-                        string role_str = role_json.get<string>();
+                        std::string role_str = role_json.get<std::string>();
                         try {
                             Role role = string_to_role(role_str);
                             service.allowed_roles.push_back(role);
@@ -503,9 +421,9 @@ Result<TargetService> ConfigManager::parse_target_service(const nlohmann::json& 
             return make_result_error("Target service must have host and port");
         }
         
-        return Result<TargetService>{service);
+        return Result<TargetService>{service};
     } catch (const std::exception& e) {
-        return make_result_error("Failed to parse target service: " + string(e.what()));
+        return make_result_error("Failed to parse target service: " + std::string(e.what()));
     }
 }
 
@@ -515,73 +433,86 @@ Result<void> ConfigManager::validate_server_config() {
         return make_result_error("Invalid listen address: " + m_server_config.listen_address);
     }
     
-    if (!ConfigUtils::is_valid_port(m_server_config.listen_port)) {
-        return make_result_error("Invalid listen port: " + std::to_string(m_server_config.listen_port));
-    }
-    
-    if (m_server_config.tls_cert_file.empty() || m_server_config.tls_key_file.empty()) {
-        return make_result_error("TLS certificate and key files must be specified");
+    if (m_server_config.listen_port < 1 || m_server_config.listen_port > 65535) {
+        return make_result_error("Server port must be between 1 and 65535");
     }
     
     return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_security_config() {
-    if (m_security_config.rate_limit_max_requests == 0) {
-        return make_result_error("Rate limit max requests must be greater than 0");
+    if (m_security_config.jwt_secret.length() < 16) {
+        return make_result_error("JWT secret must be at least 16 characters long");
     }
     
-    if (m_security_config.rate_limit_window.count() == 0) {
-        return make_result_error("Rate limit window must be greater than 0");
-    }
-    
-    if (m_security_config.brute_force_threshold == 0) {
-        return make_result_error("Brute force threshold must be greater than 0");
+    if (m_security_config.token_expiry_hours < 1 || m_security_config.token_expiry_hours > 168) {
+        return make_result_error("Token expiry must be between 1 and 168 hours");
     }
     
     return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_session_config() {
-    if (m_session_config.default_timeout.count() == 0) {
-        return make_result_error("Session default timeout must be greater than 0");
+    if (m_session_config.timeout_seconds < 60 || m_session_config.timeout_seconds > 86400) {
+        return make_result_error("Session timeout must be between 60 and 86400 seconds");
     }
     
-    if (m_session_config.max_sessions_per_user == 0) {
-        return make_result_error("Max sessions per user must be greater than 0");
+    if (m_session_config.max_concurrent_sessions < 1 || m_session_config.max_concurrent_sessions > 1000) {
+        return make_result_error("Max concurrent sessions must be between 1 and 1000");
     }
     
     return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_logging_config() {
-    if (!ConfigUtils::is_valid_log_level(m_logging_config.level)) {
+    if (m_logging_config.level != "trace" && m_logging_config.level != "debug" && 
+        m_logging_config.level != "info" && m_logging_config.level != "warn" && 
+        m_logging_config.level != "error" && m_logging_config.level != "critical") {
         return make_result_error("Invalid log level: " + m_logging_config.level);
+    }
+    
+    if (m_logging_config.max_file_size_mb < 1 || m_logging_config.max_file_size_mb > 1000) {
+        return make_result_error("Max file size must be between 1 and 1000 MB");
+    }
+    
+    if (m_logging_config.max_files < 1 || m_logging_config.max_files > 100) {
+        return make_result_error("Max files must be between 1 and 100");
     }
     
     return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_database_config() {
-    if (m_database_config.type.empty()) {
-        return make_result_error("Database type must be specified");
+    if (m_database_config.host.empty()) {
+        return make_result_error("Database host cannot be empty");
     }
     
-    if (m_database_config.connection_string.empty()) {
-        return make_result_error("Database connection string must be specified");
+    if (m_database_config.port < 1 || m_database_config.port > 65535) {
+        return make_result_error("Database port must be between 1 and 65535");
+    }
+    
+    if (m_database_config.name.empty()) {
+        return make_result_error("Database name cannot be empty");
     }
     
     return Result<void>{};
 }
 
 Result<void> ConfigManager::validate_target_services() {
-    for (const auto& [name, service] : m_target_services) {
-        if (service.host.empty()) {
-            return make_result_error("Target service '" + name + "' must have a host");
+    for (const auto& pair : m_target_services) {
+        const auto& service = pair.second;
+        const auto& name = service.name;
+        
+        if (service.name.empty()) {
+            return make_result_error("Target service name cannot be empty");
         }
         
-        if (!ConfigUtils::is_valid_port(service.port)) {
-            return make_result_error("Target service '" + name + "' has invalid port: " + std::to_string(service.port));
+        if (service.host.empty()) {
+            return make_result_error("Target service '" + name + "' host cannot be empty");
+        }
+        
+        if (service.port < 1 || service.port > 65535) {
+            return make_result_error("Target service '" + name + "' port must be between 1 and 65535");
         }
         
         if (service.allowed_roles.empty()) {
@@ -592,14 +523,38 @@ Result<void> ConfigManager::validate_target_services() {
     return Result<void>{};
 }
 
-string ConfigManager::get_config_value(const string& key, const string& default_value) {
+void ConfigManager::load_from_environment() {
+    // Override configuration with environment variables
+    if (const char* env_log_level = std::getenv("ZEROSSG_LOG_LEVEL")) {
+        m_config_json["logging"]["level"] = String(env_log_level);
+    }
+    
+    if (const char* env_db_host = std::getenv("ZEROSSG_DB_HOST")) {
+        m_config_json["database"]["host"] = String(env_db_host);
+    }
+    
+    if (const char* env_db_port = std::getenv("ZEROSSG_DB_PORT")) {
+        m_config_json["database"]["port"] = std::stoi(std::string(env_db_port));
+    }
+    
+    if (const char* env_db_name = std::getenv("ZEROSSG_DB_NAME")) {
+        m_config_json["database"]["name"] = String(env_db_name);
+    }
+    
+    if (const char* env_jwt_secret = std::getenv("ZEROSSG_JWT_SECRET")) {
+        m_config_json["security"]["jwt_secret"] = String(env_jwt_secret);
+    }
+}
+
+// Helper methods for ConfigManager
+std::string ConfigManager::get_config_value(const std::string& key, const std::string& default_value) {
     try {
         auto json_value = m_config_json;
-        std::vector<string> keys;
+        std::vector<std::string> keys;
         size_t pos = 0;
-        string key_copy = key;
+        std::string key_copy = key;
         
-        while ((pos = key_copy.find('.')) != string::npos) {
+        while ((pos = key_copy.find('.')) != std::string::npos) {
             keys.push_back(key_copy.substr(0, pos));
             key_copy.erase(0, pos + 1);
         }
@@ -613,7 +568,7 @@ string ConfigManager::get_config_value(const string& key, const string& default_
         }
         
         if (json_value.is_string()) {
-            return json_value.get<string>();
+            return json_value.get<std::string>();
         } else if (json_value.is_number() || json_value.is_boolean()) {
             return json_value.dump();
         }
@@ -624,14 +579,14 @@ string ConfigManager::get_config_value(const string& key, const string& default_
     return default_value;
 }
 
-bool ConfigManager::file_exists(const string& filename) {
+bool ConfigManager::file_exists(const std::string& filename) {
     std::ifstream file(filename);
     return file.good();
 }
 
-string ConfigManager::get_file_extension(const string& filename) {
+std::string ConfigManager::get_file_extension(const std::string& filename) {
     size_t pos = filename.find_last_of('.');
-    if (pos != string::npos && pos != filename.length() - 1) {
+    if (pos != std::string::npos && pos != filename.length() - 1) {
         return filename.substr(pos + 1);
     }
     return "";
@@ -649,154 +604,63 @@ void ConfigManager::set_default_config() {
     parse_target_services(m_config_json);
 }
 
-nlohmann::json ConfigManager::get_default_config_json() {
-    nlohmann::json config;
-    
-    // Default server configuration
-    config["server"]["listen_address"] = "0.0.0.0";
-    config["server"]["listen_port"] = 8443;
-    config["server"]["tls_cert_file"] = "server.crt";
-    config["server"]["tls_key_file"] = "server.key";
-    config["server"]["thread_count"] = 0;
-    config["server"]["verify_client_certificates"] = false;
-    config["server"]["cipher_list"] = "HIGH:!aNULL:!MD5:!RC4";
-    
-    // Default security configuration
-    config["security"]["rate_limit_max_requests"] = 100;
-    config["security"]["rate_limit_window"] = 300;
-    config["security"]["brute_force_threshold"] = 5;
-    config["security"]["brute_force_window"] = 900;
-    config["security"]["default_block_duration"] = 3600000;
-    config["security"]["enable_ip_whitelist"] = false;
-    config["security"]["allowed_ips"] = nlohmann::json::array();
-    config["security"]["enable_ip_blacklist"] = false;
-    config["security"]["blocked_ips"] = nlohmann::json::array();
-    
-    // Default session configuration
-    config["session"]["default_timeout"] = 3600;
-    config["session"]["max_sessions_per_user"] = 5;
-    config["session"]["cleanup_interval"] = 300;
-    config["session"]["enable_session_persistence"] = false;
-    config["session"]["persistence_file"] = "sessions.json";
-    
-    // Default logging configuration
-    config["logging"]["level"] = "info";
-    config["logging"]["pattern"] = "[%Y-%m-%d %H:%M:%S.%e] [%l] %v";
-    config["logging"]["enable_console_output"] = true;
-    config["logging"]["enable_file_output"] = true;
-    config["logging"]["log_file"] = "logs/zerossg.log";
-    config["logging"]["max_file_size"] = 5242880; // 5MB
-    config["logging"]["max_files"] = 3;
-    config["logging"]["enable_security_log"] = true;
-    config["logging"]["security_log_file"] = "logs/security.log";
-    config["logging"]["enable_audit_log"] = true;
-    config["logging"]["audit_log_file"] = "logs/audit.log";
-    
-    // Default database configuration
-    config["database"]["type"] = "memory";
-    config["database"]["connection_string"] = "localhost:5432/zerossg";
-    config["database"]["username"] = "zerossg";
-    config["database"]["password"] = "";
-    config["database"]["enable_ssl"] = false;
-    config["database"]["connection_pool_size"] = 10;
-    config["database"]["connection_timeout"] = 30;
-    
-    // Default target services
-    config["target_services"]["ssh"]["host"] = "internal-ssh-server";
-    config["target_services"]["ssh"]["port"] = 22;
-    config["target_services"]["ssh"]["tls_enabled"] = false;
-    config["target_services"]["ssh"]["allowed_roles"] = nlohmann::json::array({"admin", "operator"});
-    
-    config["target_services"]["web-admin"]["host"] = "internal-web-server";
-    config["target_services"]["web-admin"]["port"] = 443;
-    config["target_services"]["web-admin"]["tls_enabled"] = true;
-    config["target_services"]["web-admin"]["allowed_roles"] = nlohmann::json::array({"admin", "operator", "viewer"});
-    
-    return config;
-}
+// ConfigUtils namespace implementation
+namespace ConfigUtils {
 
-// ConfigUtils implementation
-string ConfigUtils::map_env_var(const string& config_key) {
-    // Map configuration keys to environment variables
-    if (config_key == "server.listen_address") return "ZEROSSG_LISTEN_ADDRESS";
-    if (config_key == "server.listen_port") return "ZEROSSG_LISTEN_PORT";
-    if (config_key == "server.tls_cert_file") return "ZEROSSG_TLS_CERT_FILE";
-    if (config_key == "server.tls_key_file") return "ZEROSSG_TLS_KEY_FILE";
-    if (config_key == "security.rate_limit_max_requests") return "ZEROSSG_RATE_LIMIT_MAX_REQUESTS";
-    if (config_key == "logging.level") return "ZEROSSG_LOG_LEVEL";
-    if (config_key == "logging.log_file") return "ZEROSSG_LOG_FILE";
-    
-    return "";
-}
-
-bool ConfigUtils::is_valid_port(int port) {
-    return port > 0 && port <= 65535;
-}
-
-bool ConfigUtils::is_valid_ip_address(const string& ip) {
-    // Simple validation - in production, use more sophisticated validation
-    return !ip.empty() && ip != "0.0.0.0";
-}
-
-bool ConfigUtils::is_valid_log_level(const string& level) {
-    return level == "trace" || level == "debug" || level == "info" || 
-           level == "warn" || level == "error" || level == "critical";
-}
-
-bool ConfigUtils::is_valid_timeout(seconds timeout) {
-    return timeout.count() > 0;
-}
-
-seconds ConfigUtils::parse_duration(const string& duration_str) {
-    // Simple duration parsing - in production, use more sophisticated parsing
-    try {
-        int value = std::stoi(duration_str);
-        return seconds(value);
-    } catch (...) {
-        return seconds(0);
+bool is_valid_ip_address(const std::string& ip) {
+    // Simple IP validation - in production would use proper validation
+    if (ip.empty() || ip == "0.0.0.0") {
+        return true;
     }
-}
-
-string ConfigUtils::format_duration(seconds duration) {
-    return std::to_string(duration.count());
-}
-
-vector<string> ConfigUtils::parse_string_array(const nlohmann::json& json_array) {
-    vector<string> result;
-    if (json_array.is_array()) {
-        for (const auto& item : json_array) {
-            if (item.is_string()) {
-                result.push_back(item.get<string>());
+    
+    // Basic format check
+    size_t dot_count = std::count(ip.begin(), ip.end(), '.');
+    if (dot_count != 3) {
+        return false;
+    }
+    
+    std::istringstream iss(ip);
+    std::string segment;
+    while (std::getline(iss, segment, '.')) {
+        if (segment.empty() || segment.length() > 3) {
+            return false;
+        }
+        
+        for (char c : segment) {
+            if (!std::isdigit(c)) {
+                return false;
             }
         }
+        
+        try {
+            int value = std::stoi(segment);
+            if (value < 0 || value > 255) {
+                return false;
+            }
+        } catch (const std::exception&) {
+            return false;
+        }
     }
-    return result;
+    
+    return true;
 }
 
-nlohmann::json ConfigUtils::serialize_string_array(const vector<string>& array) {
-    nlohmann::json json_array = nlohmann::json::array();
-    for (const auto& item : array) {
-        json_array.push_back(item);
-    }
-    return json_array;
-}
-
-Result<string> ConfigUtils::read_file(const string& filename) {
+Result<std::string> read_file(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         return make_result_error("Failed to open file: " + filename);
     }
     
     try {
-        string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         file.close();
-        return Result<string>{content);
+        return Result<std::string>{content};
     } catch (const std::exception& e) {
-        return make_result_error("Failed to read file: " + string(e.what()));
+        return make_result_error("Failed to read file: " + std::string(e.what()));
     }
 }
 
-Result<void> ConfigUtils::write_file(const string& filename, const string& content) {
+Result<void> write_file(const std::string& filename, const std::string& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         return make_result_error("Failed to open file for writing: " + filename);
@@ -807,223 +671,14 @@ Result<void> ConfigUtils::write_file(const string& filename, const string& conte
         file.close();
         return Result<void>{};
     } catch (const std::exception& e) {
-        return make_result_error("Failed to write file: " + string(e.what()));
+        return make_result_error("Failed to write file: " + std::string(e.what()));
     }
 }
 
-bool ConfigUtils::create_directory(const string& path) {
+bool create_directory(const std::string& path) {
     return std::filesystem::create_directories(path);
 }
 
-// Helper methods for ConfigManager
-String ConfigManager::get_config_value(const String& key, const String& default_value) {
-    auto json_value = m_config_json;
-    Strings keys;
-    size_t pos = 0;
-    String key_copy = key;
-    
-    while ((pos = key_copy.find('.')) != String::npos) {
-        keys.push_back(key_copy.substr(0, pos));
-        key_copy.erase(0, pos + 1);
-    }
-    keys.push_back(key_copy);
-    
-    for (const auto& k : keys) {
-        if (!json_value.contains(k)) {
-            return default_value;
-        }
-        json_value = json_value[k];
-    }
-    
-    if (json_value.is_string()) {
-        return json_value.get<String>();
-    }
-    
-    return default_value;
-}
-
-bool ConfigManager::file_exists(const String& filename) {
-    return std::filesystem::exists(filename);
-}
-
-String ConfigManager::get_file_extension(const String& filename) {
-    size_t pos = filename.find_last_of('.');
-    if (pos == String::npos) {
-        return "";
-    }
-    return filename.substr(pos + 1);
-}
-
-Result<void> ConfigManager::load_yaml_config(const ConfigFileName& config_file) {
-    try {
-        // Simple YAML parsing for now - in production would use yaml-cpp
-        std::ifstream file(config_file);
-        if (!file.is_open()) {
-            return make_result_error("Failed to open YAML configuration file");
-        }
-        
-        // For now, just load as JSON (simplified approach)
-        return load_json_config(config_file);
-    } catch (const std::exception& e) {
-        return make_result_error("Failed to load YAML configuration: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::load_json_config(const ConfigFileName& config_file) {
-    try {
-        std::ifstream file(config_file);
-        if (!file.is_open()) {
-            return make_result_error("Failed to open JSON configuration file");
-        }
-        
-        file >> m_config_json;
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Failed to load JSON configuration: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::validate_server_config() {
-    try {
-        int port = get_int("server.port", 8080);
-        if (port < 1 || port > 65535) {
-            return make_result_error("Server port must be between 1 and 65535");
-        }
-        
-        int workers = get_int("server.workers", 4);
-        if (workers < 1 || workers > 64) {
-            return make_result_error("Server workers must be between 1 and 64");
-        }
-        
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Server configuration validation failed: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::validate_security_config() {
-    try {
-        String jwt_secret = get_string("security.jwt_secret", "");
-        if (jwt_secret.length() < 16) {
-            return make_result_error("JWT secret must be at least 16 characters long");
-        }
-        
-        int token_expiry = get_int("security.token_expiry_hours", 24);
-        if (token_expiry < 1 || token_expiry > 168) { // 1 hour to 1 week
-            return make_result_error("Token expiry must be between 1 and 168 hours");
-        }
-        
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Security configuration validation failed: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::validate_session_config() {
-    try {
-        int timeout = get_int("session.timeout_seconds", 3600);
-        if (timeout < 60 || timeout > 86400) { // 1 minute to 24 hours
-            return make_result_error("Session timeout must be between 60 and 86400 seconds");
-        }
-        
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Session configuration validation failed: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::validate_logging_config() {
-    try {
-        String level = get_string("logging.level", "info");
-        if (level != "trace" && level != "debug" && level != "info" && 
-            level != "warn" && level != "error" && level != "critical") {
-            return make_result_error("Invalid log level: " + level);
-        }
-        
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Logging configuration validation failed: " + String(e.what()));
-    }
-}
-
-Result<void> ConfigManager::validate_database_config() {
-    try {
-        String host = get_string("database.host", "localhost");
-        if (host.empty()) {
-            return make_result_error("Database host cannot be empty");
-        }
-        
-        int port = get_int("database.port", 5432);
-        if (port < 1 || port > 65535) {
-            return make_result_error("Database port must be between 1 and 65535");
-        }
-        
-        return Result<void>{};
-    } catch (const std::exception& e) {
-        return make_result_error("Database configuration validation failed: " + String(e.what()));
-    }
-}
-
-void ConfigManager::load_from_environment() {
-    // Override configuration with environment variables
-    if (const char* env_log_level = std::getenv("ZEROSSG_LOG_LEVEL")) {
-        m_config_json["logging"]["level"] = String(env_log_level);
-    }
-    
-    if (const char* env_server_port = std::getenv("ZEROSSG_SERVER_PORT")) {
-        m_config_json["server"]["port"] = String(env_server_port);
-    }
-    
-    if (const char* env_session_timeout = std::getenv("ZEROSSG_SESSION_TIMEOUT")) {
-        m_config_json["session"]["timeout_seconds"] = String(env_session_timeout);
-    }
-    
-    if (const char* env_db_host = std::getenv("ZEROSSG_DB_HOST")) {
-        m_config_json["database"]["host"] = String(env_db_host);
-    }
-    
-    if (const char* env_db_port = std::getenv("ZEROSSG_DB_PORT")) {
-        m_config_json["database"]["port"] = String(env_db_port);
-    }
-}
-
-void ConfigManager::set_default_config() {
-    m_config_json = get_default_config_json();
-}
-
-nlohmann::json ConfigManager::get_default_config_json() {
-    return {
-        {"server", {
-            {"host", "0.0.0.0"},
-            {"port", 8080},
-            {"workers", 4},
-            {"max_connections", 1000}
-        }},
-        {"security", {
-            {"jwt_secret", "default-secret-change-in-production"},
-            {"token_expiry_hours", 24},
-            {"max_login_attempts", 5},
-            {"lockout_duration_minutes", 15}
-        }},
-        {"session", {
-            {"timeout_seconds", 3600},
-            {"cleanup_interval_seconds", 300},
-            {"max_sessions", 10000}
-        }},
-        {"logging", {
-            {"level", "info"},
-            {"file_path", "logs/zerossg.log"},
-            {"max_file_size_mb", 100},
-            {"max_files", 10}
-        }},
-        {"database", {
-            {"host", "localhost"},
-            {"port", 5432},
-            {"name", "zerossg"},
-            {"username", "zerossg_user"},
-            {"password", "zerossg_password"}
-        }}
-    };
-}
+} // namespace ConfigUtils
 
 } // namespace zerossg
