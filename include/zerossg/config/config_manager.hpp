@@ -11,7 +11,9 @@
 
 // C++ Standard Library headers
 #include <mutex>
-#include <unordered_map>
+#include <string>
+#include <fstream>
+#include <chrono>
 
 namespace zerossg {
 
@@ -76,13 +78,13 @@ public:
     ~ConfigManager() override = default;
     
     // IConfigManager interface
-    Result<void> load_config(const std::string& config_file) override;
-    std::string get_string(const std::string& key, const std::string& default_value = "") override;
+    Result<void> load_config(const ConfigFileName& config_file) override;
+    String get_string(const std::string& key, const std::string& default_value = "") override;
     int get_int(const std::string& key, int default_value = 0) override;
     bool get_bool(const std::string& key, bool default_value = false) override;
     Strings get_string_array(const std::string& key) override;
     Result<TargetService> get_target_service(const ServiceName& service_name) override;
-    Result<std::vector<TargetService>> get_all_target_services() override;
+    Result<TargetServices> get_all_target_services() override;
     
     // Configuration accessors
     const ServerConfig& get_server_config() const { return m_server_config; }
@@ -100,7 +102,7 @@ public:
     
     // Environment variable support
     void load_from_environment();
-    std::string get_env_var(const std::string& key, const std::string& default_value = "");
+    String get_env_var(const std::string& key, const std::string& default_value = "");
     
 private:
     // Configuration data
@@ -111,15 +113,15 @@ private:
     DatabaseConfig m_database_config;
     
     // Target services
-    std::unordered_map<ServiceName, TargetService> m_target_services;
+    UnorderedMap<ServiceName, TargetService> m_target_services;
     
     // Raw configuration data
     nlohmann::json m_config_json;
     mutable std::mutex m_config_mutex;
     
     // Helper methods
-    Result<void> load_yaml_config(const std::string& config_file);
-    Result<void> load_json_config(const std::string& config_file);
+    Result<void> load_yaml_config(const ConfigFileName& config_file);
+    Result<void> load_json_config(const ConfigFileName& config_file);
     
     void parse_server_config(const nlohmann::json& config);
     void parse_security_config(const nlohmann::json& config);
@@ -139,9 +141,9 @@ private:
     Result<void> validate_target_services();
     
     // Utility methods
-    string get_config_value(const string& key, const string& default_value = "");
-    bool file_exists(const string& filename);
-    string get_file_extension(const string& filename);
+    String get_config_value(const std::string& key, const std::string& default_value = "");
+    bool file_exists(const FileName& filename);
+    String get_file_extension(const FileName& filename);
     
     // Default configuration
     void set_default_config();
@@ -152,24 +154,24 @@ private:
 class ConfigUtils {
 public:
     // Environment variable mapping
-    static string map_env_var(const string& config_key);
+    static String map_env_var(const std::string& config_key);
     
     // Configuration validation
     static bool is_valid_port(int port);
-    static bool is_valid_ip_address(const string& ip);
-    static bool is_valid_log_level(const string& level);
-    static bool is_valid_timeout(seconds timeout);
+    static bool is_valid_ip_address(const std::string& ip);
+    static bool is_valid_log_level(const std::string& level);
+    static bool is_valid_timeout(Seconds timeout);
     
     // Configuration conversion
-    static seconds parse_duration(const string& duration_str);
-    static string format_duration(seconds duration);
-    static vector<string> parse_string_array(const nlohmann::json& json_array);
-    static nlohmann::json serialize_string_array(const vector<string>& array);
+    static Seconds parse_duration(const std::string& duration_str);
+    static String format_duration(Seconds duration);
+    static Vector<std::string> parse_string_array(const nlohmann::json& json_array);
+    static nlohmann::json serialize_string_array(const Vector<std::string>& array);
     
     // File operations
-    static Result<string> read_file(const string& filename);
-    static Result<void> write_file(const string& filename, const string& content);
-    static bool create_directory(const string& path);
+    static Result<String> read_file(const FileName& filename);
+    static Result<void> write_file(const FileName& filename, const String& content);
+    static bool create_directory(const String& path);
 };
 
 } // namespace zerossg

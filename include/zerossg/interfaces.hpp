@@ -17,7 +17,7 @@ class Logger;
 class IAuthenticator {
 public:
     virtual ~IAuthenticator() = default;
-    virtual Result<std::string> authenticate(const UserName& username, const PasswordHash& password) = 0;
+    virtual Result<String> authenticate(const UserName& username, const PasswordHash& password) = 0;
     virtual Result<bool> validate_token(const TokenString& token) = 0;
     virtual Result<User> get_user_from_token(const TokenString& token) = 0;
     virtual Result<TokenString> generate_token(const User& user) = 0;
@@ -29,7 +29,7 @@ class IAuthorizer {
 public:
     virtual ~IAuthorizer() = default;
     virtual Result<bool> can_access_service(const User& user, const ServiceName& service_name) = 0;
-    virtual Result<bool> has_permission(const User& user, const std::string& permission) = 0;
+    virtual Result<bool> has_permission(const User& user, const String& permission) = 0;
     virtual Result<Strings> get_allowed_services(const User& user) = 0;
 };
 
@@ -62,10 +62,10 @@ class ILogger {
 public:
     virtual ~ILogger() = default;
     virtual void log_security_event(const SecurityEvent& event) = 0;
-    virtual void log_session_event(const SessionId& session_id, const std::string& event_type, const std::string& details) = 0;
-    virtual void log_error(const std::string& component, const ErrorMessage& error) = 0;
-    virtual void log_info(const std::string& component, const std::string& message) = 0;
-    virtual void log_debug(const std::string& component, const std::string& message) = 0;
+    virtual void log_session_event(const SessionId& session_id, const String& event_type, const String& details) = 0;
+    virtual void log_error(const String& component, const ErrorMessage& error) = 0;
+    virtual void log_info(const String& component, const String& message) = 0;
+    virtual void log_debug(const String& component, const String& message) = 0;
 };
 
 // Interface for configuration
@@ -73,7 +73,7 @@ class IConfigManager {
 public:
     virtual ~IConfigManager() = default;
     virtual Result<void> load_config(const ConfigFileName& config_file) = 0;
-    virtual std::string get_string(const std::string& key, const std::string& default_value = "") = 0;
+    virtual String get_string(const std::string& key, const std::string& default_value = "") = 0;
     virtual int get_int(const std::string& key, int default_value = 0) = 0;
     virtual bool get_bool(const std::string& key, bool default_value = false) = 0;
     virtual Strings get_string_array(const std::string& key) = 0;
