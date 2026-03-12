@@ -1,13 +1,28 @@
 export module zerossg.types;
 
+export import zerossg.std;
 export import zerossg.common;
 
-export import <array>;
-export import <span>;
-export import <algorithm>;
-export import <vector>;
-
 export namespace zerossg {
+
+// Basic type aliases
+export using UserName = std::string;
+export using PasswordHash = std::string;
+export using TokenString = std::string;
+export using SecretKey = std::vector<unsigned char>;
+export using SessionId = std::string;
+export using UserCount = size_t;
+export using Strings = std::vector<std::string>;
+export using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+export using ClientIp = std::string;
+export using ServiceName = std::string;
+export using systemClock = std::chrono::system_clock;
+
+// Import standard library types for clarity
+using std::string_view;
+using std::chrono::system_clock;
+using std::chrono::minutes;
+
 
 // Modern enum class with explicit underlying type
 export enum class Role : uint8_t {
@@ -17,13 +32,16 @@ export enum class Role : uint8_t {
 };
 
 // Modern constexpr functions for enum conversion
-export constexpr string_view role_to_string(Role role) noexcept {
-    constexpr std::array role_names = {"admin", "operator", "viewer"};
-    const auto index = static_cast<std::size_t>(role);
-    return index < role_names.size() ? role_names[index] : string_view{};
+export constexpr std::string_view role_to_string(Role role) noexcept {
+    switch (role) {
+        case Role::ADMIN: return std::string_view{"admin"};
+        case Role::OPERATOR: return std::string_view{"operator"};
+        case Role::VIEWER: return std::string_view{"viewer"};
+        default: return std::string_view{};
+    }
 }
 
-export constexpr Role string_to_role(string_view role_str) noexcept {
+export constexpr Role string_to_role(std::string_view role_str) noexcept {
     if (role_str == "admin") return Role::ADMIN;
     if (role_str == "operator") return Role::OPERATOR;
     if (role_str == "viewer") return Role::VIEWER;
@@ -34,10 +52,11 @@ export constexpr Role string_to_role(string_view role_str) noexcept {
 export struct User {
     UserName m_user_name;
     PasswordHash m_password_hash;
+    PasswordHash m_password_hash_confirm;
     Role m_role;
-    bool m_active;
     TimePoint m_created_at;
     TimePoint m_last_login;
+    bool m_active;
     
     constexpr User() noexcept 
         : m_role(Role::VIEWER)
@@ -58,7 +77,6 @@ export struct User {
     [[nodiscard]] constexpr TimePoint created_at() const noexcept { return m_created_at; }
     [[nodiscard]] constexpr TimePoint last_login() const noexcept { return m_last_login; }
     
-    // Mutator methods
     void set_last_login(TimePoint time) noexcept { m_last_login = time; }
     void set_active(bool active) noexcept { m_active = active; }
 };
@@ -86,8 +104,8 @@ export struct Session {
         , m_client_ip(std::move(client_ip))
         , m_target_service(std::move(target_service))
         , m_active(true)
-        , m_created_at(system_clock::now())
-        , m_expires_at(m_created_at + seconds(3600)) {}
+        , m_created_at(systemClock::now())
+        , m_expires_at(systemClock::now() + std::chrono::minutes(30)) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
@@ -118,7 +136,7 @@ export struct Session {
 };
 
 // Modern SecurityEventType with explicit underlying type
-export enum class SecurityEventType : uint8_t {
+enum class SecurityEventType : uint8_t {
     LOGIN_SUCCESS = 0,
     LOGIN_FAILURE = 1,
     SESSION_START = 2,
@@ -130,7 +148,7 @@ export enum class SecurityEventType : uint8_t {
 };
 
 // Modern constexpr function for security event type conversion
-export constexpr string_view security_event_type_to_string(SecurityEventType type) noexcept {
+constexpr string_view security_event_type_to_string(SecurityEventType type) noexcept {
     constexpr std::array event_names = {
         "login_success",
         "login_failure", 
@@ -146,15 +164,15 @@ export constexpr string_view security_event_type_to_string(SecurityEventType typ
 }
 
 // Modern SecurityEvent with better encapsulation
-export struct SecurityEvent {
+struct SecurityEvent {
     SecurityEventType m_type;
     system_clock::time_point m_timestamp;
     UserName m_username;
     ClientIp m_client_ip;
-    String m_details;
+    std::string m_details;
     
     constexpr SecurityEvent(SecurityEventType type, UserName username, 
-                        ClientIp client_ip, String details) noexcept
+                        ClientIp client_ip, std::string details) noexcept
         : m_type(type)
         , m_timestamp(system_clock::now())
         , m_username(std::move(username))
@@ -166,11 +184,11 @@ export struct SecurityEvent {
     [[nodiscard]] constexpr system_clock::time_point timestamp() const noexcept { return m_timestamp; }
     [[nodiscard]] constexpr const UserName& username() const noexcept { return m_username; }
     [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
-    [[nodiscard]] constexpr const String& details() const noexcept { return m_details; }
+    [[nodiscard]] constexpr const std::string& details() const noexcept { return m_details; }
 };
 
 // Modern ConnectionInfo with better encapsulation
-export struct ConnectionInfo {
+struct ConnectionInfo {
     TcpEndpoint m_remote_endpoint;
     TcpEndpoint m_local_endpoint;
     ClientIp m_client_ip;
@@ -195,11 +213,11 @@ export struct ConnectionInfo {
 };
 
 // Modern TargetService with better encapsulation and validation
-export struct TargetService {
+struct TargetService {
     ServiceName m_name;
     HostAddress m_host;
     PortNo m_port;
-    Vector<Role> m_allowed_roles;
+    Roles<Role> m_allowed_roles;
     bool m_tls_enabled;
     
     constexpr TargetService() noexcept 
@@ -207,7 +225,7 @@ export struct TargetService {
         , m_tls_enabled(false) {}
     
     constexpr TargetService(ServiceName name, HostAddress host, PortNo port, 
-                       Vector<Role> allowed_roles, bool tls_enabled) noexcept
+                       Roles<Role> allowed_roles, bool tls_enabled) noexcept
         : m_name(std::move(name))
         , m_host(std::move(host))
         , m_port(port)
@@ -218,184 +236,76 @@ export struct TargetService {
     [[nodiscard]] constexpr const ServiceName& name() const noexcept { return m_name; }
     [[nodiscard]] constexpr const HostAddress& host() const noexcept { return m_host; }
     [[nodiscard]] constexpr PortNo port() const noexcept { return m_port; }
-    [[nodiscard]] constexpr const Vector<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
-    [[nodiscard]] constexpr bool tls_enabled() const noexcept { return m_tls_enabled; }
+    [[nodiscard]] constexpr bool is_tls_enabled() const noexcept { return m_tls_enabled; }
+    [[nodiscard]] constexpr const Roles<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
     
-    // Validation methods
+    // Modern validation method
     [[nodiscard]] bool is_valid() const noexcept {
-        return !m_name.empty() && m_port > 0 && m_port <= 65535;
+        return !m_name.empty() && !m_host.empty() && 
+               m_port > 0 && m_port <= 65535 && !m_allowed_roles.empty();
     }
     
+    // Modern role checking
     [[nodiscard]] bool is_role_allowed(Role role) const noexcept {
-        return std::ranges::find(m_allowed_roles, role) != m_allowed_roles.end();
+        return std::ranges::any_of(m_allowed_roles, 
+            [role](Role allowed) { return allowed == role; });
     }
-};
-
-// Modern enum class for user status
-export enum class UserStatus : uint8_t {
-    ACTIVE = 0,
-    INACTIVE = 1,
-    BLOCKED = 2,
-    SUSPENDED = 3
-};
-
-// Modern enum class for session status
-export enum class SessionStatus : uint8_t {
-    ACTIVE = 0,
-    TERMINATED = 1,
-    EXPIRED = 2,
-    ERROR = 3
-};
-
-// Modern enum class for security event types
-export enum class SecurityEventType : uint8_t {
-    LOGIN_SUCCESS = 0,
-    LOGIN_FAILURE = 1,
-    SESSION_START = 2,
-    SESSION_END = 3,
-    ACCESS_DENIED = 4,
-    RATE_LIMIT_EXCEEDED = 5,
-    BRUTE_FORCE_DETECTED = 6,
-    IP_BLOCKED = 7
-};
-
-// Modern enum class for connection states
-export enum class ConnectionState : uint8_t {
-    DISCONNECTED = 0,
-    CONNECTING = 1,
-    CONNECTED = 2,
-    DISCONNECTING = 3,
-    ERROR = 4
-};
-
-// User structure with modern C++26 features
-export struct User {
-    UserName username;
-    PasswordHash password_hash;
-    Role role{Role::VIEWER};
-    UserStatus status{UserStatus::ACTIVE};
-    std::chrono::system_clock::time_point created_at{std::chrono::system_clock::now()};
-    std::chrono::system_clock::time_point last_login{};
-    std::chrono::system_clock::time_point password_changed{std::chrono::system_clock::now()};
-    bool is_active() const noexcept { return status == UserStatus::ACTIVE; }
-    bool is_blocked() const noexcept { return status == UserStatus::BLOCKED; }
-};
-
-// Session structure with modern C++26 features
-export struct Session {
-    SessionId id;
-    UserName username;
-    ClientIp client_ip;
-    ServiceName target_service;
-    SessionStatus status{SessionStatus::ACTIVE};
-    std::chrono::system_clock::time_point created_at{std::chrono::system_clock::now()};
-    std::chrono::system_clock::time_point expires_at{};
-    std::chrono::system_clock::time_point last_activity{std::chrono::system_clock::now()};
-    bool is_expired() const noexcept { return std::chrono::system_clock::now() > expires_at; }
-    bool is_active() const noexcept { return status == SessionStatus::ACTIVE && !is_expired(); }
-};
-
-// Target service structure with modern C++26 features
-export struct TargetService {
-    ServiceName name;
-    HostAddress host;
-    PortNo port;
-    std::vector<Role> allowed_roles{Role::VIEWER};
-    bool requires_tls{false};
-    std::chrono::milliseconds timeout{30000};
-    bool is_role_allowed(Role role) const noexcept {
-        return std::ranges::find(allowed_roles, role) != allowed_roles.end();
-    }
-};
-
-// Security event structure with modern C++26 features
-export struct SecurityEvent {
-    SecurityEventType type;
-    UserName username{};
-    ClientIp client_ip{};
-    std::chrono::system_clock::time_point timestamp{std::chrono::system_clock::now()};
-    std::string details;
-    bool is_critical() const noexcept {
-        return type == SecurityEventType::BRUTE_FORCE_DETECTED ||
-               type == SecurityEventType::IP_BLOCKED;
-    }
-};
-
-// Connection information structure with modern C++26 features
-export struct ConnectionInfo {
-    TcpEndpoint client_endpoint;
-    TcpEndpoint server_endpoint;
-    ConnectionState state{ConnectionState::DISCONNECTED};
-    std::chrono::system_clock::time_point connected_at{};
-    std::chrono::system_clock::time_point last_activity{std::chrono::system_clock::now()};
-    std::size_t bytes_sent{0};
-    std::size_t bytes_received{0};
-    bool is_active() const noexcept { return state == ConnectionState::CONNECTED; }
-    std::chrono::duration<double> uptime() const noexcept {
-        if (state == ConnectionState::CONNECTED) {
-            return std::chrono::system_clock::now() - connected_at;
-        }
-        return std::chrono::duration<double>{0};
-    }
-};
-
-// Rate limiting structure with modern C++26 features
-export struct RateLimitInfo {
-    Count attempts{0};
-    std::chrono::system_clock::time_point window_start{std::chrono::system_clock::now()};
-    std::chrono::seconds window_duration{300}; // 5 minutes
-    bool is_limit_exceeded(RateLimit max_attempts) const noexcept {
-        return attempts >= max_attempts;
-    }
-    void reset_window() noexcept {
-        attempts = 0;
-        window_start = std::chrono::system_clock::now();
-    }
-    bool should_reset_window() const noexcept {
-        return std::chrono::system_clock::now() > (window_start + window_duration);
+    
+    // Utility methods
+    [[nodiscard]] string get_address() const noexcept {
+        return m_host + ":" + std::to_string(m_port);
     }
 };
 
 // Modern concepts for type checking
-export template<typename T>
-concept UserType = requires(T t) {
-    { t.username } -> std::convertible_to<UserName>;
-    { t.role } -> std::convertible_to<Role>;
-    { t.status } -> std::convertible_to<UserStatus>;
-    { t.is_active() } -> std::same_as<bool>;
+template<typename T>
+concept UserRole = std::is_same_v<T, Role>;
+
+template<typename T>
+concept SecurityEvent = std::is_same_v<T, SecurityEventType>;
+
+template<typename T>
+concept ChronoTimePoint = requires {
+    typename T::clock;
+    typename T::duration;
+    { T::clock::now() } -> std::same_as<T>;
 };
 
-export template<typename T>
-concept SessionType = requires(T t) {
-    { t.id } -> std::convertible_to<SessionId>;
-    { t.username } -> std::convertible_to<UserName>;
-    { t.status } -> std::convertible_to<SessionStatus>;
-    { t.is_active() } -> std::same_as<bool>;
-    { t.is_expired() } -> std::same_as<bool>;
+// Modern utility functions
+template<UserRole T>
+constexpr string_view role_name() noexcept {
+    return role_to_string(T{});
+}
+
+template<SecurityEvent T>
+constexpr string_view event_name() noexcept {
+    return security_event_type_to_string(T{});
+}
+
+// Modern span-based utilities
+template<typename T>
+constexpr bool contains_role(const vector<T>& roles, T role) noexcept {
+    return std::ranges::any_of(roles, [role](const T& r) { return r == role; });
+}
+
+// Compile-time validation
+template<typename T>
+concept ValidTargetService = requires(T service) {
+    { service.name() } -> std::convertible_to<string_view>;
+    { service.host() } -> std::convertible_to<string_view>;
+    { service.port() } -> std::convertible_to<uint16_t>;
+    { service.is_valid() } -> std::convertible_to<bool>;
 };
 
-export template<typename T>
-concept ServiceType = requires(T t) {
-    { t.name } -> std::convertible_to<ServiceName>;
-    { t.host } -> std::convertible_to<HostAddress>;
-    { t.port } -> std::convertible_to<PortNo>;
-    { t.is_role_allowed(Role{}) } -> std::same_as<bool>;
-};
-
-// Modern utility functions with concepts
-export template<UserType T>
-constexpr bool is_user_admin(const T& user) noexcept {
-    return user.role == Role::ADMIN;
-}
-
-export template<SessionType T>
-constexpr bool is_session_valid(const T& session) noexcept {
-    return session.is_active() && !session.is_expired();
-}
-
-export template<ServiceType T>
-constexpr bool can_user_access_service(const UserType auto& user, const T& service) noexcept {
-    return service.is_role_allowed(user.role);
-}
+// Additional type aliases for config
+export using HostAddress = std::string;
+export using PortNo = uint16_t;
+export using Count = size_t;
+export using RateLimit = size_t;
+export using Minutes = std::chrono::minutes;
+export using Threshold = size_t;
+export using Milliseconds = std::chrono::milliseconds;
+export using Seconds = std::chrono::seconds;
+export using TimeoutDuration = std::chrono::seconds;
 
 } // namespace zerossg

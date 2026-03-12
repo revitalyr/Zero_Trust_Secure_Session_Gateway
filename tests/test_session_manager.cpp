@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "zerossg/session/session_manager.hpp"
-#include "zerossg/types.hpp"
+import zerossg.types;
 #include <thread>
 #include <chrono>
 

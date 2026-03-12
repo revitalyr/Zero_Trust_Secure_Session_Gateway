@@ -11,7 +11,7 @@ import zerossg.interfaces;
 // Traditional header usage (current)
 #include "zerossg/common.hpp"
 #include "zerossg/constants.hpp"
-#include "zerossg/types.hpp"
+import zerossg.types;
 #include "zerossg/interfaces.hpp"
 #endif
 

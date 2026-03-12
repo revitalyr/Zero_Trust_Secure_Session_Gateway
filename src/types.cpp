@@ -1,4 +1,4 @@
-#include "zerossg/types.hpp"
+import zerossg.types;
 #include <stdexcept>
 #include <algorithm>
 

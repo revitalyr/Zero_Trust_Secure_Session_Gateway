@@ -2,7 +2,7 @@
 
 // Project headers
 #include "zerossg/interfaces.hpp"
-#include "zerossg/types.hpp"
+import zerossg.types;
 
 // C++ Standard Library headers
 #include <atomic>

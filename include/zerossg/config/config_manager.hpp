@@ -40,6 +40,18 @@ using std::istringstream;
 using std::lock_guard;
 using std::mutex;
 
+// Import semantic aliases from types
+using zerossg::HostAddress;
+using zerossg::PortNo;
+using zerossg::FileName;
+using zerossg::Count;
+using zerossg::RateLimit;
+using zerossg::Minutes;
+using zerossg::Threshold;
+using zerossg::Milliseconds;
+using zerossg::Seconds;
+using zerossg::TimeoutDuration;
+
 // Import semantic aliases from common
 using zerossg::strings;
 using zerossg::unorderedMap;
