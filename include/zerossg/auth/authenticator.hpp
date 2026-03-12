@@ -19,22 +19,22 @@ public:
     ~AuthenticationManager() override;
     
     // IAuthenticator interface with modern error handling
-    Result<std::string> authenticate(string_view username, string_view password) override;
-    Result<bool> validate_token(string_view token) override;
-    Result<User> get_user_from_token(string_view token) override;
+    Result<String> authenticate(const UserName& username, const PasswordHash& password) override;
+    Result<bool> validate_token(const TokenString& token) override;
+    Result<User> get_user_from_token(const TokenString& token) override;
     Result<TokenString> generate_token(const User& user) override;
-    Result<void> revoke_token(string_view token) override;
+    Result<void> revoke_token(const TokenString& token) override;
     
     // Modern user management with move semantics
-    Result<void> add_user(User&& user) noexcept;
-    Result<void> update_user(string_view username, User&& user) noexcept;
-    Result<void> delete_user(string_view username) noexcept;
-    Result<std::optional<User>> get_user(string_view username) const noexcept;
-    Result<Users<User>> list_users() const noexcept;
+    Result<void> add_user(const User& user) noexcept;
+    Result<void> update_user(const UserName& username, const User& user) noexcept;
+    Result<void> delete_user(const UserName& username) noexcept;
+    Result<Optional<User>> get_user(const UserName& username) const noexcept;
+    Result<Vector<User>> list_users() const noexcept;
     
     // Modern password utilities with constexpr support where possible
-    static Result<std::string> hash_password(string_view password) noexcept;
-    static Result<bool> verify_password(string_view password, string_view hash) noexcept;
+    static Result<PasswordHash> hash_password(const String& password) noexcept;
+    static Result<bool> verify_password(const String& password, const PasswordHash& hash) noexcept;
     
     // Modern token management with better security
     Result<TokenString> generate_token_with_claims(const User& user, 

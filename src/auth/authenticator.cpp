@@ -25,6 +25,17 @@
 using json = nlohmann::json;
 
 namespace zerossg {
+    // Import semantic aliases for cleaner code
+    using zerossg::Result;
+    using zerossg::String;
+    using zerossg::TokenString;
+    using zerossg::UserName;
+    using zerossg::PasswordHash;
+    using zerossg::Optional;
+    using zerossg::Vector;
+    using zerossg::SecretKey;
+    using zerossg::LockGuard;
+    using zerossg::system_clock;
 
 AuthenticationManager::AuthenticationManager() {
     // Initialize with modern C++26 features
