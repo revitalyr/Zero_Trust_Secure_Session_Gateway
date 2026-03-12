@@ -58,32 +58,32 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
     }
 }
 
-string ConfigManager::get_string(const string& key, const string& default_value) {
+String ConfigManager::get_string(const String& key, const String& default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     return get_config_value(key, default_value);
 }
 
-int ConfigManager::get_int(const string& key, int default_value) {
+int ConfigManager::get_int(const String& key, int default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
-        string value = get_config_value(key, std::to_string(default_value));
+        String value = get_config_value(key, std::to_string(default_value));
         return std::stoi(value);
     } catch (const std::exception&) {
         return default_value;
     }
 }
 
-bool ConfigManager::get_bool(const string& key, bool default_value) {
+bool ConfigManager::get_bool(const String& key, bool default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
-    string value = get_config_value(key, default_value ? "true" : "false");
+    String value = get_config_value(key, default_value ? "true" : "false");
     std::transform(value.begin(), value.end(), value.begin(), ::tolower);
     
     return value == "true" || value == "1" || value == "yes" || value == "on";
 }
 
-vector<string> ConfigManager::get_string_array(const string& key) {
+Strings ConfigManager::get_string_array(const String& key) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
@@ -106,10 +106,10 @@ vector<string> ConfigManager::get_string_array(const string& key) {
         }
         
         if (json_value.is_array()) {
-            vector<string> result;
+            Strings result;
             for (const auto& item : json_value) {
                 if (item.is_string()) {
-                    result.push_back(item.get<string>());
+                    result.push_back(item.get<String>());
                 }
             }
             return result;
@@ -121,7 +121,7 @@ vector<string> ConfigManager::get_string_array(const string& key) {
     return {};
 }
 
-Result<TargetService> ConfigManager::get_target_service(const string& service_name) {
+Result<TargetService> ConfigManager::get_target_service(const ServiceName& service_name) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     auto it = m_target_services.find(service_name);
