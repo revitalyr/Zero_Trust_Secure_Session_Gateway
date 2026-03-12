@@ -38,6 +38,9 @@ using std::pair;
 using std::mutex;
 using std::unordered_map;
 
+// Import additional types from common module
+using zerossg::shared_ptr;
+
 enum class LogLevel {
     TRACE = 0,
     DEBUG = 1,

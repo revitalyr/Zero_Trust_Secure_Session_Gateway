@@ -86,10 +86,10 @@ public:
     
     // IConfigManager interface
     Result<void> load_config(const ConfigFileName& config_file) override;
-    String get_string(const std::string& key, const std::string& default_value = "") override;
-    int get_int(const std::string& key, int default_value = 0) override;
-    bool get_bool(const std::string& key, bool default_value = false) override;
-    Strings get_string_array(const std::string& key) override;
+    String get_string(const String& key, const String& default_value = "") override;
+    int get_int(const String& key, int default_value = 0) override;
+    bool get_bool(const String& key, bool default_value = false) override;
+    Strings get_string_array(const String& key) override;
     Result<TargetService> get_target_service(const ServiceName& service_name) override;
     Result<TargetServices> get_all_target_services() override;
     

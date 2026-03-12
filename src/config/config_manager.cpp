@@ -1,7 +1,12 @@
 // C++23 module imports
 import zerossg.common;
 import zerossg.constants;
+import zerossg.interfaces;
 import zerossg.std;
+
+// Third-party library imports
+import <nlohmann/json.hpp>;
+import <yaml-cpp/yaml.h>;
 
 namespace zerossg {
 
@@ -38,7 +43,7 @@ using std::vector;
 using std::unordered_map;
 using std::ifstream;
 using std::ofstream;
-using nlohmann::json;
+using json = nlohmann::json;
 using YAML::Node;
 using YAML::Exception;
 
