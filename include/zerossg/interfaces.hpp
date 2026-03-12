@@ -73,12 +73,12 @@ class IConfigManager {
 public:
     virtual ~IConfigManager() = default;
     virtual Result<void> load_config(const ConfigFileName& config_file) = 0;
-    virtual String get_string(const std::string& key, const std::string& default_value = "") = 0;
-    virtual int get_int(const std::string& key, int default_value = 0) = 0;
-    virtual bool get_bool(const std::string& key, bool default_value = false) = 0;
-    virtual Strings get_string_array(const std::string& key) = 0;
+    virtual String get_string(const String& key, const String& default_value = "") = 0;
+    virtual int get_int(const String& key, int default_value = 0) = 0;
+    virtual bool get_bool(const String& key, bool default_value = false) = 0;
+    virtual Strings get_string_array(const String& key) = 0;
     virtual Result<TargetService> get_target_service(const ServiceName& service_name) = 0;
-    virtual Result<TargetServices> get_all_target_services() = 0;
+    virtual Result<Vector<TargetService>> get_all_target_services() = 0;
 };
 
 // Interface for TLS handling
@@ -87,7 +87,7 @@ public:
     virtual ~ITlsHandler() = default;
     virtual Result<void> initialize(const FileName& cert_file, const FileName& key_file) = 0;
     virtual SslContext& get_context() = 0;
-    virtual Result<bool> verify_certificate(const std::string& cert_data) = 0;
+    virtual Result<bool> verify_certificate(const String& cert_data) = 0;
 };
 
 // Interface for proxy functionality
