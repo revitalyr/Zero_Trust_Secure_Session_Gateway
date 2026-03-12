@@ -4,21 +4,231 @@ export import zerossg.common;
 
 export import <array>;
 export import <span>;
+export import <algorithm>;
+export import <vector>;
 
 export namespace zerossg {
-
-// Forward declarations for types used in interfaces
-export struct User;
-export struct Session;
-export struct TargetService;
-export struct SecurityEvent;
-export struct ConnectionInfo;
 
 // Modern enum class with explicit underlying type
 export enum class Role : uint8_t {
     ADMIN = 0,
     OPERATOR = 1,
     VIEWER = 2
+};
+
+// Modern constexpr functions for enum conversion
+export constexpr string_view role_to_string(Role role) noexcept {
+    constexpr std::array role_names = {"admin", "operator", "viewer"};
+    const auto index = static_cast<std::size_t>(role);
+    return index < role_names.size() ? role_names[index] : string_view{};
+}
+
+export constexpr Role string_to_role(string_view role_str) noexcept {
+    if (role_str == "admin") return Role::ADMIN;
+    if (role_str == "operator") return Role::OPERATOR;
+    if (role_str == "viewer") return Role::VIEWER;
+    return Role::VIEWER; // Default fallback
+}
+
+// Modern User struct with semantic member names
+export struct User {
+    UserName m_user_name;
+    PasswordHash m_password_hash;
+    Role m_role;
+    bool m_active;
+    TimePoint m_created_at;
+    TimePoint m_last_login;
+    
+    constexpr User() noexcept 
+        : m_role(Role::VIEWER)
+        , m_active(false) {}
+    
+    constexpr User(UserName username, PasswordHash password_hash, Role role) noexcept
+        : m_user_name(std::move(username))
+        , m_password_hash(std::move(password_hash))
+        , m_role(role)
+        , m_active(true)
+        , m_created_at(system_clock::now()) {}
+    
+    // Modern accessor methods
+    [[nodiscard]] constexpr const UserName& user_name() const noexcept { return m_user_name; }
+    [[nodiscard]] constexpr const PasswordHash& password_hash() const noexcept { return m_password_hash; }
+    [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
+    [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
+    [[nodiscard]] constexpr TimePoint created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr TimePoint last_login() const noexcept { return m_last_login; }
+    
+    // Mutator methods
+    void set_last_login(TimePoint time) noexcept { m_last_login = time; }
+    void set_active(bool active) noexcept { m_active = active; }
+};
+
+// Modern Session struct with semantic member names
+export struct Session {
+    SessionId m_session_id;
+    UserName m_user_name;
+    Role m_role;
+    TimePoint m_created_at;
+    TimePoint m_expires_at;
+    ClientIp m_client_ip;
+    ServiceName m_target_service;
+    bool m_active;
+    
+    constexpr Session() noexcept 
+        : m_role(Role::VIEWER)
+        , m_active(false) {}
+    
+    constexpr Session(SessionId session_id, UserName username, Role role, 
+                   ClientIp client_ip, ServiceName target_service) noexcept
+        : m_session_id(std::move(session_id))
+        , m_user_name(std::move(username))
+        , m_role(role)
+        , m_client_ip(std::move(client_ip))
+        , m_target_service(std::move(target_service))
+        , m_active(true)
+        , m_created_at(system_clock::now())
+        , m_expires_at(m_created_at + seconds(3600)) {}
+    
+    // Accessor methods with semantic return types
+    [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
+    [[nodiscard]] constexpr const UserName& user_name() const noexcept { return m_user_name; }
+    [[nodiscard]] constexpr Role role() const noexcept { return m_role; }
+    [[nodiscard]] constexpr bool is_active() const noexcept { return m_active; }
+    [[nodiscard]] constexpr TimePoint created_at() const noexcept { return m_created_at; }
+    [[nodiscard]] constexpr TimePoint expires_at() const noexcept { return m_expires_at; }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const ServiceName& target_service() const noexcept { return m_target_service; }
+    
+    // Mutator methods
+    void set_active(bool active) noexcept { m_active = active; }
+    void set_expires_at(TimePoint expires) noexcept { m_expires_at = expires; }
+    
+    // Utility methods
+    [[nodiscard]] bool is_expired() const noexcept {
+        return system_clock::now() > m_expires_at;
+    }
+    
+    [[nodiscard]] TimeoutDuration time_until_expiry() const noexcept {
+        const auto now = system_clock::now();
+        if (now >= m_expires_at) {
+            return TimeoutDuration{0};
+        }
+        return std::chrono::duration_cast<TimeoutDuration>(m_expires_at - now);
+    }
+};
+
+// Modern SecurityEventType with explicit underlying type
+export enum class SecurityEventType : uint8_t {
+    LOGIN_SUCCESS = 0,
+    LOGIN_FAILURE = 1,
+    SESSION_START = 2,
+    SESSION_TERMINATION = 3,
+    AUTHENTICATION_ERROR = 4,
+    ACCESS_VIOLATION = 5,
+    RATE_LIMIT_EXCEEDED = 6,
+    BRUTE_FORCE_DETECTED = 7
+};
+
+// Modern constexpr function for security event type conversion
+export constexpr string_view security_event_type_to_string(SecurityEventType type) noexcept {
+    constexpr std::array event_names = {
+        "login_success",
+        "login_failure", 
+        "session_start",
+        "session_termination",
+        "authentication_error",
+        "access_violation",
+        "rate_limit_exceeded",
+        "brute_force_detected"
+    };
+    const auto index = static_cast<std::size_t>(type);
+    return index < event_names.size() ? event_names[index] : string_view{};
+}
+
+// Modern SecurityEvent with better encapsulation
+export struct SecurityEvent {
+    SecurityEventType m_type;
+    system_clock::time_point m_timestamp;
+    UserName m_username;
+    ClientIp m_client_ip;
+    String m_details;
+    
+    constexpr SecurityEvent(SecurityEventType type, UserName username, 
+                        ClientIp client_ip, String details) noexcept
+        : m_type(type)
+        , m_timestamp(system_clock::now())
+        , m_username(std::move(username))
+        , m_client_ip(std::move(client_ip))
+        , m_details(std::move(details)) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr SecurityEventType type() const noexcept { return m_type; }
+    [[nodiscard]] constexpr system_clock::time_point timestamp() const noexcept { return m_timestamp; }
+    [[nodiscard]] constexpr const UserName& username() const noexcept { return m_username; }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr const String& details() const noexcept { return m_details; }
+};
+
+// Modern ConnectionInfo with better encapsulation
+export struct ConnectionInfo {
+    TcpEndpoint m_remote_endpoint;
+    TcpEndpoint m_local_endpoint;
+    ClientIp m_client_ip;
+    PortNo m_client_port;
+    
+    constexpr ConnectionInfo(const TcpEndpoint& remote,
+                         const TcpEndpoint& local) noexcept
+        : m_remote_endpoint(remote)
+        , m_local_endpoint(local)
+        , m_client_ip(remote.address().to_string())
+        , m_client_port(remote.port()) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr const TcpEndpoint& remote_endpoint() const noexcept { 
+        return m_remote_endpoint; 
+    }
+    [[nodiscard]] constexpr const TcpEndpoint& local_endpoint() const noexcept { 
+        return m_local_endpoint; 
+    }
+    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] constexpr PortNo client_port() const noexcept { return m_client_port; }
+};
+
+// Modern TargetService with better encapsulation and validation
+export struct TargetService {
+    ServiceName m_name;
+    HostAddress m_host;
+    PortNo m_port;
+    Vector<Role> m_allowed_roles;
+    bool m_tls_enabled;
+    
+    constexpr TargetService() noexcept 
+        : m_port(0)
+        , m_tls_enabled(false) {}
+    
+    constexpr TargetService(ServiceName name, HostAddress host, PortNo port, 
+                       Vector<Role> allowed_roles, bool tls_enabled) noexcept
+        : m_name(std::move(name))
+        , m_host(std::move(host))
+        , m_port(port)
+        , m_allowed_roles(std::move(allowed_roles))
+        , m_tls_enabled(tls_enabled) {}
+    
+    // Accessors
+    [[nodiscard]] constexpr const ServiceName& name() const noexcept { return m_name; }
+    [[nodiscard]] constexpr const HostAddress& host() const noexcept { return m_host; }
+    [[nodiscard]] constexpr PortNo port() const noexcept { return m_port; }
+    [[nodiscard]] constexpr const Vector<Role>& allowed_roles() const noexcept { return m_allowed_roles; }
+    [[nodiscard]] constexpr bool tls_enabled() const noexcept { return m_tls_enabled; }
+    
+    // Validation methods
+    [[nodiscard]] bool is_valid() const noexcept {
+        return !m_name.empty() && m_port > 0 && m_port <= 65535;
+    }
+    
+    [[nodiscard]] bool is_role_allowed(Role role) const noexcept {
+        return std::ranges::find(m_allowed_roles, role) != m_allowed_roles.end();
+    }
 };
 
 // Modern enum class for user status

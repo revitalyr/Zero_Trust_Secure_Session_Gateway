@@ -1,11 +1,11 @@
 #pragma once
 
-// Project headers
-#include "common.hpp"
+// C++23 module imports
+import zerossg.common;
 
-// C++ Standard Library headers
-#include <array>
-#include <span>
+// Standard library imports
+import <array>;
+import <span>;
 
 namespace zerossg {
 

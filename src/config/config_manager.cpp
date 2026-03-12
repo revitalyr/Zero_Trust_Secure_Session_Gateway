@@ -11,6 +11,7 @@ import <mutex>;
 import <stdexcept>;
 import <cctype>;
 import <vector>;
+import <string_view>;
 
 namespace zerossg {
 
