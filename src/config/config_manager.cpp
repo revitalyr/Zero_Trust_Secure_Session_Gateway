@@ -2,9 +2,7 @@
 import zerossg.constants;
 import zerossg.interfaces;
 import zerossg.std;
-
-// Header includes
-#include <zerossg/config/config_manager.hpp>
+import zerossg.config.config_manager;
 
 // Third-party library imports
 import <nlohmann/json.hpp>;

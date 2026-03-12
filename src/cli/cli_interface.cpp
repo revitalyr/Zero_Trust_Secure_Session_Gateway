@@ -1,4 +1,3 @@
-#include "zerossg/cli/cli_interface.hpp"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -6,6 +5,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+import zerossg.cli.cli_interface;
 import zerossg.network.gateway_server;
 import zerossg.config.config_manager;
 import zerossg.auth.authenticator;

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "zerossg/rbac/authorizer.hpp"
+import zerossg.rbac.authorizer;
 import zerossg.types;
 
 using namespace zerossg;
