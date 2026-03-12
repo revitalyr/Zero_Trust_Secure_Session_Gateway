@@ -1,19 +1,6 @@
 // C++23 module imports
-import zerossg.config.config_manager;
-
-// Standard library imports
-import <algorithm>;
-import <cstdlib>;
-import <fstream>;
-import <iostream>;
-import <string>;
-import <mutex>;
-import <stdexcept>;
-import <cctype>;
-import <vector>;
-import <string_view>;
-import <filesystem>;
-import <expected>;
+import zerossg.config_manager;
+import zerossg.std;
 
 namespace zerossg {
 
@@ -35,6 +22,16 @@ using std::filesystem::exists;
 using std::to_string;
 using std::getenv;
 using zerossg::make_result_error;
+
+// Additional standard library types needed
+using std::string;
+using std::vector;
+using std::unordered_map;
+using std::ifstream;
+using std::ofstream;
+using nlohmann::json;
+using YAML::Node;
+using YAML::Exception;
 
 ConfigManager::ConfigManager() {
     set_default_config();

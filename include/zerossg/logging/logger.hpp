@@ -29,8 +29,7 @@ using zerossg::FileName;
 using zerossg::SecurityEvent;
 
 // Import spdlog types for module compatibility
-using spdlog::logger;
-using spdlog::level::level_enum;
+// Using spdlog::logger and spdlog::level::level_enum directly
 
 // Import standard library types for module compatibility
 using std::shared_ptr;
@@ -93,11 +92,11 @@ public:
     static shared_ptr<Logger> create_audit_logger();
     
 private:
-    shared_ptr<logger> m_logger;
+    shared_ptr<spdlog::logger> m_logger;
     mutable mutex m_mutex;
     
     // Helper methods
-    level_enum convert_log_level(LogLevel level) const;
+    spdlog::level::level_enum convert_log_level(LogLevel level) const;
     String format_timestamp() const;
     String format_security_event(const SecurityEvent& event) const;
     

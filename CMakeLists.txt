@@ -97,40 +97,46 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     )
     target_compile_features(zerossg.common INTERFACE cxx_std_23)
     
+    # Create interface library for std module
+    add_library(zerossg.std INTERFACE 
+        include/zerossg/std.ixx
+    )
+    target_compile_features(zerossg.std INTERFACE cxx_std_23)
+    
     # Create interface library for types
     add_library(zerossg.types INTERFACE 
         include/zerossg/types.ixx
     )
     target_compile_features(zerossg.types INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.types INTERFACE zerossg.common)
+    target_link_libraries(zerossg.types INTERFACE zerossg.common zerossg.std)
     
     # Create interface library for constants
     add_library(zerossg.constants INTERFACE 
         include/zerossg/constants.ixx
     )
     target_compile_features(zerossg.constants INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.constants INTERFACE zerossg.common)
+    target_link_libraries(zerossg.constants INTERFACE zerossg.common zerossg.std)
     
     # Create interface library for interfaces
     add_library(zerossg.interfaces INTERFACE 
         include/zerossg/interfaces.ixx
     )
     target_compile_features(zerossg.interfaces INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.interfaces INTERFACE zerossg.common zerossg.types)
+    target_link_libraries(zerossg.interfaces INTERFACE zerossg.common zerossg.types zerossg.std)
     
     # Create interface library for authenticator
     add_library(zerossg.auth.authenticator INTERFACE 
         include/zerossg/auth/authenticator.ixx
     )
     target_compile_features(zerossg.auth.authenticator INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.auth.authenticator INTERFACE zerossg.common zerossg.types zerossg.interfaces)
+    target_link_libraries(zerossg.auth.authenticator INTERFACE zerossg.common zerossg.types zerossg.interfaces zerossg.std)
     
     # Create interface library for logging
     add_library(zerossg.logging.logger INTERFACE 
         include/zerossg/logging/logger.ixx
     )
     target_compile_features(zerossg.logging.logger INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.logging.logger INTERFACE zerossg.common zerossg.interfaces)
+    target_link_libraries(zerossg.logging.logger INTERFACE zerossg.common zerossg.interfaces zerossg.std)
 endif()
 
 # Add subdirectories

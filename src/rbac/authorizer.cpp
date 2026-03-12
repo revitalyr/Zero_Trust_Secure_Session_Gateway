@@ -2,7 +2,7 @@
 import zerossg.rbac.authorizer;
 
 // Standard library imports
-import <algorithm>;
+import zerossg.std;
 
 namespace zerossg {
 

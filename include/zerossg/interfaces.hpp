@@ -63,7 +63,7 @@ public:
     virtual ~ILogger() = default;
     virtual void log_security_event(const SecurityEvent& event) = 0;
     virtual void log_session_event(const SessionId& session_id, const String& event_type, const String& details) = 0;
-    virtual void log_error(const String& component, const ErrorMessage& error) = 0;
+    virtual void log_error(const String& component, const String& error) = 0;
     virtual void log_info(const String& component, const String& message) = 0;
     virtual void log_debug(const String& component, const String& message) = 0;
 };
@@ -72,13 +72,13 @@ public:
 class IConfigManager {
 public:
     virtual ~IConfigManager() = default;
-    virtual Result<void> load_config(const ConfigFileName& config_file) = 0;
+    virtual std::expected<void> load_config(const ConfigFileName& config_file) = 0;
     virtual String get_string(const String& key, const String& default_value = "") = 0;
     virtual int get_int(const String& key, int default_value = 0) = 0;
     virtual bool get_bool(const String& key, bool default_value = false) = 0;
     virtual Strings get_string_array(const String& key) = 0;
-    virtual Result<TargetService> get_target_service(const ServiceName& service_name) = 0;
-    virtual Result<Vector<TargetService>> get_all_target_services() = 0;
+    virtual std::expected<TargetService> get_target_service(const ServiceName& service_name) = 0;
+    virtual std::expected<Vector<TargetService>> get_all_target_services() = 0;
 };
 
 // Interface for TLS handling
