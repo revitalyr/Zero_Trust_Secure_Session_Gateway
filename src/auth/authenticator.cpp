@@ -18,18 +18,18 @@ import <openssl/sha.h>;
 using json = nlohmann::json;
 
 // Import semantic aliases for cleaner code
-using zerossg::Result;
-using zerossg::String;
-using zerossg::UserName;
-using zerossg::PasswordHash;
-using zerossg::TokenString;
-using zerossg::User;
-using zerossg::SecretKey;
-using zerossg::SessionId;
-using zerossg::UserCount;
-using zerossg::Strings;
-using zerossg::TimePoint;
-using zerossg::make_result_error;
+using Result = zerossg::Result;
+using String = zerossg::String;
+using UserName = zerossg::UserName;
+using PasswordHash = zerossg::PasswordHash;
+using TokenString = zerossg::TokenString;
+using User = zerossg::User;
+using SecretKey = zerossg::SecretKey;
+using SessionId = zerossg::SessionId;
+using UserCount = zerossg::UserCount;
+using Strings = zerossg::Strings;
+using TimePoint = zerossg::TimePoint;
+using make_result_error = zerossg::make_result_error;
 
 
 namespace zerossg {

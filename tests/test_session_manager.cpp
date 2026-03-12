@@ -13,6 +13,10 @@ using zerossg::User;
 using zerossg::Role;
 using zerossg::ClientIp;
 using zerossg::ServiceName;
+using zerossg::String;
+using zerossg::ADMIN = zerossg::Role::ADMIN;
+using zerossg::OPERATOR = zerossg::Role::OPERATOR;
+using zerossg::VIEWER = zerossg::Role::VIEWER;
 
 class SessionManagerTest : public ::testing::Test {
 protected:
@@ -29,8 +33,8 @@ protected:
 
 TEST_F(SessionManagerTest, CreateSession) {
     User test_user("testuser", "hash", zerossg::Role::OPERATOR);
-    string client_ip = "192.168.1.100";
-    string target_service = "ssh";
+    String client_ip = "192.168.1.100";
+    String target_service = "ssh";
     
     // Create session
     auto session_result = session_manager->create_session(test_user, client_ip, target_service);
@@ -48,20 +52,20 @@ TEST_F(SessionManagerTest, CreateSession) {
 
 TEST_F(SessionManagerTest, SessionValidation) {
     User test_user("testuser", "hash", zerossg::Role::VIEWER);
-    string client_ip = "192.168.1.101";
-    string target_service = "web-admin";
+    String client_ip = "192.168.1.101";
+    String target_service = "web-admin";
     
     // Create session
     auto session_result = session_manager->create_session(test_user, client_ip, target_service);
     EXPECT_TRUE(session_result.is_success());
     
     // Validate session
-    auto validate_result = session_manager->is_session_valid(session_result.value());
+    auto validate_result = session_manager->is_session_valid(*session_result.value());
     EXPECT_TRUE(validate_result.is_success());
     EXPECT_TRUE(validate_result.value());
     
     // Terminate session
-    auto terminate_result = session_manager->terminate_session(session_result.value());
+    auto terminate_result = session_manager->terminate_session(*session_result.value());
     EXPECT_TRUE(terminate_result.is_success());
     
     // Validate terminated session
@@ -71,8 +75,8 @@ TEST_F(SessionManagerTest, SessionValidation) {
 
 TEST_F(SessionManagerTest, SessionUpdate) {
     User test_user("testuser", "hash", zerossg::Role::ADMIN);
-    string client_ip = "192.168.1.102";
-    string target_service = "database";
+    String client_ip = "192.168.1.102";
+    String target_service = "database";
     
     // Create session
     auto session_result = session_manager->create_session(test_user, client_ip, target_service);
