@@ -124,31 +124,44 @@ Result<String> AuthenticationManager::authenticate(const UserName& username, con
     return token_result;
 }
 
-Result<bool> AuthenticationManager::validate_token(string_view token) {
+Result<bool> AuthenticationManager::validate_token(const TokenString& token) {
     // Modern token format validation
     if (!auth_utils::is_valid_jwt_structure(token)) {
         return make_result_error<bool>("Invalid token format");
-Result<User> AuthenticationManager::get_user_from_token(const string& token) {
+    }
+    
+    // Check if token is revoked
+    {
+        std::shared_lock lock(m_revoked_tokens_mutex);
+        if (m_revoked_tokens.contains(string(token))) {
+            return make_result_error<bool>("Token has been revoked");
+        }
+    }
+    
+    return make_result_success(true);
+}
+
+Result<User> AuthenticationManager::get_user_from_token(const TokenString& token) {
     // Parse JWT token (header.payload.signature)
     size_t first_dot = token.find('.');
     size_t second_dot = token.find('.', first_dot + 1);
     
-    if (first_dot == string::npos || second_dot == string::npos) {
-        return Result<User>::error("Invalid token format");
+    if (first_dot == String::npos || second_dot == String::npos) {
+        return make_result_error<User>("Invalid token format");
     }
     
-    string header_payload = token.substr(0, second_dot);
-    string signature = token.substr(second_dot + 1);
+    String header_payload = token.substr(0, second_dot);
+    String signature = token.substr(second_dot + 1);
     
     // Verify signature
     if (!verify_jwt_signature(header_payload, signature)) {
-        return Result<User>::error("Invalid token signature");
+        return make_result_error<User>("Invalid token signature");
     }
     
     // Parse payload
     auto payload_result = parse_jwt_payload(token);
     if (!payload_result.is_success()) {
-        return Result<User>::error("Invalid token payload: " + payload_result.error());
+        return make_result_error<User>("Invalid token payload: " + payload_result.error());
     }
     
     // Check if token is revoked
@@ -156,14 +169,14 @@ Result<User> AuthenticationManager::get_user_from_token(const string& token) {
         LockGuard<std::mutex> lock(m_tokens_mutex);
         auto revoked_it = m_revoked_tokens.find(token);
         if (revoked_it != m_revoked_tokens.end()) {
-            return Result<User>::error("Token has been revoked");
+            return make_result_error<User>("Token has been revoked");
         }
     }
     
     return payload_result;
 }
 
-Result<string> AuthenticationManager::generate_token(const User& user) {
+Result<TokenString> AuthenticationManager::generate_token(const User& user) {
     try {
         // Create JWT header
         json header = {
@@ -187,77 +200,77 @@ Result<string> AuthenticationManager::generate_token(const User& user) {
         string header_payload = header_b64 + "." + payload_b64;
         string signature = generate_jwt_signature(header_payload);
         
-        return Result<string>::success(header_payload + "." + signature);
+        return make_result_success<TokenString>(header_payload + "." + signature);
     } catch (const std::exception& e) {
-        return Result<string>::error("JWT generation failed: " + string(e.what()));
+        return make_result_error<TokenString>("JWT generation failed: " + String(e.what()));
     }
 }
 
-Result<void> AuthenticationManager::revoke_token(const std::string& token) {
+Result<void> AuthenticationManager::revoke_token(const TokenString& token) {
     LockGuard<std::mutex> lock(m_tokens_mutex);
     
     // Store token with expiry time for cleanup
     auto expiry_time = std::chrono::duration_cast<std::chrono::seconds>(
-        system_clock::now() + TOKEN_EXPIRY_TIME).count();
-    m_revoked_tokens[token] = std::to_string(expiry_time);
+        std::chrono::system_clock::now() + TOKEN_EXPIRY_TIME).count();
+    m_revoked_tokens[string(token)] = std::to_string(expiry_time);
     
-    return Result<void>::success();
+    return make_result_success();
 }
 
 Result<void> AuthenticationManager::add_user(const User& user) {
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(user.username) != m_users.end()) {
-        return Result<void>::error("User already exists");
+        return make_result_error<void>("User already exists");
     }
     
     m_users[user.username] = user;
-    return Result<void>::success();
+    return make_result_success();
 }
 
-Result<void> AuthenticationManager::update_user(const std::string& username, const User& user) {
+Result<void> AuthenticationManager::update_user(const UserName& username, const User& user) {
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(username) == m_users.end()) {
-        return Result<void>::error("User not found");
+        return make_result_error<void>("User not found");
     }
     
     m_users[username] = user;
-    return Result<void>::success();
+    return make_result_success();
 }
 
-Result<void> AuthenticationManager::delete_user(const std::string& username) {
+Result<void> AuthenticationManager::delete_user(const UserName& username) {
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.erase(username) == 0) {
-        return Result<void>::error("User not found");
+        return make_result_error<void>("User not found");
     }
     
-    return Result<void>::success();
+    return make_result_success();
 }
 
-Result<std::optional<User>> AuthenticationManager::get_user(const std::string& username) {
+Result<Optional<User>> AuthenticationManager::get_user(const UserName& username) {
     LockGuard<std::mutex> lock(m_users_mutex);
     
     auto it = m_users.find(username);
     if (it == m_users.end()) {
-        return Result<optional<User>>::success(std::nullopt);
+        return make_result_success<Optional<User>>(std::nullopt);
     }
     
-    return Result<optional<User>>::success(it->second);
+    return make_result_success<Optional<User>>(it->second);
 }
 
-Result<Users<User>> AuthenticationManager::list_users() {
+Result<Vector<User>> AuthenticationManager::list_users() {
     LockGuard<std::mutex> lock(m_users_mutex);
     
-    Users<User> users;
+    Vector<User> users;
     users.reserve(m_users.size());
     
     for (const auto& pair : m_users) {
         users.push_back(pair.second);
     }
     
-    return Result<Users<User>>::success(std::move(users));
+    return make_result_success<Vector<User>>(std::move(users));
 }
 
 Result<std::string> AuthenticationManager::hash_password(const std::string& password) {
