@@ -86,7 +86,7 @@ class ITlsHandler {
 public:
     virtual ~ITlsHandler() = default;
     virtual Result<void> initialize(const FileName& cert_file, const FileName& key_file) = 0;
-    virtual boost::asio::ssl::context& get_context() = 0;
+    virtual SslContext& get_context() = 0;
     virtual Result<bool> verify_certificate(const std::string& cert_data) = 0;
 };
 

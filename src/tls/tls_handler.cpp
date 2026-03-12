@@ -5,7 +5,7 @@
 
 namespace zerossg {
 
-TlsHandler::TlsHandler(boost::asio::io_context& io_context)
+TlsHandler::TlsHandler(IoContext& io_context)
     : m_ssl_context(boost::asio::ssl::context::tlsv12_server)
     , m_io_context(io_context)
     , m_verify_depth(9)
@@ -55,7 +55,7 @@ Result<void> TlsHandler::initialize(const string& cert_file, const string& key_f
     }
 }
 
-boost::asio::ssl::context& TlsHandler::get_context() {
+SslContext& TlsHandler::get_context() {
     return m_ssl_context;
 }
 
@@ -113,7 +113,7 @@ Result<void> TlsHandler::load_private_key(const string& key_file) {
     }
 }
 
-Result<void> TlsHandler::set_verify_mode(boost::asio::ssl::verify_mode mode) {
+Result<void> TlsHandler::set_verify_mode(SslVerifyMode mode) {
     try {
         m_ssl_context.set_verify_mode(mode);
         if (mode != boost::asio::ssl::verify_none) {
@@ -143,7 +143,7 @@ void TlsHandler::set_cipher_list(const string& cipher_list) {
     m_cipher_list = cipher_list;
 }
 
-bool TlsHandler::verify_certificate_callback(bool preverified, boost::asio::ssl::verify_context& ctx) {
+bool TlsHandler::verify_certificate_callback(bool preverified, SslVerifyContext& ctx) {
     // This is a simplified verification callback
     // In production, you would want to implement more sophisticated verification
     // including certificate revocation checking, hostname verification, etc.

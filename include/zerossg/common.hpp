@@ -2,18 +2,17 @@
 
 #include <string>
 #include <string_view>
-#include <memory>
 #include <vector>
-#include <unordered_map>
+#include <memory>
 #include <chrono>
-#include <optional>
-#include <functional>
-#include <stdexcept>
-#include <system_error>
 #include <mutex>
 #include <expected>
 #include <concepts>
+#include <unordered_map>
+#include <optional>
+#include <variant>
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 namespace zerossg {
 
@@ -100,6 +99,15 @@ using SessionManagerPtr = std::unique_ptr<T>;
 
 // Network type aliases
 using TcpEndpoint = boost::asio::ip::tcp::endpoint;
+using SslContext = boost::asio::ssl::context;
+using SslStream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
+using TcpSocket = boost::asio::ip::tcp::socket;
+using TcpAcceptor = boost::asio::ip::tcp::acceptor;
+using IoContext = boost::asio::io_context;
+
+// SSL verification type aliases
+using SslVerifyMode = boost::asio::ssl::verify_mode;
+using SslVerifyContext = boost::asio::ssl::verify_context;
 
 // Synchronization aliases
 template<typename Mutex>
