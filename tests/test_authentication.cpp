@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
-#include "zerossg/auth/authenticator.hpp"
+import zerossg.auth.authenticator;
 import zerossg.types;
+import zerossg.common;
+#include <string>
 
 using namespace zerossg;
 

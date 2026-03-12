@@ -3,9 +3,9 @@
 // Project headers
 #include "zerossg/interfaces.hpp"
 #include "zerossg/tls/tls_handler.hpp"
-#include "zerossg/auth/authenticator.hpp"
+import zerossg.auth.authenticator;
 #include "zerossg/rbac/authorizer.hpp"
-#include "zerossg/session/session_manager.hpp"
+import zerossg.session.session_manager;
 #include "zerossg/security/security_manager.hpp"
 #include "zerossg/logging/logger.hpp"
 

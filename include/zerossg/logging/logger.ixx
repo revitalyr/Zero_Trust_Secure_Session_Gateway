@@ -1,8 +1,8 @@
 export module zerossg.logging.logger;
 
 // C++23 module imports
-export import zerossg.common;
-export import zerossg.interfaces;
+import zerossg.common;
+import zerossg.interfaces;
 
 // Third-party library imports
 export import <spdlog/spdlog.h>;

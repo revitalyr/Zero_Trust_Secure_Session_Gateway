@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
-#include "zerossg/session/session_manager.hpp"
+import zerossg.session.session_manager;
 import zerossg.types;
+import zerossg.common;
 #include <thread>
 #include <chrono>
+#include <string>
 
 using namespace zerossg;
 

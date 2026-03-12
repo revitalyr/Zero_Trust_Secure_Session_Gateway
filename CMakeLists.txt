@@ -91,17 +91,18 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     set(CMAKE_CXX_SCAN_FOR_MODULES ON)
     set(CMAKE_EXPERIMENTAL_CXX_MODULE_STD ON)
     
-    # Create interface library for common
-    add_library(zerossg.common INTERFACE 
-        include/zerossg/common.ixx
-    )
-    target_compile_features(zerossg.common INTERFACE cxx_std_23)
-    
     # Create interface library for std module
     add_library(zerossg.std INTERFACE 
         include/zerossg/std.ixx
     )
     target_compile_features(zerossg.std INTERFACE cxx_std_23)
+    
+    # Create interface library for common
+    add_library(zerossg.common INTERFACE 
+        include/zerossg/common.ixx
+    )
+    target_compile_features(zerossg.common INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.common INTERFACE zerossg.std)
     
     # Create interface library for types
     add_library(zerossg.types INTERFACE 
@@ -137,6 +138,13 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     )
     target_compile_features(zerossg.logging.logger INTERFACE cxx_std_23)
     target_link_libraries(zerossg.logging.logger INTERFACE zerossg.common zerossg.interfaces zerossg.std)
+    
+    # Create interface library for session manager
+    add_library(zerossg.session.session_manager INTERFACE 
+        include/zerossg/session/session_manager.ixx
+    )
+    target_compile_features(zerossg.session.session_manager INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.session.session_manager INTERFACE zerossg.types zerossg.interfaces zerossg.std)
 endif()
 
 # Add subdirectories

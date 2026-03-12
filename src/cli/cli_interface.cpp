@@ -1,8 +1,8 @@
 #include "zerossg/cli/cli_interface.hpp"
 #include "zerossg/network/gateway_server.hpp"
 #include "zerossg/config/config_manager.hpp"
-#include "zerossg/auth/authenticator.hpp"
-#include "zerossg/session/session_manager.hpp"
+import zerossg.auth.authenticator;
+import zerossg.session.session_manager;
 #include "zerossg/security/security_manager.hpp"
 #include <iostream>
 #include <iomanip>

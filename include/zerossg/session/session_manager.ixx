@@ -1,4 +1,4 @@
-#pragma once
+export module zerossg.session.session_manager;
 
 // C++23 module imports
 import zerossg.interfaces;
@@ -12,6 +12,12 @@ import <random>;
 import <string>;
 
 namespace zerossg {
+
+// Import needed types
+using zerossg::User;
+using zerossg::SessionId;
+using zerossg::ClientIp;
+using zerossg::ServiceName;
 
 class SessionManager : public ISessionManager {
 public:
