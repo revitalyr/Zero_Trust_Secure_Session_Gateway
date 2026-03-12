@@ -1,10 +1,11 @@
-#include "zerossg/network/gateway_server.hpp"
-#include "zerossg/cli/cli_interface.hpp"
-#include "zerossg/config/config_manager.hpp"
-#include "zerossg/logging/logger.hpp"
-#include "zerossg/common.hpp"
 #include <memory>
 #include <csignal>
+
+import zerossg.network.gateway_server;
+import zerossg.cli.cli_interface;
+import zerossg.config.config_manager;
+import zerossg.logging.logger;
+import zerossg.common;
 
 using namespace zerossg;
 

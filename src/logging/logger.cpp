@@ -1,9 +1,11 @@
-#include "zerossg/logging/logger.hpp"
+// C++23 module imports
+import zerossg.interfaces;
+import zerossg.constants;
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <chrono>
-#include <iomanip>
-#include <sstream>
+#include <spdlog/sinks/basic_file_sink.h>;
+#include <chrono>;
+#include <iomanip>;
+#include <sstream>;
 
 namespace zerossg {
 

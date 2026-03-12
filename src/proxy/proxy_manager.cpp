@@ -1,4 +1,6 @@
-#include "zerossg/proxy/proxy_manager.hpp"
+// Project headers
+import zerossg.interfaces;
+import zerossg.logging.logger;
 #include <iostream>
 
 namespace zerossg {

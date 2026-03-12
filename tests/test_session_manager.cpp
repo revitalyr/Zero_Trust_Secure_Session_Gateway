@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 import zerossg.session.session_manager;
 import zerossg.types;
-import zerossg.common;
+import zerossg.interfaces;
 #include <thread>
 #include <chrono>
 #include <string>

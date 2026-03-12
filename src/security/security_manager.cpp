@@ -1,4 +1,6 @@
-#include "zerossg/security/security_manager.hpp"
+// Project headers
+import zerossg.interfaces;
+import zerossg.logging.logger;
 #include <algorithm>
 #include <iostream>
 

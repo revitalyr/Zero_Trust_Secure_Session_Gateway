@@ -1,7 +1,5 @@
 export module zerossg.constants;
 
-export import zerossg.common;
-
 export import <chrono>;
 export import <cstdint>;
 export import <string>;

@@ -116,7 +116,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
         include/zerossg/constants.ixx
     )
     target_compile_features(zerossg.constants INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.constants INTERFACE zerossg.common zerossg.std)
+    target_link_libraries(zerossg.constants INTERFACE zerossg.std)
     
     # Create interface library for interfaces
     add_library(zerossg.interfaces INTERFACE 
@@ -130,7 +130,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
         include/zerossg/auth/authenticator.ixx
     )
     target_compile_features(zerossg.auth.authenticator INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.auth.authenticator INTERFACE zerossg.common zerossg.types zerossg.std)
+    target_link_libraries(zerossg.auth.authenticator INTERFACE zerossg.types zerossg.interfaces zerossg.std)
     
     # Create interface library for logging
     add_library(zerossg.logging.logger INTERFACE 

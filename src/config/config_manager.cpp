@@ -1,5 +1,4 @@
 // C++23 module imports
-import zerossg.common;
 import zerossg.constants;
 import zerossg.interfaces;
 import zerossg.std;

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 import zerossg.auth.authenticator;
 import zerossg.types;
-import zerossg.common;
+import zerossg.interfaces;
 #include <string>
 
 using namespace zerossg;
