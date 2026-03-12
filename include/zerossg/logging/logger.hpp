@@ -19,10 +19,20 @@ import <unordered_map>;
 
 namespace zerossg {
 
+// Import semantic aliases for type visibility
+using zerossg::String;
+using zerossg::Vector;
+using zerossg::SessionId;
+using zerossg::UserName;
+using zerossg::ClientIp;
+using zerossg::FileName;
+using zerossg::SecurityEvent;
+
 // Import standard library types for module compatibility
 using std::shared_ptr;
 using std::pair;
 using std::mutex;
+using std::unordered_map;
 
 enum class LogLevel {
     TRACE = 0,
@@ -73,14 +83,14 @@ public:
     void log_throughput(size_t bytes_transferred, const String& direction = "total");
     
     // Static factory methods
-    static std::shared_ptr<Logger> create(const String& name = "zerossg");
-    static std::shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
-    static std::shared_ptr<Logger> create_security_logger();
-    static std::shared_ptr<Logger> create_audit_logger();
+    static shared_ptr<Logger> create(const String& name = "zerossg");
+    static shared_ptr<Logger> create_with_file_output(const String& name, const FileName& log_file);
+    static shared_ptr<Logger> create_security_logger();
+    static shared_ptr<Logger> create_audit_logger();
     
 private:
-    std::shared_ptr<spdlog::logger> m_logger;
-    mutable std::mutex m_mutex;
+    shared_ptr<spdlog::logger> m_logger;
+    mutable mutex m_mutex;
     
     // Helper methods
     spdlog::level::level_enum convert_log_level(LogLevel level) const;
@@ -88,7 +98,7 @@ private:
     String format_security_event(const SecurityEvent& event) const;
     
     // Field formatting for structured logging
-    String format_fields(const Vector<std::pair<String, String>>& fields) const;
+    String format_fields(const Vector<pair<String, String>>& fields) const;
     
     // Initialize default sinks
     void initialize_default_sinks();
@@ -99,8 +109,8 @@ class LoggerManager {
 public:
     static LoggerManager& instance();
     
-    std::shared_ptr<Logger> get_logger(const String& name = "default");
-    void set_global_logger(std::shared_ptr<Logger> logger);
+    shared_ptr<Logger> get_logger(const String& name = "default");
+    void set_global_logger(shared_ptr<Logger> logger);
     
     // Convenience methods for global logging
     void info(const String& message);
@@ -110,9 +120,9 @@ public:
     
 private:
     LoggerManager() = default;
-    UnorderedMap<String, std::shared_ptr<Logger>> m_loggers;
-    std::shared_ptr<Logger> m_global_logger;
-    mutable std::mutex m_mutex;
+    unordered_map<String, shared_ptr<Logger>> m_loggers;
+    shared_ptr<Logger> m_global_logger;
+    mutable mutex m_mutex;
 };
 
 // Convenience macros for logging
