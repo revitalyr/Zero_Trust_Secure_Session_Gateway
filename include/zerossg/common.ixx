@@ -21,13 +21,27 @@ export import <boost/asio/ssl.hpp>;
 export namespace zerossg {
 
 // Modern C++26 type aliases with semantic naming
-export using string_view = std::string_view;
+export using stringView = std::string_view;
 
 template<typename T>
-export using unique_ptr = std::unique_ptr<T>;
+export using uniquePtr = std::unique_ptr<T>;
 
 template<typename T>
-export using shared_ptr = std::shared_ptr<T>;
+export using sharedPtr = std::shared_ptr<T>;
+
+template<typename T>
+export using weakPtr = std::weak_ptr<T>;
+
+template<typename T>
+export using vector = std::vector<T>;
+
+template<typename K, typename V>
+export using unorderedMap = std::unordered_map<K, V>;
+
+export using systemClock = std::chrono::system_clock;
+export using steadyClock = std::chrono::steady_clock;
+export using milliseconds = std::chrono::milliseconds;
+export using seconds = std::chrono::seconds;
 
 // Semantic type aliases for basic types
 export using UserName = std::string;
@@ -51,23 +65,23 @@ export using AttemptCount = size_t;
 export using Count = size_t;
 
 // Time duration aliases
-export using TimeoutDuration = std::chrono::seconds;
-export using Milliseconds = std::chrono::milliseconds;
-export using Hours = std::chrono::hours;
-export using Minutes = std::chrono::minutes;
+export using timeoutDuration = std::chrono::seconds;
+export using milliseconds = std::chrono::milliseconds;
+export using hours = std::chrono::hours;
+export using minutes = std::chrono::minutes;
 
 // Semantic type aliases for collections
-export using Strings = std::vector<std::string>;
+export using strings = std::vector<std::string>;
 template<typename T>
-export using Roles = std::vector<T>;
+export using roles = std::vector<T>;
 
 // Semantic type aliases for plural collections
 template<typename T>
-export using Users = std::vector<T>;
-export using Sessions = std::vector<Session>;
-export using TargetServices = std::vector<TargetService>;
-export using SecurityEvents = std::vector<SecurityEvent>;
-export using ConnectionInfos = std::vector<ConnectionInfo>;
+export using users = std::vector<T>;
+export using sessions = std::vector<Session>;
+export using targetServices = std::vector<TargetService>;
+export using securityEvents = std::vector<SecurityEvent>;
+export using connectionInfos = std::vector<ConnectionInfo>;
 
 // Smart pointer aliases
 template<typename T>
