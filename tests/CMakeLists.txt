@@ -4,37 +4,21 @@
 find_package(GTest REQUIRED)
 
 # Collect test files
-file(GLOB_RECURSE TEST_SOURCES "*.cpp")
+set(TEST_SOURCES
+    "test_authentication.cpp"
+    "test_authorization.cpp"
+    "test_session_manager.cpp"
+)
 
 # Create test executable
 add_executable(zerossg_tests ${TEST_SOURCES})
 
 # Link libraries
 target_link_libraries(zerossg_tests
+    PRIVATE
     GTest::gtest
     GTest::gtest_main
-    Boost::system
-    ${OPENSSL_LIBRARIES}
-    ${SPDLOG_LIBRARIES}
-    ${NLOHMANN_JSON_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
-)
-
-# Link against interface libraries for C++23 modules (only if CMake version supports modules)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
-    target_link_libraries(zerossg_tests
-        zerossg.std
-        zerossg.common
-        zerossg.types
-        zerossg.interfaces
-        zerossg.auth.authenticator
-        zerossg.rbac.authorizer
-        zerossg.proxy.proxy_manager
-        zerossg.cli.cli_interface
-        zerossg.logging.logger
-        zerossg.session.session_manager
-    )
-endif()
+    zerossg_lib)
 
 # Include directories
 target_include_directories(zerossg_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)

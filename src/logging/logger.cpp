@@ -1,21 +1,21 @@
-// C++23 module imports
-import zerossg.interfaces;
-import zerossg.constants;
-import zerossg.logging.logger;
+module;
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <chrono>
 #include <iomanip>
-#include <sstream>
-#include <memory>
-#include <vector>
-#include <mutex>
-#include <algorithm>
-#include <ctime>
+
+module zerossg.logging.logger;
+
+import zerossg.interfaces;
+import zerossg.constants;
+import zerossg.std;
 
 // Logger class implementation
+namespace zerossg {
+
 Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks();
     m_logger->set_name(name);

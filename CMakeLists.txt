@@ -35,6 +35,15 @@ endif()
 # Find required packages with modern CMake
 find_package(Boost 1.75 REQUIRED COMPONENTS system)
 
+# Find readline for the CLI
+find_package(Readline QUIET)
+if(NOT Readline_FOUND)
+    message(STATUS "Readline not found, interactive CLI may have limited features.")
+else()
+    set(READLINE_INCLUDE_DIR ${Readline_INCLUDE_DIRS})
+    set(READLINE_LIBRARIES ${Readline_LIBRARIES})
+endif()
+
 # Use system packages with fallback
 find_package(spdlog QUIET)
 if(NOT spdlog_FOUND)
@@ -85,123 +94,72 @@ if(DEFINED ENV{VCPKG_ROOT})
     include_directories($ENV{VCPKG_ROOT}/installed/x64-windows/include)
 endif()
 
-# C++23 modules support
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
-    # CMake 3.28+ has native module support
-    set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-    set(CMAKE_EXPERIMENTAL_CXX_MODULE_STD ON)
-    
-    # Create interface library for std module
-    add_library(zerossg.std INTERFACE 
-        include/zerossg/std.ixx
-    )
-    target_compile_features(zerossg.std INTERFACE cxx_std_23)
-    
-    # Create interface library for common
-    add_library(zerossg.common INTERFACE 
-        include/zerossg/common.ixx
-    )
-    target_compile_features(zerossg.common INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.common INTERFACE zerossg.std)
-    
-    # Create interface library for types
-    add_library(zerossg.types INTERFACE 
-        include/zerossg/types.ixx
-    )
-    target_compile_features(zerossg.types INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.types INTERFACE zerossg.std)
-    
-    # Create interface library for constants
-    add_library(zerossg.constants INTERFACE 
-        include/zerossg/constants.ixx
-    )
-    target_compile_features(zerossg.constants INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.constants INTERFACE zerossg.std)
-    
-    # Create interface library for interfaces
-    add_library(zerossg.interfaces INTERFACE 
-        include/zerossg/interfaces.ixx
-    )
-    target_compile_features(zerossg.interfaces INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.interfaces INTERFACE zerossg.types zerossg.std)
-    
-    # Create interface library for authenticator
-    add_library(zerossg.auth.authenticator INTERFACE 
-        include/zerossg/auth/authenticator.ixx
-    )
-    target_compile_features(zerossg.auth.authenticator INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.auth.authenticator INTERFACE zerossg.types zerossg.interfaces zerossg.std)
-    
-    # Create interface library for logging
-    add_library(zerossg.logging.logger INTERFACE 
-        include/zerossg/logging/logger.ixx
-    )
-    target_compile_features(zerossg.logging.logger INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.logging.logger INTERFACE zerossg.interfaces zerossg.std)
-    
-    # Create interface library for RBAC authorizer
-    add_library(zerossg.rbac.authorizer INTERFACE 
-        include/zerossg/rbac/authorizer.ixx
-    )
-    target_compile_features(zerossg.rbac.authorizer INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.rbac.authorizer INTERFACE zerossg.types zerossg.std)
-    
-    # Create interface library for proxy manager
-    add_library(zerossg.proxy.proxy_manager INTERFACE 
-        include/zerossg/proxy/proxy_manager.ixx
-    )
-    target_compile_features(zerossg.proxy.proxy_manager INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.proxy.proxy_manager INTERFACE zerossg.types zerossg.std)
-    
-    # Create interface library for CLI interface
-    add_library(zerossg.cli.cli_interface INTERFACE 
-        include/zerossg/cli/cli_interface.ixx
-    )
-    target_compile_features(zerossg.cli.cli_interface INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.cli.cli_interface INTERFACE zerossg.std)
-    
-    # Create interface library for third-party nlohmann/json
-    add_library(zerossg.third_party.nlohmann_json INTERFACE 
-        include/zerossg/third_party/nlohmann_json.ixx
-    )
-    target_compile_features(zerossg.third_party.nlohmann_json INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.third_party.nlohmann_json INTERFACE)
-    
-    # Create interface library for third-party OpenSSL
-    add_library(zerossg.third_party.openssl INTERFACE 
-        include/zerossg/third_party/openssl.ixx
-    )
-    target_compile_features(zerossg.third_party.openssl INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.third_party.openssl INTERFACE)
-    
-    # Create interface library for third-party yaml-cpp
-    add_library(zerossg.third_party.yaml_cpp INTERFACE 
-        include/zerossg/third_party/yaml_cpp.ixx
-    )
-    target_compile_features(zerossg.third_party.yaml_cpp INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.third_party.yaml_cpp INTERFACE)
-    
-    # Create interface library for session manager
-    add_library(zerossg.session.session_manager INTERFACE 
-        include/zerossg/session/session_manager.ixx
-    )
-    target_compile_features(zerossg.session.session_manager INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.session.session_manager INTERFACE zerossg.types zerossg.interfaces zerossg.std)
-    
-    # Create interface library for TLS handler
-    add_library(zerossg.tls.tls_handler INTERFACE 
-        include/zerossg/tls/tls_handler.ixx
-    )
-    target_compile_features(zerossg.tls.tls_handler INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.tls.tls_handler INTERFACE zerossg.interfaces zerossg.logging.logger zerossg.std zerossg.third_party.openssl)
-    
-    # Create interface library for network gateway server
-    add_library(zerossg.network.gateway_server INTERFACE 
-        include/zerossg/network/gateway_server.ixx
-    )
-    target_compile_features(zerossg.network.gateway_server INTERFACE cxx_std_23)
-    target_link_libraries(zerossg.network.gateway_server INTERFACE zerossg.tls.tls_handler zerossg.auth.authenticator zerossg.rbac.authorizer zerossg.session.session_manager zerossg.proxy.proxy_manager zerossg.security.security_manager zerossg.logging.logger zerossg.third_party.nlohmann_json zerossg.std)
-endif()
+# For C++20 modules, implementation files (.cpp) must be separated from
+# module interface files (.ixx).
+set(ZEROSSG_IMPL_SOURCES
+    "src/auth/authenticator.cpp"
+    "src/cli/cli_interface.cpp"
+    "src/config/config_manager.cpp"
+    "src/logging/logger.cpp"
+    "src/network/connection.cpp"
+    "src/network/gateway_server.cpp"
+    "src/proxy/proxy_manager.cpp"
+    "src/rbac/authorizer.cpp"
+    "src/security/security_manager.cpp"
+    "src/session/session_manager.cpp"
+    "src/tls/tls_handler.cpp"
+    "src/types.cpp"
+)
+
+add_library(zerossg_lib STATIC ${ZEROSSG_IMPL_SOURCES})
+
+# Module interfaces must be declared in a FILE_SET. This allows CMake's
+# dependency scanner to correctly identify and build them first.
+target_sources(zerossg_lib PUBLIC
+    FILE_SET CXX_MODULES
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "include/zerossg/auth/authenticator.ixx"
+        "include/zerossg/cli/cli_interface.ixx"
+        "include/zerossg/common.ixx"
+        "include/zerossg/config/config_manager.ixx"
+        "include/zerossg/constants.ixx"
+        "include/zerossg/interfaces.ixx"
+        "include/zerossg/logging/logger.ixx"
+        "include/zerossg/network/connection.ixx"
+        "include/zerossg/network/gateway_server.ixx"
+        "include/zerossg/proxy/proxy_manager.ixx"
+        "include/zerossg/rbac/authorizer.ixx"
+        "include/zerossg/result.ixx"
+        "include/zerossg/security/security_manager.ixx"
+        "include/zerossg/session/session_manager.ixx"
+        "include/zerossg/std.ixx"
+        "include/zerossg/third_party/nlohmann_json.ixx"
+        "include/zerossg/third_party/openssl.ixx"
+        "include/zerossg/third_party/yaml_cpp.ixx"
+        "include/zerossg/tls/tls_handler.ixx"
+        "include/zerossg/types.ixx"
+)
+
+# Apply compile features and include directories to the library.
+# Using PUBLIC ensures that any target linking against zerossg_lib
+# will inherit these properties.
+target_compile_features(zerossg_lib PUBLIC cxx_std_23)
+
+target_include_directories(zerossg_lib PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+# Link all external dependencies to the main library.
+# These will be propagated to the final executable and test targets.
+target_link_libraries(zerossg_lib PUBLIC
+    Boost::system
+    ${SPDLOG_LIBRARIES}
+    ${NLOHMANN_JSON_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+    ${READLINE_LIBRARIES}
+)
 
 # Add subdirectories
 add_subdirectory(src)

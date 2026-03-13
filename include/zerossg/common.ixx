@@ -1,23 +1,13 @@
-export module zerossg.common;
-
-// C++23 Standard Library exports
-export import <chrono>;
-export import <concepts>;
-export import <expected>;
-export import <generator>;
-export import <memory>;
-export import <mutex>;
-export import <optional>;
-export import <string>;
-export import <string_view>;
-export import <unordered_map>;
-export import <variant>;
-export import <vector>;
+module;
 
 // Boost exports
-export import <boost/asio.hpp>;
-export import <boost/asio/ssl.hpp>;
-export import <boost/asio/ssl/verify_context.hpp>;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/asio/ssl/verify_context.hpp>
+
+export module zerossg.common;
+
+import zerossg.std;
 
 export namespace zerossg {
 

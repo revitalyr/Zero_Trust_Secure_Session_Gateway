@@ -1,7 +1,6 @@
 module zerossg.types;
 
 import zerossg.std;
-import zerossg.result;
 
 namespace zerossg {
 
@@ -11,33 +10,33 @@ namespace zerossg {
 [[deprecated("Use constexpr role_to_string instead")]]
 zerossg::RoleString role_to_string(Role role) {
     switch (role) {
-        case Role::ADMIN: return zerossg::ROLE_ADMIN;
-        case Role::OPERATOR: return zerossg::ROLE_OPERATOR;
-        case Role::VIEWER: return zerossg::ROLE_VIEWER;
-        default: return zerossg::ERROR_UNKNOWN_ROLE;
+        case Role::ADMIN: return "admin";
+        case Role::OPERATOR: return "operator";
+        case Role::VIEWER: return "viewer";
+        default: return "unknown";
     }
 }
 
 [[deprecated("Use constexpr string_to_role instead")]]
 Role string_to_role(const zerossg::RoleString& role_str) {
-    if (role_str == zerossg::ROLE_ADMIN) return Role::ADMIN;
-    if (role_str == zerossg::ROLE_OPERATOR) return Role::OPERATOR;
-    if (role_str == zerossg::ROLE_VIEWER) return Role::VIEWER;
+    if (role_str == "admin") return Role::ADMIN;
+    if (role_str == "operator") return Role::OPERATOR;
+    if (role_str == "viewer") return Role::VIEWER;
     return Role::VIEWER; // Default fallback
 }
 
 [[deprecated("Use constexpr security_event_type_to_string instead")]]
 zerossg::EventString security_event_type_to_string(SecurityEventType type) {
     switch (type) {
-        case SecurityEventType::LOGIN_SUCCESS: return zerossg::EVENT_LOGIN_SUCCESS;
-        case SecurityEventType::LOGIN_FAILURE: return zerossg::EVENT_LOGIN_FAILURE;
-        case SecurityEventType::SESSION_START: return zerossg::EVENT_SESSION_START;
-        case SecurityEventType::SESSION_TERMINATION: return zerossg::EVENT_SESSION_TERMINATION;
-        case SecurityEventType::AUTHENTICATION_ERROR: return zerossg::EVENT_AUTHENTICATION_ERROR;
-        case SecurityEventType::ACCESS_VIOLATION: return zerossg::EVENT_ACCESS_VIOLATION;
-        case SecurityEventType::RATE_LIMIT_EXCEEDED: return zerossg::EVENT_RATE_LIMIT_EXCEEDED;
-        case SecurityEventType::BRUTE_FORCE_DETECTED: return zerossg::EVENT_BRUTE_FORCE_DETECTED;
-        default: return zerossg::ERROR_UNKNOWN_EVENT;
+        case SecurityEventType::LOGIN_SUCCESS: return "login_success";
+        case SecurityEventType::LOGIN_FAILURE: return "login_failure";
+        case SecurityEventType::SESSION_START: return "session_start";
+        case SecurityEventType::SESSION_TERMINATION: return "session_termination";
+        case SecurityEventType::AUTHENTICATION_ERROR: return "authentication_error";
+        case SecurityEventType::ACCESS_VIOLATION: return "access_violation";
+        case SecurityEventType::RATE_LIMIT_EXCEEDED: return "rate_limit_exceeded";
+        case SecurityEventType::BRUTE_FORCE_DETECTED: return "brute_force_detected";
+        default: return "unknown_event";
     }
 }
 

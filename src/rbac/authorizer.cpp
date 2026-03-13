@@ -18,7 +18,7 @@ zerossg::Result<bool> AuthorizationManager::can_access_service(const zerossg::Us
     
     auto service_it = m_services.find(service_name);
     if (service_it == m_services.end()) {
-        return zerossg::Result<bool>::error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return make_result_error<bool>(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     const zerossg::TargetService& service = service_it->second;

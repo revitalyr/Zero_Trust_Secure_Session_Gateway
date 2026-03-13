@@ -6,7 +6,6 @@ import zerossg.types;
 import zerossg.interfaces;
 import zerossg.third_party.nlohmann_json;
 import zerossg.third_party.openssl;
-import zerossg.result;
 
 // Standard library imports
 import zerossg.std;
@@ -431,23 +430,6 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
     } catch (const json::exception& e) {
         return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX, e.what()));
     }
-}
-
-zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) {
-    unsigned char* hmac = nullptr;
-    unsigned int hmac_len;
-    
-    hmac = HMAC(EVP_sha256(), m_jwt_secret.data(), m_jwt_secret.size(),
-                reinterpret_cast<const unsigned char*>(header_payload.data()), header_payload.size(), nullptr, &hmac_len);
-    
-    if (!hmac) {
-        throw std::runtime_error(zerossg::ERROR_HMAC_GENERATION_FAILED);
-    }
-    
-    std::string signature = base64_encode(std::string(reinterpret_cast<char*>(hmac), hmac_len));
-    OPENSSL_free(hmac);
-    
-    return signature;
 }
 
 bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload& header_payload, const zerossg::JwtSignature& signature) {

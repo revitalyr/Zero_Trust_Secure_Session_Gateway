@@ -1,3 +1,5 @@
+module;
+
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -19,13 +21,11 @@ zerossg::CLIInterface::CLIInterface() {
 }
 
 Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
-Result<int> CLIInterface::run(int argc, char* argv[]) {
-    try {
         zerossg::CommandLineArgs args = parse_command_line(argc, argv);
         
         if (args.empty()) {
             show_help();
-            return Result<int>::success(1);
+            return make_result_success(1);
         }
         
         zerossg::CommandName command_name = args[0];
@@ -34,14 +34,14 @@ Result<int> CLIInterface::run(int argc, char* argv[]) {
         if (!command) {
             print_error("Unknown command: " + command_name);
             show_help();
-            return Result<int>::success(1);
+            return make_result_success(1);
         }
         
         zerossg::CommandLineArgs command_args(args.begin() + 1, args.end());
         
         if (!validate_arguments(*command, command_args)) {
             show_command_help(*command);
-            return Result<int>::success(1);
+            return make_result_success(1);
         }
         
         int result = command->handler(command_args);
@@ -49,7 +49,6 @@ Result<int> CLIInterface::run(int argc, char* argv[]) {
     } catch (const std::exception& e) {
         print_error("CLI error: " + zerossg::String(e.what()));
         return Result<int>::success(1);
-    }
 }
 
 void CLIInterface::show_help() {

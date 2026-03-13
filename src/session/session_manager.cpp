@@ -2,11 +2,10 @@ module zerossg.session.session_manager;
 
 // C++23 module imports
 import zerossg.constants;
-import zerossg.result;
+import zerossg.types;
 
 // Standard library imports
 import zerossg.std;
-import <format>;
 
 namespace zerossg {
 
@@ -18,7 +17,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.m_user_name)) {
-        return zerossg::make_result_error<SessionId>(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.m_user_name));
+        return make_result_error<SessionId>(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.m_user_name));
     }
     
     // Generate unique session ID
@@ -37,7 +36,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     m_sessions[session_id] = session;
     m_total_sessions.fetch_add(1);
     
-    return zerossg::make_result_success(session_id);
+    return make_result_success(session_id);
 }
 
 zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::SessionId& session_id) {
@@ -45,7 +44,7 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     const zerossg::Session& session = it->second;
@@ -54,10 +53,10 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     if (std::chrono::system_clock::now() > session.m_expires_at) {
         // Remove expired session
         m_sessions.erase(it);
-        return zerossg::make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_EXPIRED_PREFIX, session_id));
+        return make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_EXPIRED_PREFIX, session_id));
     }
     
-    return zerossg::make_result_success(session);
+    return make_result_success(session);
 }
 
 zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& session_id, const zerossg::Session& session) {
@@ -65,21 +64,21 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     m_sessions[session_id] = session;
-    return zerossg::make_result_success();
+    return make_result_success();
 }
 
 zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId& session_id) {
     LockGuard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
-    return zerossg::make_result_success();
+    return make_result_success();
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
@@ -96,13 +95,13 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
         }
     }
     
-    return zerossg::make_result_success(std::move(active_sessions));
+    return make_result_success(std::move(active_sessions));
 }
 
 zerossg::Result<void> SessionManager::cleanup_expired_sessions() {
     LockGuard<std::mutex> lock(m_sessions_mutex);
     cleanup_expired_sessions_internal();
-    return zerossg::make_result_success();
+    return make_result_success();
 }
 
 size_t SessionManager::get_active_session_count() const {
@@ -129,25 +128,25 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     zerossg::Session& session = it->second;
     
     // Check if session is still active
     if (!session.active || std::chrono::system_clock::now() > session.expires_at) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
+        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
     }
     
     // Extend session
     session.expires_at += additional_time;
     
-    return zerossg::make_result_success();
+    return make_result_success();
 }
 
 zerossg::Result<bool> SessionManager::is_session_valid(const zerossg::SessionId& session_id) {
     auto session_result = get_session(session_id);
-    return session_result.is_success() ? zerossg::make_result_success(true) : zerossg::make_result_error<bool>(session_result.error());
+    return session_result.is_success() ? make_result_success(true) : make_result_error<bool>(session_result.error());
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const zerossg::UserName& username) {
@@ -163,7 +162,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const ze
         }
     }
     
-    return zerossg::make_result_success(std::move(user_sessions));
+    return make_result_success(std::move(user_sessions));
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const zerossg::ServiceName& service_name) {
@@ -179,7 +178,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const
         }
     }
     
-    return zerossg::make_result_success(std::move(service_sessions));
+    return make_result_success(std::move(service_sessions));
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zerossg::ClientIp& client_ip) {
@@ -195,7 +194,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zero
         }
     }
     
-    return zerossg::make_result_success(std::move(ip_sessions));
+    return make_result_success(std::move(ip_sessions));
 }
 
 zerossg::SessionId SessionManager::generate_session_id() {

@@ -1,7 +1,9 @@
+module zerossg.security.security_manager;
+
 // Project headers
 import zerossg.interfaces;
 import zerossg.logging.logger;
-import zerossg.std;
+import zerossg.std; // Includes <format>
 
 namespace zerossg {
 
@@ -27,7 +29,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
     // Check if IP is currently blocked
     if (info.blocked && now < info.block_until) {
         record_security_event("rate_limit_blocked", std::format("IP {} blocked for exceeding rate limit", client_ip));
-        return Result<bool>::success(false);
+        return make_result_success(false);
     }
     
     // Reset window if needed
@@ -46,11 +48,11 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
             std::format("IP {} exceeded rate limit: {} requests in {} seconds", 
                 client_ip, info.request_count, m_rate_limit_window.count()));
         
-        return Result<bool>::success(false);
+        return make_result_success(false);
     }
     
     info.request_count++;
-    return Result<bool>::success(true);
+    return make_result_success(true);
 }
 
 Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_ip) {
@@ -61,7 +63,7 @@ Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_i
     
     // Check if brute force is already detected
     if (info.detected) {
-        return Result<bool>::success(true);
+        return make_result_success(true);
     }
     
     // Clean old attempts outside the window
@@ -84,10 +86,10 @@ Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_i
         // Auto-block the IP
         block_ip(client_ip, m_default_block_duration);
         
-        return Result<bool>::success(true);
+        return make_result_success(true);
     }
     
-    return Result<bool>::success(false);
+    return make_result_success(false);
 }
 
 void SecurityManager::record_failed_attempt(const string& client_ip) {
@@ -131,7 +133,7 @@ Result<void> SecurityManager::block_ip(const string& client_ip, milliseconds dur
     record_security_event("ip_blocked", 
         std::format("IP {} blocked for {} milliseconds", client_ip, duration.count()));
     
-    return Result<void>::success();
+    return make_result_success();
 }
 
 bool SecurityManager::is_ip_blocked(const string& client_ip) {
