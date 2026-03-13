@@ -1,13 +1,9 @@
-// Project headers
+module zerossg.tls.tls_handler;
+
 import zerossg.interfaces;
 import zerossg.logging.logger;
-import zerossg.tls.tls_handler;
 import zerossg.result;
-
-// Standard library imports
 import zerossg.std;
-
-// OpenSSL imports from module
 import zerossg.third_party.openssl;
 
 namespace zerossg {

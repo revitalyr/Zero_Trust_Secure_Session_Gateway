@@ -7,12 +7,13 @@ import zerossg.types;
 import zerossg.interfaces;
 import zerossg.std;
 import zerossg.result;
+import <format>;
 
 // Explicit usage of zerossg namespace preferred for maintenance
 
 int main() {
     std::cout << "Zero Trust Secure Session Gateway" << std::endl;
-    std::cout << "Version: " << zerossg::APPLICATION_VERSION << std::endl;
+    std::cout << std::format("Version: {}", zerossg::APPLICATION_VERSION) << std::endl;
     
     // Example of using semantic types
     zerossg::UserName username = "admin";
@@ -20,9 +21,9 @@ int main() {
     zerossg::ClientIp client_ip = "192.168.1.100";
     zerossg::ServiceName service_name = "ssh";
     
-    std::cout << "User: " << username << std::endl;
-    std::cout << "Client IP: " << client_ip << std::endl;
-    std::cout << "Target Service: " << service_name << std::endl;
+    std::cout << std::format("User: {}", username) << std::endl;
+    std::cout << std::format("Client IP: {}", client_ip) << std::endl;
+    std::cout << std::format("Target Service: {}", service_name) << std::endl;
     
     // Example of using Result type
     zerossg::Result<zerossg::User> user_result = zerossg::make_result_success(zerossg::User{
@@ -42,15 +43,15 @@ int main() {
         }
         std::cout << std::endl;
     } else {
-        std::cout << "Error: " << user_result.error() << std::endl;
+        std::cout << std::format("Error: {}", user_result.error()) << std::endl;
     }
     
     // Example of using time types
     zerossg::Hours session_timeout = zerossg::DEFAULT_SESSION_TIMEOUT;
     zerossg::Milliseconds block_duration = zerossg::DEFAULT_BLOCK_DURATION;
     
-    std::cout << "Session timeout: " << session_timeout.count() << " hours" << std::endl;
-    std::cout << "Block duration: " << block_duration.count() << " milliseconds" << std::endl;
+    std::cout << std::format("Session timeout: {} hours", session_timeout.count()) << std::endl;
+    std::cout << std::format("Block duration: {} milliseconds", block_duration.count()) << std::endl;
     
     // Example of using collection types
     zerossg::Strings allowed_services = {"ssh", "web", "database"};

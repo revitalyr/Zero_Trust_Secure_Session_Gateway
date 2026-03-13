@@ -1,8 +1,9 @@
+module zerossg.auth.authenticator;
+
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
 import zerossg.interfaces;
-import zerossg.auth.authenticator;
 import zerossg.third_party.nlohmann_json;
 import zerossg.third_party.openssl;
 import zerossg.result;
@@ -95,7 +96,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     if (!verify_result.is_success()) {
         // Record failed attempt for security monitoring
         detect_suspicious_activity(username, "");
-        return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX + verify_result.error());
+        return zerossg::make_result_error<zerossg::TokenString>(std::format("{}{}", zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
     }
     
     if (!verify_result.value()) {
@@ -171,7 +172,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::get_user_from_token(const 
     // Parse payload
     auto payload_result = parse_jwt_payload(token);
     if (!payload_result.is_success()) {
-        return zerossg::make_result_error<zerossg::User>(zerossg::ERROR_INVALID_TOKEN_PAYLOAD_PREFIX + payload_result.error());
+        return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_INVALID_TOKEN_PAYLOAD_PREFIX, payload_result.error()));
     }
     
     // Check if token is revoked
@@ -212,7 +213,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::generate_token(cons
         
         return zerossg::make_result_success<zerossg::TokenString>(header_payload + "." + signature);
     } catch (const std::exception& e) {
-        return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_JWT_GENERATION_FAILED_PREFIX + zerossg::String(e.what()));
+        return zerossg::make_result_error<zerossg::TokenString>(std::format("{}{}", zerossg::ERROR_JWT_GENERATION_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -418,17 +419,17 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
         std::string username = payload["username"];
         auto user_result = get_user(username);
         if (!user_result.is_success()) {
-            return zerossg::Result<zerossg::User>::error(zerossg::ERROR_USER_NOT_FOUND_PREFIX + username);
+            return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         
         auto user_opt = user_result.value();
         if (!user_opt.has_value()) {
-            return zerossg::Result<zerossg::User>::error(zerossg::ERROR_USER_NOT_FOUND_PREFIX + username);
+            return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         
         return zerossg::Result<zerossg::User>::success(user_opt.value());
     } catch (const json::exception& e) {
-        return zerossg::Result<zerossg::User>::error(zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX + std::string(e.what()));
+        return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -510,8 +511,8 @@ zerossg::Strings AuthenticationManager::get_recent_failed_attempts(std::string_v
     if (it != m_rate_limits.end()) {
         // Return recent failed attempt timestamps with semantic type
         for (zerossg::AttemptCount i = 0; i < count && i < 5; ++i) {
-            attempts.push_back(zerossg::LOG_MSG_FAILED_ATTEMPT_PREFIX + 
-                std::to_string(std::chrono::duration_cast<std::chrono::seconds>(it->second.m_window_start.time_since_epoch()).count()));
+            attempts.push_back(std::format("{}{}", zerossg::LOG_MSG_FAILED_ATTEMPT_PREFIX, 
+                std::chrono::duration_cast<std::chrono::seconds>(it->second.m_window_start.time_since_epoch()).count()));
         }
     }
     

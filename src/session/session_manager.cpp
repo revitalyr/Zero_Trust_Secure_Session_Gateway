@@ -1,10 +1,12 @@
+module zerossg.session.session_manager;
+
 // C++23 module imports
-import zerossg.session.session_manager;
 import zerossg.constants;
 import zerossg.result;
 
 // Standard library imports
 import zerossg.std;
+import <format>;
 
 namespace zerossg {
 
@@ -16,7 +18,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.m_user_name)) {
-        return zerossg::Result<SessionId>::error(zerossg::ERROR_MAXIMUM_SESSION_LIMIT + std::string(user.m_user_name));
+        return zerossg::Result<SessionId>::error(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.m_user_name));
     }
     
     // Generate unique session ID
@@ -43,7 +45,7 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::Result<Session>::error(zerossg::ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
+        return zerossg::Result<Session>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     const zerossg::Session& session = it->second;
@@ -52,7 +54,7 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     if (std::chrono::system_clock::now() > session.m_expires_at) {
         // Remove expired session
         m_sessions.erase(it);
-        return zerossg::Result<Session>::error(zerossg::ERROR_SESSION_EXPIRED_PREFIX + session_id);
+        return zerossg::Result<Session>::error(std::format("{}{}", zerossg::ERROR_SESSION_EXPIRED_PREFIX, session_id));
     }
     
     return zerossg::Result<Session>::success(session);
@@ -63,7 +65,7 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::Result<void>::error(zerossg::ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
+        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     m_sessions[session_id] = session;
@@ -74,7 +76,7 @@ zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
-        return zerossg::Result<void>::error(zerossg::ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
+        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     return zerossg::Result<void>::success();
@@ -127,14 +129,14 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return zerossg::Result<void>::error(zerossg::ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
+        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     zerossg::Session& session = it->second;
     
     // Check if session is still active
     if (!session.active || std::chrono::system_clock::now() > session.expires_at) {
-        return zerossg::Result<void>::error(zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX + session_id);
+        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
     }
     
     // Extend session
@@ -246,15 +248,15 @@ zerossg::DurationString SessionManager::format_session_duration(const std::chron
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     
     if (duration.count() < 60) {
-        return std::to_string(duration.count()) + zerossg::TIME_FORMAT_SECONDS_SUFFIX;
+        return std::format("{}s", duration.count());
     } else if (duration.count() < 3600) {
         auto minutes = duration.count() / 60;
         auto seconds = duration.count() % 60;
-        return std::to_string(minutes) + zerossg::TIME_FORMAT_MINUTES_SUFFIX + std::to_string(seconds) + zerossg::TIME_FORMAT_SECONDS_SUFFIX;
+        return std::format("{}m {}s", minutes, seconds);
     } else {
         auto hours = duration.count() / 3600;
         auto minutes = (duration.count() % 3600) / 60;
-        return std::to_string(hours) + zerossg::TIME_FORMAT_HOURS_SUFFIX + std::to_string(minutes) + zerossg::TIME_FORMAT_MINUTES_SUFFIX;
+        return std::format("{}h {}m", hours, minutes);
     }
 }
 

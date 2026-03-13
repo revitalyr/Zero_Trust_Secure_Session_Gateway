@@ -1,8 +1,7 @@
-module zerossg.network.gateway_server;
-
 // Project headers
 import zerossg.common;
 import zerossg.types;
+import zerossg.network.gateway_server;
 import zerossg.tls.tls_handler;
 import zerossg.result;
 import zerossg.auth.authenticator;
@@ -14,7 +13,7 @@ import zerossg.logging.logger;
 
 // Standard library imports
 import zerossg.third_party.nlohmann_json;
-import zerossg.std;
+import zerossg.std; // Includes <format> and other std headers
 
 using json = nlohmann::json;
 
@@ -33,7 +32,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigFileName& config_fil
         m_tls_handler = zerossg::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);
         if (!tls_result.is_success()) {
-            return zerossg::Result<void>::error(zerossg::ERROR_TLS_INIT_FAILED_PREFIX + tls_result.error());
+            return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_TLS_INIT_FAILED_PREFIX, tls_result.error()));
         }
         
         // Initialize business logic components

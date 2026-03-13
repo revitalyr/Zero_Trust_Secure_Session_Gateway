@@ -1,4 +1,5 @@
-import zerossg.types;
+module zerossg.types;
+
 import zerossg.std;
 import zerossg.result;
 

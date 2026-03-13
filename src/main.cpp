@@ -1,6 +1,5 @@
 #include <memory>
 #include <csignal>
-#include <iostream>
 
 import zerossg.network.gateway_server;
 import zerossg.cli.cli_interface;
@@ -8,22 +7,21 @@ import zerossg.config.config_manager;
 import zerossg.logging.logger;
 import zerossg.common;
 
+import zerossg.std;
+
 // Global server instance for signal handling
 std::unique_ptr<zerossg::GatewayServer> g_server;
 std::atomic<bool> g_shutdown_requested{false};
 
-// Logger instance for logging
-zerossg::Logger logger("main");
-
 // Signal handler for graceful shutdown
 void signal_handler(int signal) {
-    zerossg::Logger::log_info("main", "Server started successfully" + std::to_string(signal) + ", shutting down gracefully...");
+    zerossg::Logger::get("main")->info(std::format("Signal {} received, shutting down gracefully...", signal));
     g_shutdown_requested.store(true);
     
     if (g_server && g_server->is_running()) {
         auto stop_result = g_server->stop();
         if (!stop_result.is_success()) {
-            std::cerr << "Error stopping server: " << stop_result.error() << std::endl;
+            zerossg::Logger::get("main")->error(std::format("Error stopping server: {}", stop_result.error()));
         }
     }
 }
@@ -41,7 +39,7 @@ void setup_signal_handlers() {
 
 // Print application banner
 void print_banner() {
-    LOG_INFO("main", R"(
+    zerossg::Logger::get("main")->info(R"(
  _____ _   _ _   _    _    _   _  ____ _____ ____  
 | ____| \ | | | | |  / \  | \ | |/ ___| ____|  _ \ 
 |  _| |  \| | |_| | / _ \ |  \| | |   |  _| | | | |
@@ -60,7 +58,7 @@ void print_banner() {
 
 // Print usage information
 void print_usage(const char* program_name) {
-    String usage = R"(
+    std::string usage = std::format(R"(
 Usage: )" + zerossg::String(program_name) + R"( [command] [options]
 
 Commands:
@@ -79,9 +77,9 @@ Options:
 Examples:
   )" + String(program_name) + R"( start config.json
   )" + String(program_name) + R"( interactive
-  )" + String(program_name) + R"( --config production.json start)";
+  )" + String(program_name) + R"( --config production.json start))");
     
-    LOG_INFO("main", usage);
+    zerossg::Logger::get("main")->info(usage);
 }
 
 // Parse command line arguments
@@ -118,7 +116,7 @@ CommandLineArgs parse_command_line(int argc, char* argv[]) {
         } else if (arg == "--daemon" || arg == "-d") {
             args.daemon_mode = true;
         } else if (arg.starts_with("--")) {
-            std::cerr << "Unknown option: " << arg << std::endl;
+            zerossg::Logger::get("main")->error(std::format("Unknown option: {}", arg));
             args.show_help = true;
             return args;
         } else if (args.command.empty()) {
@@ -134,18 +132,16 @@ CommandLineArgs parse_command_line(int argc, char* argv[]) {
 // Run the server
 int run_server(const CommandLineArgs& args) {
     try {
-        // Initialize logging
-        auto logger = Logger::create("zerossg");
-        logger->set_level(LogLevel::INFO);
-        logger->add_file_sink("logs/zerossg.log");
+        zerossg::Logger::init(args.log_level, "logs/zerossg.log");
+        auto logger = zerossg::Logger::get("main");
         
-        LOG_INFO("main", "Starting Zero Trust Secure Session Gateway");
+        logger->info("Starting Zero Trust Secure Session Gateway");
         
         // Load configuration
         auto config_manager = std::make_unique<ConfigManager>();
         auto config_result = config_manager->load_config(args.config_file);
         if (!config_result.is_success()) {
-            std::cerr << "Failed to load configuration: " << config_result.error() << std::endl;
+            logger->critical(std::format("Failed to load configuration: {}", config_result.error()));
             return 1;
         }
         
@@ -153,7 +149,7 @@ int run_server(const CommandLineArgs& args) {
         g_server = std::make_unique<GatewayServer>();
         auto init_result = g_server->initialize(args.config_file);
         if (!init_result.is_success()) {
-            std::cerr << "Failed to initialize server: " << init_result.error() << std::endl;
+            logger->critical(std::format("Failed to initialize server: {}", init_result.error()));
             return 1;
         }
         
@@ -163,31 +159,30 @@ int run_server(const CommandLineArgs& args) {
         // Start server
         auto start_result = g_server->start();
         if (!start_result.is_success()) {
-            std::cerr << "Failed to start server: " << start_result.error() << std::endl;
+            logger->critical(std::format("Failed to start server: {}", start_result.error()));
             return 1;
         }
         
-        LOG_INFO("main", "Server started successfully");
-        LOG_INFO(logger, "Server is running. Press Ctrl+C to stop.");
+        logger->info("Server started successfully");
+        logger->info("Server is running. Press Ctrl+C to stop.");
         
         // Wait for shutdown signal
         while (g_server->is_running() && !g_shutdown_requested.load()) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         
-        LOG_INFO("main", "Server shutting down");
+        logger->info("Server shutting down");
         
         // Cleanup
         if (g_server) {
             g_server->stop();
             g_server.reset();
         }
-        
-        LOG_INFO("main", "Server stopped successfully");
+        logger->info("Server stopped successfully");
         
         return 0;
     } catch (const std::exception& e) {
-        std::cerr << "Server error: " << e.what() << std::endl;
+        zerossg::Logger::get("main")->critical(std::format("Server error: {}", e.what()));
         return 1;
     }
 }
@@ -195,6 +190,7 @@ int run_server(const CommandLineArgs& args) {
 // Run CLI interface
 int run_cli(const CommandLineArgs& args) {
     try {
+        zerossg::Logger::init(args.log_level, "", true); // Console only for CLI
         auto cli = std::make_unique<CLIInterface>();
         cli->set_config_file(args.config_file);
         
@@ -216,7 +212,7 @@ int run_cli(const CommandLineArgs& args) {
             return result.is_success() ? result.value() : 1;
         }
     } catch (const std::exception& e) {
-        std::cerr << "CLI error: " << e.what() << std::endl;
+        zerossg::Logger::get("main")->error(std::format("CLI error: {}", e.what()));
         return 1;
     }
 }
@@ -227,13 +223,13 @@ int run_daemon(const CommandLineArgs& args) {
     pid_t pid = fork();
     
     if (pid < 0) {
-        std::cerr << "Failed to fork daemon process" << std::endl;
+        zerossg::Logger::get("main")->critical("Failed to fork daemon process");
         return 1;
     }
     
     if (pid > 0) {
         // Parent process exits
-        LOG_INFO("main", "Daemon started with PID: " + std::to_string(pid));
+        zerossg::Logger::get("main")->info(std::format("Daemon started with PID: {}", pid));
         return 0;
     }
     
@@ -242,13 +238,13 @@ int run_daemon(const CommandLineArgs& args) {
     
     pid_t sid = setsid();
     if (sid < 0) {
-        std::cerr << "Failed to create session ID" << std::endl;
+        zerossg::Logger::get("main")->critical("Failed to create session ID");
         return 1;
     }
     
     // Change working directory
     if (chdir("/") < 0) {
-        std::cerr << "Failed to change working directory" << std::endl;
+        zerossg::Logger::get("main")->critical("Failed to change working directory");
         return 1;
     }
     
@@ -264,6 +260,9 @@ int run_daemon(const CommandLineArgs& args) {
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
+    // Initial logging to console until config is parsed
+    zerossg::Logger::init("info", "", true);
+
     auto args = parse_command_line(argc, argv);
     
     // Handle help and version
@@ -273,8 +272,8 @@ int main(int argc, char* argv[]) {
     }
     
     if (args.show_version) {
-        LOG_INFO("main", "Zero Trust Secure Session Gateway v1.0.0");
-        LOG_INFO("main", "Built with modern C++20 and enterprise-grade security features");
+        zerossg::Logger::get("main")->info("Zero Trust Secure Session Gateway v1.0.0");
+        zerossg::Logger::get("main")->info("Built with modern C++20 and enterprise-grade security features");
         return 0;
     }
     
@@ -283,7 +282,7 @@ int main(int argc, char* argv[]) {
 #ifndef _WIN32
         return run_daemon(args);
 #else
-        std::cerr << "Daemon mode is not supported on Windows" << std::endl;
+        zerossg::Logger::get("main")->error("Daemon mode is not supported on Windows");
         return 1;
 #endif
     }
