@@ -23,7 +23,7 @@ zerossg::Result<zerossg::Bytes> generate_secure_random_bytes(size_t size) {
         bytes[i] = dist(rd);
     }
     
-    return zerossg::Result<zerossg::Bytes>::success(std::move(bytes));
+    return zerossg::make_result_success(std::move(bytes));
 }
 
 AuthenticationManager::AuthenticationManager() {
@@ -132,7 +132,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     zerossg::String header_payload = header_b64 + "." + payload_b64;
     zerossg::String signature = generate_jwt_signature(header_payload);
     
-    return zerossg::make_result_success<zerossg::TokenString>(header_payload + "." + signature);
+    return zerossg::make_result_success(header_payload + "." + signature);
 }
 
 zerossg::Result<bool> AuthenticationManager::validate_token(const zerossg::TokenString& token) {
@@ -211,7 +211,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::generate_token(cons
         std::string header_payload = header_b64 + "." + payload_b64;
         std::string signature = generate_jwt_signature(header_payload);
         
-        return zerossg::make_result_success<zerossg::TokenString>(header_payload + "." + signature);
+        return zerossg::make_result_success(header_payload + "." + signature);
     } catch (const std::exception& e) {
         return zerossg::make_result_error<zerossg::TokenString>(std::format("{}{}", zerossg::ERROR_JWT_GENERATION_FAILED_PREFIX, e.what()));
     }
@@ -232,7 +232,7 @@ zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user)
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(user.username) != m_users.end()) {
-        return zerossg::make_result_error<void>(zerossg::ERROR_USER_ALREADY_EXISTS);
+        return zerossg::make_result_error(zerossg::ERROR_USER_ALREADY_EXISTS);
     }
     
     m_users[user.username] = user;
@@ -243,7 +243,7 @@ zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(username) == m_users.end()) {
-        return zerossg::make_result_error<void>(zerossg::ERROR_USER_NOT_FOUND);
+        return zerossg::make_result_error(zerossg::ERROR_USER_NOT_FOUND);
     }
     
     m_users[username] = user;
@@ -254,7 +254,7 @@ zerossg::Result<void> AuthenticationManager::delete_user(const zerossg::UserName
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.erase(username) == 0) {
-        return zerossg::make_result_error<void>(zerossg::ERROR_USER_NOT_FOUND);
+        return zerossg::make_result_error(zerossg::ERROR_USER_NOT_FOUND);
     }
     
     return zerossg::make_result_success();
@@ -265,10 +265,10 @@ zerossg::Result<std::optional<zerossg::User>> AuthenticationManager::get_user(co
     
     auto it = m_users.find(username);
     if (it == m_users.end()) {
-        return zerossg::make_result_success<std::optional<zerossg::User>>(std::nullopt);
+        return zerossg::make_result_success(std::optional<zerossg::User>{std::nullopt});
     }
     
-    return zerossg::make_result_success<std::optional<zerossg::User>>(it->second);
+    return zerossg::make_result_success(std::optional<zerossg::User>{it->second});
 }
 
 zerossg::Result<zerossg::Users> AuthenticationManager::list_users() {
@@ -281,7 +281,7 @@ zerossg::Result<zerossg::Users> AuthenticationManager::list_users() {
         users.push_back(pair.second);
     }
     
-    return zerossg::make_result_success<zerossg::Users>(std::move(users));
+    return zerossg::make_result_success(std::move(users));
 }
 
 zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(const zerossg::Password& password) {
@@ -322,7 +322,7 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
     result.append(reinterpret_cast<char*>(salt.data()), salt.size());
     result.append(reinterpret_cast<char*>(hash.data()), hash_len);
     
-    return zerossg::make_result_success<zerossg::PasswordHash>(base64_encode(result));
+    return zerossg::make_result_success(base64_encode(result));
 }
 
 zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Password& password, const zerossg::PasswordHash& hash) {
@@ -412,22 +412,22 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
         // Check expiration
         auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if (payload["exp"].get<int64_t>() < now) {
-            return zerossg::Result<zerossg::User>::error(zerossg::ERROR_TOKEN_EXPIRED);
+            return zerossg::make_result_error<zerossg::User>(zerossg::ERROR_TOKEN_EXPIRED);
         }
         
         // Get user
         std::string username = payload["username"];
         auto user_result = get_user(username);
         if (!user_result.is_success()) {
-            return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
+            return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         
         auto user_opt = user_result.value();
         if (!user_opt.has_value()) {
-            return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
+            return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         
-        return zerossg::Result<zerossg::User>::success(user_opt.value());
+        return zerossg::make_result_success(user_opt.value());
     } catch (const json::exception& e) {
         return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX, e.what()));
     }

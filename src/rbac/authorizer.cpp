@@ -3,7 +3,6 @@ module zerossg.rbac.authorizer;
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
-import zerossg.result;
 import zerossg.std;
 import <format>;
 
@@ -23,11 +22,11 @@ zerossg::Result<bool> AuthorizationManager::can_access_service(const zerossg::Us
     }
     
     const zerossg::TargetService& service = service_it->second;
-    return zerossg::Result<bool>::success(can_role_access_service(user.m_role, service));
+    return zerossg::make_result_success(can_role_access_service(user.m_role, service));
 }
 
 zerossg::Result<bool> AuthorizationManager::has_permission(const zerossg::User& user, const zerossg::Permission& permission) {
-    return zerossg::Result<bool>::success(role_has_permission(user.m_role, permission));
+    return zerossg::make_result_success(role_has_permission(user.m_role, permission));
 }
 
 zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(const zerossg::User& user) {
@@ -42,14 +41,14 @@ zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(con
         }
     }
     
-    return zerossg::Result<zerossg::Strings>::success(std::move(allowed_services));
+    return zerossg::make_result_success(std::move(allowed_services));
 }
 
 zerossg::Result<void> AuthorizationManager::add_service(const zerossg::TargetService& service) {
     LockGuard<std::mutex> lock(m_services_mutex);
     
     m_services[service.m_name] = service;
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<void> AuthorizationManager::update_service(const zerossg::ServiceName& service_name, const zerossg::TargetService& service) {
@@ -57,21 +56,21 @@ zerossg::Result<void> AuthorizationManager::update_service(const zerossg::Servic
     
     auto it = m_services.find(service_name);
     if (it == m_services.end()) {
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     m_services[service_name] = service;
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<void> AuthorizationManager::remove_service(const zerossg::ServiceName& service_name) {
     LockGuard<std::mutex> lock(m_services_mutex);
     
     if (m_services.erase(service_name) == 0) {
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<std::optional<zerossg::TargetService>> AuthorizationManager::get_service(const zerossg::ServiceName& service_name) {
@@ -79,10 +78,10 @@ zerossg::Result<std::optional<zerossg::TargetService>> AuthorizationManager::get
     
     auto it = m_services.find(service_name);
     if (it == m_services.end()) {
-        return zerossg::Result<std::optional<zerossg::TargetService>>::success(std::nullopt);
+        return zerossg::make_result_success(std::optional<zerossg::TargetService>{std::nullopt});
     }
     
-    return zerossg::Result<std::optional<zerossg::TargetService>>::success(it->second);
+    return zerossg::make_result_success(std::optional<zerossg::TargetService>{it->second});
 }
 
 zerossg::Result<zerossg::TargetServices> AuthorizationManager::list_services() {
@@ -95,14 +94,14 @@ zerossg::Result<zerossg::TargetServices> AuthorizationManager::list_services() {
         services.push_back(pair.second);
     }
     
-    return zerossg::Result<zerossg::TargetServices>::success(std::move(services));
+    return zerossg::make_result_success(std::move(services));
 }
 
 zerossg::Result<void> AuthorizationManager::add_permission_to_role(zerossg::Role role, const zerossg::Permission& permission) {
     LockGuard<std::mutex> lock(m_permissions_mutex);
     
     m_role_permissions[role].insert(permission);
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<void> AuthorizationManager::remove_permission_from_role(zerossg::Role role, const zerossg::Permission& permission) {
@@ -113,7 +112,7 @@ zerossg::Result<void> AuthorizationManager::remove_permission_from_role(zerossg:
         role_it->second.erase(permission);
     }
     
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<zerossg::Permissions> AuthorizationManager::get_role_permissions(zerossg::Role role) {
@@ -121,46 +120,46 @@ zerossg::Result<zerossg::Permissions> AuthorizationManager::get_role_permissions
     
     auto it = m_role_permissions.find(role);
     if (it == m_role_permissions.end()) {
-        return zerossg::Result<zerossg::Permissions>::success(zerossg::Permissions{});
+        return zerossg::make_result_success(zerossg::Permissions{});
     }
     
     zerossg::Permissions permissions(it->second.begin(), it->second.end());
-    return zerossg::Result<zerossg::Permissions>::success(std::move(permissions));
+    return zerossg::make_result_success(std::move(permissions));
 }
 
 zerossg::Result<void> AuthorizationManager::set_role_hierarchy(zerossg::Role superior, zerossg::Role subordinate) {
     LockGuard<std::mutex> lock(m_hierarchy_mutex);
     
     m_role_hierarchy[superior].insert(subordinate);
-    return zerossg::Result<void>::success();
+    return zerossg::make_result_success();
 }
 
 zerossg::Result<bool> AuthorizationManager::is_role_superior(zerossg::Role role_a, zerossg::Role role_b) {
     LockGuard<std::mutex> lock(m_hierarchy_mutex);
     
     if (role_a == role_b) {
-        return zerossg::Result<bool>::success(true);
+        return zerossg::make_result_success(true);
     }
     
     auto it = m_role_hierarchy.find(role_a);
     if (it == m_role_hierarchy.end()) {
-        return zerossg::Result<bool>::success(false);
+        return zerossg::make_result_success(false);
     }
     
     // Check if role_b is in the hierarchy of role_a
     for (zerossg::Role subordinate : it->second) {
         if (subordinate == role_b) {
-            return zerossg::Result<bool>::success(true);
+            return zerossg::make_result_success(true);
         }
         
         // Recursively check subordinates
         auto subordinate_result = is_role_superior(subordinate, role_b);
         if (subordinate_result.is_success() && subordinate_result.value()) {
-            return zerossg::Result<bool>::success(true);
+            return zerossg::make_result_success(true);
         }
     }
     
-    return zerossg::Result<bool>::success(false);
+    return zerossg::make_result_success(false);
 }
 
 void AuthorizationManager::initialize_default_permissions() {
