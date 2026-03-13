@@ -8,15 +8,13 @@ import zerossg.config.config_manager;
 import zerossg.logging.logger;
 import zerossg.common;
 
-using namespace zerossg;
-
 // Global server instance for signal handling
-std::unique_ptr<GatewayServer> g_server;
+std::unique_ptr<zerossg::GatewayServer> g_server;
 std::atomic<bool> g_shutdown_requested{false};
 
 // Signal handler for graceful shutdown
 void signal_handler(int signal) {
-    LOG_INFO("main", "Received signal " + std::to_string(signal) + ", shutting down gracefully...");
+    zerossg::Logger::log_info("main", "Received signal " + std::to_string(signal) + ", shutting down gracefully...");
     g_shutdown_requested.store(true);
     
     if (g_server && g_server->is_running()) {
@@ -60,7 +58,7 @@ void print_banner() {
 // Print usage information
 void print_usage(const char* program_name) {
     String usage = R"(
-Usage: )" + String(program_name) + R"( [command] [options]
+Usage: )" + zerossg::String(program_name) + R"( [command] [options]
 
 Commands:
   start [config-file]     Start the gateway server
@@ -91,14 +89,14 @@ struct CommandLineArgs {
     bool daemon_mode{false};
     bool show_version{false};
     bool show_help{false};
-    std::vector<string> command_args;
+    std::vector<zerossg::String> command_args;
 };
 
 CommandLineArgs parse_command_line(int argc, char* argv[]) {
     CommandLineArgs args;
     
     for (int i = 1; i < argc; ++i) {
-        string arg = argv[i];
+        zerossg::String arg = argv[i];
         
         if (arg == "--help" || arg == "-h") {
             args.show_help = true;
@@ -203,7 +201,7 @@ int run_cli(const CommandLineArgs& args) {
             return 0;
         } else {
             // Convert command args to argc/argv format
-            std::vector<string> all_args = {args.command};
+            std::vector<zerossg::String> all_args = {args.command};
             all_args.insert(all_args.end(), args.command_args.begin(), args.command_args.end());
             
             std::vector<char*> argv;
@@ -295,7 +293,7 @@ int main(int argc, char* argv[]) {
     // Route to appropriate handler
     if (args.command == "start") {
         // Insert config file as first argument if provided
-        if (!args.config_file.empty() && args.config_file != "config.json") {
+        if (!args.config_file.empty() && args.config_file != zerossg::String("config.json")) {
             args.command_args.insert(args.command_args.begin(), args.config_file);
         }
         return run_server(args);

@@ -8,39 +8,17 @@ import zerossg.third_party.yaml_cpp;
 
 namespace zerossg {
 
-// Import semantic aliases for cleaner code
-using zerossg::Result;
-using zerossg::String;
-using zerossg::Strings;
-using zerossg::ServiceName;
-using zerossg::ConfigFileName;
-
-// Import constants for string literals
-using zerossg::ERROR_CONFIG_FILE_NOT_FOUND;
-using zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT;
-using zerossg::ERROR_FAILED_TO_LOAD_CONFIG;
-using zerossg::FORMAT_YAML;
-using zerossg::FORMAT_YML;
-using zerossg::FORMAT_JSON;
-
-// Import standard library types for module compatibility
-using zerossg::make_result_error;
-
-// Additional standard library types needed
-using json = nlohmann::json;
-using YAML::Node;
-using YAML::Exception;
-
-ConfigManager::ConfigManager() {
-    set_default_config();
+zerossg::ConfigManager::ConfigManager() {
+    zerossg::ConfigManager::set_default_config();
 }
 
-Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigFileName& config_file) {
+    std::lock_guard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
+    std::lock_guard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
     
     try {
-        if (!file_exists(config_file)) {
-            return make_result_error(ERROR_CONFIG_FILE_NOT_FOUND + config_file);
+        if (!zerossg::file_exists(config_file)) {
+            return zerossg::make_result_error(zerossg::ERROR_CONFIG_FILE_NOT_FOUND + config_file);
         }
         
         std::string extension = get_file_extension(config_file);
@@ -56,7 +34,7 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
                 return result;
             }
         } else {
-            return make_result_error(ERROR_UNSUPPORTED_CONFIG_FORMAT + extension);
+            return zerossg::make_result_error(zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT + extension);
         }
         
         // Load environment variables (override config file)
@@ -68,9 +46,9 @@ Result<void> ConfigManager::load_config(const ConfigFileName& config_file) {
             return validation_result;
         }
         
-        return Result<void>{};
+        return zerossg::Result<void>{};
     } catch (const std::exception& e) {
-        return make_result_error(ERROR_FAILED_TO_LOAD_CONFIG + String(e.what()));
+        return zerossg::make_result_error(zerossg::ERROR_FAILED_TO_LOAD_CONFIG + zerossg::String(e.what()));
     }
 }
 
@@ -79,21 +57,21 @@ String ConfigManager::get_string(const String& key, const String& default_value)
     return get_config_value(key, default_value);
 }
 
-int ConfigManager::get_int(const String& key, int default_value) {
+int ConfigManager::get_int(const std::string& key, int default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
-        String value = get_config_value(key, std::to_string(default_value));
+        std::string value = get_config_value(key, std::to_string(default_value));
         return std::stoi(value);
-    } catch (const std::exception&) {
+    } catch (const std::exception& e) {
         return default_value;
     }
 }
 
-bool ConfigManager::get_bool(const String& key, bool default_value) {
+bool ConfigManager::get_bool(const std::string& key, bool default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
-    String value = get_config_value(key, default_value ? "true" : "false");
+    std::string value = get_config_value(key, default_value ? "true" : "false");
     std::transform(value.begin(), value.end(), value.begin(), ::tolower);
     
     return value == "true" || value == "1" || value == "yes" || value == "on";
@@ -122,10 +100,10 @@ Strings ConfigManager::get_string_array(const String& key) {
         }
         
         if (json_value.is_array()) {
-            Strings result;
+            std::vector<std::string> result;
             for (const auto& item : json_value) {
                 if (item.is_string()) {
-                    result.push_back(item.get<String>());
+                    result.push_back(item.get<std::string>());
                 }
             }
             return result;
@@ -142,10 +120,10 @@ Result<TargetService> ConfigManager::get_target_service(const ServiceName& servi
     
     auto it = m_target_services.find(service_name);
     if (it == m_target_services.end()) {
-        return make_result_error("Target service not found: " + service_name);
+        return zerossg::make_result_error("Target service not found: " + service_name);
     }
     
-    return Result<TargetService>{it->second};
+    return zerossg::Result<TargetService>{it->second};
 }
 
 Result<std::vector<TargetService>> ConfigManager::get_all_target_services() {
@@ -419,7 +397,7 @@ Result<TargetService> ConfigManager::parse_target_service(const nlohmann::json& 
             return make_result_error("Target service must have host and port");
         }
         
-        return Result<TargetService>{service};
+        return zerossg::Result<TargetService>{service};
     } catch (const std::exception& e) {
         return make_result_error("Failed to parse target service: " + std::string(e.what()));
     }
@@ -528,11 +506,11 @@ void ConfigManager::load_from_environment() {
     }
     
     if (const char* env_db_host = std::getenv("ZEROSSG_DB_HOST")) {
-        m_config_json["database"]["host"] = String(env_db_host);
+        m_config_json["database"]["host"] = zerossg::String(env_db_host);
     }
     
     if (const char* env_db_port = std::getenv("ZEROSSG_DB_PORT")) {
-        m_config_json["database"]["port"] = std::stoi(std::string(env_db_port));
+        m_config_json["database"]["port"] = std::stoi(zerossg::String(env_db_port));
     }
     
     if (const char* env_db_name = std::getenv("ZEROSSG_DB_NAME")) {
@@ -540,7 +518,7 @@ void ConfigManager::load_from_environment() {
     }
     
     if (const char* env_jwt_secret = std::getenv("ZEROSSG_JWT_SECRET")) {
-        m_config_json["security"]["jwt_secret"] = String(env_jwt_secret);
+        m_config_json["security"]["jwt_secret"] = zerossg::String(env_jwt_secret);
     }
 }
 
@@ -566,7 +544,7 @@ std::string ConfigManager::get_config_value(const std::string& key, const std::s
         }
         
         if (json_value.is_string()) {
-            return json_value.get<std::string>();
+            return json_value.get<zerossg::String>();
         } else if (json_value.is_number() || json_value.is_boolean()) {
             return json_value.dump();
         }

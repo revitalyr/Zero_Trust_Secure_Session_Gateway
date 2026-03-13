@@ -58,7 +58,6 @@ private:
     bool m_format_security_event{true};
     String m_format_fields{"default"};
     std::mutex m_mutex;
-    spdlog::logger m_logger;
 };
 
 export class LoggerManager {

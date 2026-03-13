@@ -14,20 +14,21 @@ import zerossg.security.security_manager;
 
 namespace zerossg {
 
-CLIInterface::CLIInterface() {
-    register_builtin_commands();
+zerossg::CLIInterface::CLIInterface() {
+    zerossg::CLIInterface::register_builtin_commands();
 }
 
+Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
 Result<int> CLIInterface::run(int argc, char* argv[]) {
     try {
-        std::vector<string> args = parse_command_line(argc, argv);
+        std::vector<zerossg::String> args = parse_command_line(argc, argv);
         
         if (args.empty()) {
             show_help();
             return Result<int>::success(1);
         }
         
-        string command_name = args[0];
+        zerossg::String command_name = args[0];
         CLICommand* command = find_command(command_name);
         
         if (!command) {
@@ -36,7 +37,7 @@ Result<int> CLIInterface::run(int argc, char* argv[]) {
             return Result<int>::success(1);
         }
         
-        std::vector<string> command_args(args.begin() + 1, args.end());
+        std::vector<zerossg::String> command_args(args.begin() + 1, args.end());
         
         if (!validate_arguments(*command, command_args)) {
             show_command_help(*command);
@@ -46,7 +47,7 @@ Result<int> CLIInterface::run(int argc, char* argv[]) {
         int result = command->handler(command_args);
         return Result<int>::success(result);
     } catch (const std::exception& e) {
-        print_error("CLI error: " + string(e.what()));
+        print_error("CLI error: " + zerossg::String(e.what()));
         return Result<int>::success(1);
     }
 }
@@ -88,7 +89,7 @@ void CLIInterface::export_audit_logs(const string& output_file) {
         print_info("Exporting audit logs to: " + output_file);
         print_success("Audit logs exported successfully");
     } catch (const std::exception& e) {
-        print_error("Failed to export audit logs: " + string(e.what()));
+        print_error("Failed to export audit logs: " + zerossg::String(e.what()));
     }
 }
 
@@ -96,8 +97,8 @@ void CLIInterface::register_command(const CLICommand& command) {
     m_commands.push_back(command);
 }
 
-void CLIInterface::register_command(const string& name, const string& description, const string& usage,
-                                    std::function<int(const std::vector<string>&)> handler) {
+void CLIInterface::register_command(const zerossg::String& name, const zerossg::String& description, const zerossg::String& usage,
+                                    std::function<int(const std::vector<zerossg::String>&)> handler) {
     CLICommand cmd;
     cmd.name = name;
     cmd.description = description;

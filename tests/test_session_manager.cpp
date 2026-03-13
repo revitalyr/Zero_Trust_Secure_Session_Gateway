@@ -1,38 +1,41 @@
 #include <gtest/gtest.h>
-import zerossg.session.session_manager;
-import zerossg.types;
-import zerossg.interfaces;
 #include <thread>
 #include <chrono>
 #include <string>
 
-using namespace zerossg;
+// C++23 module imports
+import zerossg.session.session_manager;
+import zerossg.types;
+import zerossg.interfaces;
+
+
 
 // Import needed types for tests
-using zerossg::User;
-using zerossg::Role;
-using zerossg::ClientIp;
-using zerossg::ServiceName;
-using zerossg::String;
-using zerossg::ADMIN = zerossg::Role::ADMIN;
-using zerossg::OPERATOR = zerossg::Role::OPERATOR;
-using zerossg::VIEWER = zerossg::Role::VIEWER;
+using User = zerossg::User;
+using Role = zerossg::Role;
+using ClientIp = zerossg::ClientIp;
+using ServiceName = zerossg::ServiceName;
+using String = zerossg::String;
+using SessionManager = zerossg::SessionManager;
+using ADMIN = zerossg::Role::ADMIN;
+using OPERATOR = zerossg::Role::OPERATOR;
+using VIEWER = zerossg::Role::VIEWER;
 
 class SessionManagerTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        session_manager = std::make_unique<SessionManager>();
+        session_manager = new SessionManager();
     }
     
     void TearDown() override {
-        session_manager.reset();
+        delete session_manager;
     }
     
-    std::unique_ptr<SessionManager> session_manager;
+    SessionManager* session_manager;
 };
 
 TEST_F(SessionManagerTest, CreateSession) {
-    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
+    User test_user("testuser", "hash", Role::OPERATOR);
     String client_ip = "192.168.1.100";
     String target_service = "ssh";
     
@@ -42,7 +45,7 @@ TEST_F(SessionManagerTest, CreateSession) {
     EXPECT_FALSE(session_result.value().empty());
     
     // Get session
-    auto get_result = session_manager->get_session(*session_result.value());
+    auto get_result = session_manager->get_session(session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_EQ(get_result.value().username, "testuser");
     EXPECT_EQ(get_result.value().client_ip, client_ip);
@@ -51,7 +54,7 @@ TEST_F(SessionManagerTest, CreateSession) {
 }
 
 TEST_F(SessionManagerTest, SessionValidation) {
-    User test_user("testuser", "hash", zerossg::Role::VIEWER);
+    User test_user("testuser", "hash", Role::VIEWER);
     String client_ip = "192.168.1.101";
     String target_service = "web-admin";
     
@@ -60,7 +63,7 @@ TEST_F(SessionManagerTest, SessionValidation) {
     EXPECT_TRUE(session_result.is_success());
     
     // Get session
-    auto get_result = session_manager->get_session(*session_result.value());
+    auto get_result = session_manager->get_session(session_result.value());
     EXPECT_TRUE(get_result.is_success());
     EXPECT_EQ(get_result.value().username, "testuser");
     EXPECT_EQ(get_result.value().client_ip, client_ip);
@@ -68,21 +71,21 @@ TEST_F(SessionManagerTest, SessionValidation) {
     EXPECT_TRUE(get_result.value().active);
     
     // Validate session
-    auto validate_result = session_manager->is_session_valid(*session_result.value());
+    auto validate_result = session_manager->is_session_valid(session_result.value());
     EXPECT_TRUE(validate_result.is_success());
     EXPECT_TRUE(validate_result.value());
     
     // Terminate session
-    auto terminate_result = session_manager->terminate_session(*session_result.value());
+    auto terminate_result = session_manager->terminate_session(session_result.value());
     EXPECT_TRUE(terminate_result.is_success());
     
     // Validate terminated session
-    validate_result = session_manager->is_session_valid(*session_result.value());
+    validate_result = session_manager->is_session_valid(session_result.value());
     EXPECT_TRUE(validate_result.is_error());
 }
 
 TEST_F(SessionManagerTest, SessionUpdate) {
-    User test_user("testuser", "hash", zerossg::Role::ADMIN);
+    User test_user("testuser", "hash", Role::ADMIN);
     String client_ip = "192.168.1.102";
     String target_service = "database";
     
@@ -107,7 +110,7 @@ TEST_F(SessionManagerTest, SessionUpdate) {
 }
 
 TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
-    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
+    User test_user("testuser", "hash", Role::OPERATOR);
     String client_ip = "192.168.1.103";
     String target_service = "ssh";
     
@@ -134,8 +137,8 @@ TEST_F(SessionManagerTest, MultipleSessionsPerUser) {
 }
 
 TEST_F(SessionManagerTest, ActiveSessionsList) {
-    User user1("user1", "hash", zerossg::Role::OPERATOR);
-    User user2("user2", "hash", zerossg::Role::VIEWER);
+    User user1("user1", "hash", Role::OPERATOR);
+    User user2("user2", "hash", Role::VIEWER);
     
     // Create sessions
     auto session1_result = session_manager->create_session(user1, "192.168.1.104", "ssh");
@@ -161,7 +164,7 @@ TEST_F(SessionManagerTest, ActiveSessionsList) {
 }
 
 TEST_F(SessionManagerTest, SessionExtension) {
-    User test_user("testuser", "hash", zerossg::Role::ADMIN);
+    User test_user("testuser", "hash", Role::ADMIN);
     string client_ip = "192.168.1.106";
     string target_service = "database";
     
@@ -187,8 +190,8 @@ TEST_F(SessionManagerTest, SessionExtension) {
 }
 
 TEST_F(SessionManagerTest, SessionFiltering) {
-    User user1("user1", "hash", zerossg::Role::OPERATOR);
-    User user2("user2", "hash", zerossg::Role::VIEWER);
+    User user1("user1", "hash", Role::OPERATOR);
+    User user2("user2", "hash", Role::VIEWER);
     
     string client_ip1 = "192.168.1.107";
     string client_ip2 = "192.168.1.108";
@@ -220,7 +223,7 @@ TEST_F(SessionManagerTest, SessionFiltering) {
 }
 
 TEST_F(SessionManagerTest, Statistics) {
-    User test_user("testuser", "hash", zerossg::Role::OPERATOR);
+    User test_user("testuser", "hash", Role::OPERATOR);
     
     // Check initial statistics
     EXPECT_EQ(session_manager->get_active_session_count(), 0);
@@ -247,7 +250,7 @@ TEST_F(SessionManagerTest, Statistics) {
 }
 
 TEST_F(SessionManagerTest, CleanupExpiredSessions) {
-    User test_user("testuser", "hash", zerossg::Role::VIEWER);
+    User test_user("testuser", "hash", Role::VIEWER);
     
     // Create session
     auto session_result = session_manager->create_session(test_user, "192.168.1.111", "web-admin");

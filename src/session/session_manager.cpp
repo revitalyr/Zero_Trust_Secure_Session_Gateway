@@ -17,13 +17,12 @@ namespace zerossg {
     using std::remove_if;
     
     // Import constants for string literals
-using zerossg::ERROR_MAXIMUM_SESSION_LIMIT;
-using zerossg::ERROR_SESSION_NOT_FOUND_PREFIX;
-using zerossg::ERROR_SESSION_EXPIRED_PREFIX;
-using zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX;
-using zerossg::TIME_FORMAT_SECONDS_SUFFIX;
-using zerossg::TIME_FORMAT_MINUTES_SUFFIX;
-using zerossg::TIME_FORMAT_HOURS_SUFFIX;
+    using zerossg::ERROR_MAXIMUM_SESSION_LIMIT;
+    using zerossg::ERROR_SESSION_NOT_FOUND_PREFIX;
+    using zerossg::ERROR_SESSION_EXPIRED_PREFIX;
+    using zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX;
+    using zerossg::TIME_FORMAT_SECONDS_SUFFIX;
+    using zerossg::TIME_FORMAT_MINUTES_SUFFIX;
 
 SessionManager::SessionManager() : m_random_generator(m_random_device()) {
 }

@@ -54,7 +54,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
     return Result<bool>::success(true);
 }
 
-Result<bool> SecurityManager::detect_brute_force(const string& client_ip) {
+Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_ip) {
     std::lock_guard<std::mutex> lock(m_brute_force_mutex);
     
     auto now = system_clock::now();

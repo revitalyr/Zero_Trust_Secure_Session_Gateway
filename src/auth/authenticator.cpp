@@ -9,21 +9,6 @@ import zerossg.third_party.openssl;
 // Standard library imports
 import zerossg.std;
 
-using json = nlohmann::json;
-
-// Import semantic aliases for cleaner code
-using Result = zerossg::Result;
-using String = zerossg::String;
-using UserName = zerossg::UserName;
-using PasswordHash = zerossg::PasswordHash;
-using TokenString = zerossg::TokenString;
-using SecretKey = zerossg::SecretKey;
-using SessionId = zerossg::SessionId;
-using UserCount = zerossg::UserCount;
-using Strings = zerossg::Strings;
-using TimePoint = zerossg::TimePoint;
-using make_result_error = zerossg::make_result_error;
-
 namespace zerossg {
     // Import type aliases
     using User = zerossg::User;
