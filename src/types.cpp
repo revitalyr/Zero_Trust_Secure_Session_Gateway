@@ -47,7 +47,7 @@ namespace utils {
 // Advanced role validation with error handling
 constexpr zerossg::Result<Role> validate_role(zerossg::RoleStringView role_str) noexcept {
     if (role_str.empty()) {
-        return zerossg::make_result_error<Role>("Role string cannot be empty");
+        return zerossg::make_result_error<Role>(zerossg::ERROR_ROLE_STRING_EMPTY);
     }
     
     const auto role = string_to_role(role_str);
@@ -67,29 +67,18 @@ constexpr std::strong_ordering compare_roles(Role lhs, Role rhs) noexcept {
 // Security event validation with modern error handling
 constexpr zerossg::Result<SecurityEventType> validate_security_event(zerossg::EventStringView event_str) noexcept {
     if (event_str.empty()) {
-        return zerossg::make_result_error<SecurityEventType>("Event string cannot be empty");
+        return zerossg::make_result_error<SecurityEventType>(zerossg::ERROR_EVENT_STRING_EMPTY);
     }
     
     // Use constexpr lookup table for validation
-    constexpr std::array<zerossg::EventStringView, 8> valid_events = {
-        "login_success",
-        "login_failure",
-        "session_start",
-        "session_termination",
-        "authentication_error",
-        "access_violation",
-        "rate_limit_exceeded",
-        "brute_force_detected"
-    };
-    
-    if (const auto it = std::ranges::find(valid_events, event_str); 
-        it != valid_events.end()) {
-        const auto index = std::distance(valid_events.begin(), it);
+    if (const auto it = std::ranges::find(zerossg::VALID_SECURITY_EVENTS, event_str); 
+        it != zerossg::VALID_SECURITY_EVENTS.end()) {
+        const auto index = std::distance(zerossg::VALID_SECURITY_EVENTS.begin(), it);
         return zerossg::make_result_success<SecurityEventType>(
             static_cast<SecurityEventType>(index));
     }
     
-    return zerossg::make_result_error<SecurityEventType>("Invalid security event type");
+    return zerossg::make_result_error<SecurityEventType>(zerossg::ERROR_INVALID_SECURITY_EVENT);
 }
 
 // Modern utility for role hierarchy checking
@@ -112,22 +101,11 @@ constexpr bool all_roles_valid() noexcept {
 
 // Modern string utilities with constexpr support
 constexpr bool is_valid_role_string(zerossg::RoleStringView role_str) noexcept {
-    return role_str == "admin" || role_str == "operator" || role_str == "viewer";
+    return role_str == zerossg::ROLE_ADMIN || role_str == zerossg::ROLE_OPERATOR || role_str == zerossg::ROLE_VIEWER;
 }
 
 constexpr bool is_valid_security_event_string(zerossg::EventStringView event_str) noexcept {
-    constexpr std::array<zerossg::EventStringView, 8> valid_events = {
-        "login_success",
-        "login_failure", 
-        "session_start",
-        "session_termination",
-        "authentication_error",
-        "access_violation",
-        "rate_limit_exceeded",
-        "brute_force_detected"
-    };
-    
-    return std::ranges::find(valid_events, event_str) != valid_events.end();
+    return std::ranges::find(zerossg::VALID_SECURITY_EVENTS, event_str) != zerossg::VALID_SECURITY_EVENTS.end();
 }
 
 // Type-safe role enumeration with modern features

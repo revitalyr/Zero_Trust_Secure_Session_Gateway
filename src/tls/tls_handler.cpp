@@ -16,7 +16,7 @@ TlsHandler::TlsHandler(IoContext& io_context)
     : m_ssl_context(boost::asio::ssl::context::tlsv12_server)
     , m_io_context(io_context)
     , m_verify_depth(9)
-    , m_cipher_list("HIGH:!aNULL:!MD5:!RC4") {
+    , m_cipher_list(zerossg::DEFAULT_CIPHER_LIST) {
     
     // Set default options
     m_ssl_context.set_options(
@@ -37,19 +37,19 @@ zerossg::Result<void> TlsHandler::initialize(const zerossg::FilePath& cert_file,
         // Load certificate chain
         auto cert_result = load_certificate_chain(cert_file);
         if (!cert_result.is_success()) {
-            return zerossg::Result<void>::error("Failed to load certificate: " + cert_result.error());
+            return zerossg::Result<void>::error(zerossg::ERROR_TLS_CERT_LOAD_FAILED_PREFIX + cert_result.error());
         }
         
         // Load private key
         auto key_result = load_private_key(key_file);
         if (!key_result.is_success()) {
-            return zerossg::Result<void>::error("Failed to load private key: " + key_result.error());
+            return zerossg::Result<void>::error(zerossg::ERROR_TLS_KEY_LOAD_FAILED_PREFIX + key_result.error());
         }
         
         // Set cipher list
         if (!m_cipher_list.empty()) {
             if (SSL_CTX_set_cipher_list(m_ssl_context.native_handle(), m_cipher_list.c_str()) != 1) {
-                return zerossg::Result<void>::error("Failed to set cipher list");
+                return zerossg::Result<void>::error(zerossg::ERROR_TLS_SET_CIPHER_LIST_FAILED);
             }
         }
         
@@ -58,7 +58,7 @@ zerossg::Result<void> TlsHandler::initialize(const zerossg::FilePath& cert_file,
         
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("TLS initialization failed: " + std::string(e.what()));
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_INIT_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -71,7 +71,7 @@ zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateD
         // Create a memory BIO for the certificate data
         BIO* bio = BIO_new_mem_buf(cert_data.data(), static_cast<int>(cert_data.size()));
         if (!bio) {
-            return zerossg::Result<bool>::error("Failed to create BIO for certificate");
+            return zerossg::Result<bool>::error(zerossg::ERROR_TLS_BIO_CREATION_FAILED);
         }
         
         // Load certificate
@@ -79,7 +79,7 @@ zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateD
         BIO_free(bio);
         
         if (!cert) {
-            return zerossg::Result<bool>::error("Failed to parse certificate");
+            return zerossg::Result<bool>::error(zerossg::ERROR_TLS_CERT_PARSE_FAILED);
         }
         
         // Basic validation checks
@@ -88,7 +88,7 @@ zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateD
         
         return zerossg::Result<bool>::success(result == 1);
     } catch (const std::exception& e) {
-        return zerossg::Result<bool>::error("Certificate verification failed: " + std::string(e.what()));
+        return zerossg::Result<bool>::error(zerossg::ERROR_TLS_CERT_VERIFY_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -102,7 +102,7 @@ zerossg::Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath
         m_ssl_context.use_certificate_chain_file(cert_file);
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Failed to load certificate chain: " + std::string(e.what()));
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_CERT_CHAIN_LOAD_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -116,7 +116,7 @@ zerossg::Result<void> TlsHandler::load_private_key(const zerossg::FilePath& key_
         m_ssl_context.use_private_key_file(key_file, boost::asio::ssl::context::pem);
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Failed to load private key: " + std::string(e.what()));
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_KEY_LOAD_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -128,7 +128,7 @@ zerossg::Result<void> TlsHandler::set_verify_mode(zerossg::SslVerifyMode mode) {
         }
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Failed to set verify mode: " + std::string(e.what()));
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_SET_VERIFY_MODE_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -137,7 +137,7 @@ zerossg::Result<void> TlsHandler::add_ca_certificate(const zerossg::FilePath& ca
         m_ssl_context.load_verify_file(ca_file);
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Failed to load CA certificate: " + std::string(e.what()));
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_CA_CERT_LOAD_FAILED_PREFIX + std::string(e.what()));
     }
 }
 
@@ -172,13 +172,13 @@ bool TlsHandler::verify_certificate_callback(bool preverified, zerossg::SslVerif
 zerossg::Result<void> TlsHandler::validate_certificate_file(const zerossg::FilePath& cert_file) {
     std::ifstream file(cert_file);
     if (!file.is_open()) {
-        return zerossg::Result<void>::error("Certificate file not found: " + cert_file);
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_CERT_FILE_NOT_FOUND_PREFIX + cert_file);
     }
     
     // Check if file contains certificate data
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    if (content.find("-----BEGIN CERTIFICATE-----") == std::string::npos) {
-        return zerossg::Result<void>::error("Invalid certificate file format: " + cert_file);
+    if (content.find(zerossg::PEM_CERTIFICATE_HEADER) == std::string::npos) {
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_INVALID_CERT_FORMAT_PREFIX + cert_file);
     }
     
     return zerossg::Result<void>::success();
@@ -187,14 +187,14 @@ zerossg::Result<void> TlsHandler::validate_certificate_file(const zerossg::FileP
 zerossg::Result<void> TlsHandler::validate_key_file(const zerossg::FilePath& key_file) {
     std::ifstream file(key_file);
     if (!file.is_open()) {
-        return zerossg::Result<void>::error("Private key file not found: " + key_file);
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_KEY_FILE_NOT_FOUND_PREFIX + key_file);
     }
     
     // Check if file contains private key data
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    if (content.find("-----BEGIN") == std::string::npos || 
-        content.find("PRIVATE KEY-----") == std::string::npos) {
-        return zerossg::Result<void>::error("Invalid private key file format: " + key_file);
+    if (content.find(zerossg::PEM_BEGIN_HEADER) == std::string::npos || 
+        content.find(zerossg::PEM_PRIVATE_KEY_FOOTER_PART) == std::string::npos) {
+        return zerossg::Result<void>::error(zerossg::ERROR_TLS_INVALID_KEY_FORMAT_PREFIX + key_file);
     }
     
     return zerossg::Result<void>::success();

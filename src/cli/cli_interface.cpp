@@ -157,7 +157,7 @@ void CLIInterface::run_interactive_mode() {
 }
 
 void CLIInterface::show_prompt() {
-    std::cout << "zerossg> " << std::flush;
+    std::cout << zerossg::CLI_PROMPT << std::flush;
 }
 
 zerossg::CommandLineArgs CLIInterface::parse_input(const zerossg::RawInputString& input) {
@@ -259,46 +259,46 @@ void CLIInterface::print_warning(const zerossg::WarningString& message) {
 }
 
 void CLIInterface::register_builtin_commands() {
-    register_command("start", "Start the Zero Trust gateway server", "start [config-file]",
+    register_command(zerossg::CMD_START, "Start the Zero Trust gateway server", "start [config-file]",
                      [this](const zerossg::CommandLineArgs& args) { return start_server(args); });
     
-    register_command("stop", "Stop the Zero Trust gateway server", "stop",
+    register_command(zerossg::CMD_STOP, "Stop the Zero Trust gateway server", "stop",
                      [this](const zerossg::CommandLineArgs& args) { return stop_server(args); });
     
-    register_command("status", "Show server status and statistics", "status",
+    register_command(zerossg::CMD_STATUS, "Show server status and statistics", "status",
                      [this](const zerossg::CommandLineArgs& args) { return show_status(args); });
     
-    register_command("users", "List all users", "users",
+    register_command(zerossg::CMD_USERS, "List all users", "users",
                      [this](const zerossg::CommandLineArgs& args) { return list_users(args); });
     
-    register_command("sessions", "List active sessions", "sessions",
+    register_command(zerossg::CMD_SESSIONS, "List active sessions", "sessions",
                      [this](const zerossg::CommandLineArgs& args) { return list_sessions(args); });
     
-    register_command("security", "Show security statistics", "security",
+    register_command(zerossg::CMD_SECURITY, "Show security statistics", "security",
                      [this](const zerossg::CommandLineArgs& args) { return show_security_stats(args); });
     
-    register_command("logs", "Export audit logs", "logs <output-file>",
+    register_command(zerossg::CMD_LOGS, "Export audit logs", "logs <output-file>",
                      [this](const zerossg::CommandLineArgs& args) { return export_logs(args); });
     
-    register_command("add-user", "Add a new user", "add-user <username> <role> [password]",
+    register_command(zerossg::CMD_ADD_USER, "Add a new user", "add-user <username> <role> [password]",
                      [this](const zerossg::CommandLineArgs& args) { return add_user(args); });
     
-    register_command("remove-user", "Remove a user", "remove-user <username>",
+    register_command(zerossg::CMD_REMOVE_USER, "Remove a user", "remove-user <username>",
                      [this](const zerossg::CommandLineArgs& args) { return remove_user(args); });
     
-    register_command("config", "Show configuration", "config",
+    register_command(zerossg::CMD_CONFIG, "Show configuration", "config",
                      [this](const zerossg::CommandLineArgs& args) { return show_config(args); });
     
-    register_command("test", "Test connection to services", "test [service-name]",
+    register_command(zerossg::CMD_TEST, "Test connection to services", "test [service-name]",
                      [this](const zerossg::CommandLineArgs& args) { return test_connection(args); });
     
-    register_command("interactive", "Enter interactive mode", "interactive",
+    register_command(zerossg::CMD_INTERACTIVE, "Enter interactive mode", "interactive",
                      [this](const std::vector<string>& args) { 
                          run_interactive_mode(); 
                          return 0; 
                      });
     
-    register_command("help", "Show help information", "help [command]",
+    register_command(zerossg::CMD_HELP, "Show help information", "help [command]",
                      [this](const zerossg::CommandLineArgs& args) { 
                          if (args.empty()) {
                              show_help();
@@ -626,7 +626,7 @@ bool CLIUtils::is_valid_email(const string& email) {
 }
 
 bool CLIUtils::is_valid_role(const string& role) {
-    return role == "admin" || role == "operator" || role == "viewer";
+    return role == zerossg::ROLE_ADMIN || role == zerossg::ROLE_OPERATOR || role == zerossg::ROLE_VIEWER;
 }
 
 bool CLIUtils::is_valid_port(const string& port) {
@@ -704,7 +704,7 @@ void CLIUtils::show_progress(const string& message, int current, int total) {
 }
 
 void CLIUtils::show_spinner(const string& message) {
-    static const char spinner[] = "|/-\\";
+    static const char spinner[] = zerossg::CLI_SPINNER_CHARS;
     static int spinner_index = 0;
     
     std::cout << "\r" << message << " " << spinner[spinner_index] << std::flush;
@@ -736,7 +736,7 @@ void InteractiveShell::run() {
     
     char* input = nullptr;
     while (m_running) {
-        input = readline("zerossg> ");
+        input = readline(zerossg::CLI_PROMPT);
         
         if (!input) {
             // EOF received
@@ -827,7 +827,7 @@ void InteractiveShell::process_command(const string& command) {
 
 bool InteractiveShell::should_exit(const string& command) {
     string lower_cmd = CLIUtils::to_lower(CLIUtils::trim(command));
-    return lower_cmd == "exit" || lower_cmd == "quit";
+    return lower_cmd == zerossg::CMD_EXIT || lower_cmd == zerossg::CMD_QUIT;
 }
 
 void InteractiveShell::trim_history() {
@@ -840,7 +840,7 @@ void InteractiveShell::trim_history() {
 std::vector<string> InteractiveShell::get_command_names() {
     // This would need access to the CLI's command list
     // For now, return common commands
-    return {"start", "stop", "status", "users", "sessions", "security", "logs", "help", "exit"};
+    return {zerossg::CMD_START, zerossg::CMD_STOP, zerossg::CMD_STATUS, zerossg::CMD_USERS, zerossg::CMD_SESSIONS, zerossg::CMD_SECURITY, zerossg::CMD_LOGS, zerossg::CMD_HELP, zerossg::CMD_EXIT};
 }
 
 } // namespace zerossg
