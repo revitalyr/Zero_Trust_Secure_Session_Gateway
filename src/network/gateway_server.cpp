@@ -4,7 +4,6 @@ module zerossg.network.gateway_server;
 import zerossg.common;
 import zerossg.types;
 import zerossg.tls.tls_handler;
-import zerossg.result;
 import zerossg.auth.authenticator;
 import zerossg.rbac.authorizer;
 import zerossg.session.session_manager;
@@ -33,7 +32,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigFileName& config_fil
         m_tls_handler = zerossg::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);
         if (!tls_result.is_success()) {
-            return zerossg::Result<void>::error(zerossg::ERROR_TLS_INIT_FAILED_PREFIX + tls_result.error());
+            return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_TLS_INIT_FAILED_PREFIX, tls_result.error()));
         }
         
         // Initialize business logic components
@@ -51,15 +50,15 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigFileName& config_fil
             return setup_result;
         }
         
-        return zerossg::Result<void>::success();
+        return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVER_INIT_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVER_INIT_FAILED_PREFIX, e.what()));
     }
 }
 
 Result<void> GatewayServer::start() {
     if (m_running.load()) {
-        return zerossg::Result<void>::error(zerossg::ERROR_SERVER_ALREADY_RUNNING);
+        return zerossg::make_result_error(zerossg::ERROR_SERVER_ALREADY_RUNNING);
     }
     
     try {
@@ -73,16 +72,16 @@ Result<void> GatewayServer::start() {
         
         m_logger->info(std::format("Server started on {}:{}", m_listen_address, m_listen_port));
         
-        return zerossg::Result<void>::success();
+        return zerossg::make_result_success();
     } catch (const std::exception& e) {
         m_running.store(false);
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVER_START_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVER_START_FAILED_PREFIX, e.what()));
     }
 }
 
 Result<void> GatewayServer::stop() {
     if (!m_running.load()) {
-        return Result<void>::success();
+        return zerossg::make_result_success();
     }
     
     m_running.store(false);
@@ -101,9 +100,9 @@ Result<void> GatewayServer::stop() {
         
         m_logger->info("Server stopped");
         
-        return zerossg::Result<void>::success();
+        return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVER_STOP_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVER_STOP_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -118,9 +117,9 @@ Result<void> GatewayServer::setup_acceptor() {
         m_acceptor->bind(endpoint);
         m_acceptor->listen(boost::asio::socket_base::max_listen_connections);
         
-        return zerossg::Result<void>::success();
+        return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_ACCEPTOR_SETUP_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_ACCEPTOR_SETUP_FAILED_PREFIX, e.what()));
     }
 }
 
