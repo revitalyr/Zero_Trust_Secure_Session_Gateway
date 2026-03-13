@@ -12,9 +12,12 @@ import zerossg.common;
 std::unique_ptr<zerossg::GatewayServer> g_server;
 std::atomic<bool> g_shutdown_requested{false};
 
+// Logger instance for logging
+zerossg::Logger logger("main");
+
 // Signal handler for graceful shutdown
 void signal_handler(int signal) {
-    zerossg::Logger::log_info("main", "Received signal " + std::to_string(signal) + ", shutting down gracefully...");
+    zerossg::Logger::log_info("main", "Server started successfully" + std::to_string(signal) + ", shutting down gracefully...");
     g_shutdown_requested.store(true);
     
     if (g_server && g_server->is_running()) {
@@ -165,7 +168,7 @@ int run_server(const CommandLineArgs& args) {
         }
         
         LOG_INFO("main", "Server started successfully");
-        LOG_INFO("main", "Server is running. Press Ctrl+C to stop.");
+        LOG_INFO(logger, "Server is running. Press Ctrl+C to stop.");
         
         // Wait for shutdown signal
         while (g_server->is_running() && !g_shutdown_requested.load()) {

@@ -1,18 +1,19 @@
 // Project headers
+import zerossg.common;
+import zerossg.types;
+import zerossg.network.gateway_server;
 import zerossg.tls.tls_handler;
+import zerossg.result;
 import zerossg.auth.authenticator;
 import zerossg.rbac.authorizer;
 import zerossg.session.session_manager;
 import zerossg.proxy.proxy_manager;
 import zerossg.security.security_manager;
 import zerossg.logging.logger;
-import zerossg.network.gateway_server;
 
-// Standard library headers
+// Standard library imports
 import zerossg.third_party.nlohmann_json;
 import zerossg.std;
-import <iostream>;
-import <sstream>;
 
 using json = nlohmann::json;
 
@@ -25,20 +26,20 @@ GatewayServer::~GatewayServer() {
     stop();
 }
 
-Result<void> GatewayServer::initialize(const std::string& config_file) {
+Result<void> GatewayServer::initialize(const zerossg::String& config_file) {
     try {
         // Initialize TLS handler
-        m_tls_handler = std::make_unique<TlsHandler>(m_io_context);
+        m_tls_handler = zerossg::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);
         if (!tls_result.is_success()) {
             return zerossg::Result<void>::error("TLS initialization failed: " + tls_result.error());
         }
         
         // Initialize business logic components
-        m_auth_manager = std::make_unique<AuthenticationManager>();
-        m_authz_manager = std::make_unique<AuthorizationManager>();
-        m_session_manager = std::make_unique<SessionManager>();
-        m_security_manager = std::make_unique<SecurityManager>();
+        m_auth_manager = zerossg::make_unique<AuthenticationManager>();
+        m_authz_manager = zerossg::make_unique<AuthorizationManager>();
+        m_session_manager = zerossg::make_unique<SessionManager>();
+        m_security_manager = zerossg::make_unique<SecurityManager>();
         
         // Initialize logger (simplified for now)
         // m_logger = std::make_shared<Logger>();
@@ -51,7 +52,7 @@ Result<void> GatewayServer::initialize(const std::string& config_file) {
         
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Server initialization failed: " + std::string(e.what()));
+        return zerossg::Result<void>::error("Server initialization failed: " + zerossg::String(e.what()));
     }
 }
 
@@ -69,13 +70,13 @@ Result<void> GatewayServer::start() {
         // Start accepting connections
         start_accept();
         
-        std::cout << "Zero Trust Secure Session Gateway started on " 
-                  << m_listen_address << ":" << m_listen_port << std::endl;
+        zerossg::cout << "Zero Trust Secure Session Gateway started on " 
+                  << m_listen_address << ":" << m_listen_port << zerossg::endl;
         
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
         m_running.store(false);
-        return zerossg::Result<void>::error("Failed to start server: " + std::string(e.what()));
+        return zerossg::Result<void>::error("Failed to start server: " + zerossg::String(e.what()));
     }
 }
 
@@ -98,11 +99,11 @@ Result<void> GatewayServer::stop() {
         // Wait for threads to finish
         stop_io_threads();
         
-        std::cout << "Zero Trust Secure Session Gateway stopped" << std::endl;
+        zerossg::cout << "Zero Trust Secure Session Gateway stopped" << zerossg::endl;
         
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Error stopping server: " + std::string(e.what()));
+        return zerossg::Result<void>::error("Error stopping server: " + zerossg::String(e.what()));
     }
 }
 
@@ -111,7 +112,7 @@ Result<void> GatewayServer::setup_acceptor() {
         boost::asio::ip::tcp::endpoint endpoint(
             boost::asio::ip::make_address(m_listen_address), m_listen_port);
         
-        m_acceptor = std::make_unique<boost::asio::ip::tcp::acceptor>(m_io_context);
+        m_acceptor = zerossg::make_unique<boost::asio::ip::tcp::acceptor>(m_io_context);
         m_acceptor->open(endpoint.protocol());
         m_acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
         m_acceptor->bind(endpoint);
@@ -119,7 +120,7 @@ Result<void> GatewayServer::setup_acceptor() {
         
         return zerossg::Result<void>::success();
     } catch (const std::exception& e) {
-        return zerossg::Result<void>::error("Failed to setup acceptor: " + std::string(e.what()));
+        return zerossg::Result<void>::error("Failed to setup acceptor: " + zerossg::String(e.what()));
     }
 }
 
@@ -128,7 +129,7 @@ void GatewayServer::start_accept() {
         return;
     }
     
-    auto connection = std::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context());
+    auto connection = zerossg::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context());
     
     m_acceptor->async_accept(
         connection->m_socket.lowest_layer(),
@@ -143,7 +144,7 @@ void GatewayServer::handle_accept(ConnectionPtr connection, const boost::system:
         register_connection(connection);
         connection->start();
     } else {
-        std::cerr << "Accept error: " << error.message() << std::endl;
+        zerossg::cerr << "Accept error: " << error.message() << zerossg::endl;
     }
     
     // Continue accepting new connections
@@ -157,7 +158,7 @@ void GatewayServer::start_io_threads() {
                 try {
                     m_io_context.run_for(std::chrono::milliseconds(100));
                 } catch (const std::exception& e) {
-                    std::cerr << "I/O thread error: " << e.what() << std::endl;
+                    zerossg::cerr << "I/O thread error: " << e.what() << zerossg::endl;
                 }
             }
         });
@@ -215,7 +216,7 @@ void Connection::do_handshake() {
             if (!error) {
                 self->do_read();
             } else {
-                std::cerr << "Handshake error: " << error.message() << std::endl;
+                zerossg::cerr << "Handshake error: " << error.message() << zerossg::endl;
             }
         }
     );
@@ -233,15 +234,15 @@ void Connection::do_read() {
 void Connection::handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
     if (error) {
         if (error != boost::asio::error::eof) {
-            std::cerr << "Read error: " << error.message() << std::endl;
+            zerossg::cerr << "Read error: " << error.message() << zerossg::endl;
         }
         return;
     }
     
     // Read the request
-    std::istream is(&m_buffer);
-    std::string request_line;
-    std::getline(is, request_line);
+    zerossg::istream is(&m_buffer);
+    zerossg::String request_line;
+    zerossg::getline(is, request_line);
     
     // Process the request
     handle_request(request_line);
@@ -250,12 +251,12 @@ void Connection::handle_read(const boost::system::error_code& error, size_t byte
     do_read();
 }
 
-void Connection::handle_request(const std::string& request) {
+void Connection::handle_request(const zerossg::String& request) {
     try {
         json request_json = json::parse(request);
-        std::string request_type = request_json.value("type", "");
+        zerossg::String request_type = request_json.value("type", "");
         
-        std::string response;
+        zerossg::String response;
         
         if (request_type == "login") {
             response = process_login_request(request);
@@ -266,21 +267,21 @@ void Connection::handle_request(const std::string& request) {
         } else if (request_type == "logout") {
             response = process_logout_request(request);
         } else {
-            response = create_error_response("Unknown request type: " + request_type);
+            response = create_error_response("Unknown request type: " + zerossg::String(request_type));
         }
         
         do_write(response + "\n\n");
     } catch (const json::exception& e) {
-        do_write(create_error_response("Invalid JSON: " + std::string(e.what())) + "\n\n");
+        do_write(create_error_response("Invalid JSON: " + zerossg::String(e.what())) + "\n\n");
     } catch (const std::exception& e) {
-        do_write(create_error_response("Request processing error: " + std::string(e.what())) + "\n\n");
+        do_write(create_error_response("Request processing error: " + zerossg::String(e.what())) + "\n\n");
     }
 }
 
-std::string Connection::process_login_request(const std::string& request) {
+zerossg::String Connection::process_login_request(const zerossg::String& request) {
     json request_json = json::parse(request);
-    std::string username = request_json.value("username", "");
-    std::string password = request_json.value("password", "");
+    zerossg::String username = request_json.value("username", "");
+    zerossg::String password = request_json.value("password", "");
     
     if (username.empty() || password.empty()) {
         return create_error_response("Username and password required");
@@ -310,7 +311,7 @@ std::string Connection::process_login_request(const std::string& request) {
     m_user = user_result.value().value();
     m_authenticated = true;
     
-    std::string token = auth_result.value();
+    zerossg::String token = auth_result.value();
     
     json response_data = {
         {"token", token},
@@ -323,13 +324,13 @@ std::string Connection::process_login_request(const std::string& request) {
     return create_response("success", "Login successful", response_data);
 }
 
-std::string Connection::process_session_request(const std::string& request) {
+zerossg::String Connection::process_session_request(const zerossg::String& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }
     
     json request_json = json::parse(request);
-    std::string target_service = request_json.value("target_service", "");
+    zerossg::String target_service = request_json.value("target_service", "");
     
     if (target_service.empty()) {
         return create_error_response("Target service required");
@@ -357,7 +358,7 @@ std::string Connection::process_session_request(const std::string& request) {
     return create_response("success", "Session created", response_data);
 }
 
-std::string Connection::process_proxy_request(const std::string& request) {
+zerossg::String Connection::process_proxy_request(const zerossg::String& request) {
     if (!m_authenticated || m_session_id.empty()) {
         return create_error_response("No active session");
     }
@@ -372,7 +373,7 @@ std::string Connection::process_proxy_request(const std::string& request) {
     return create_response("success", "Proxy request processed", response_data);
 }
 
-std::string Connection::process_logout_request(const std::string& request) {
+zerossg::String Connection::process_logout_request(const zerossg::String& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }
@@ -388,23 +389,23 @@ std::string Connection::process_logout_request(const std::string& request) {
     return create_response("success", "Logout successful");
 }
 
-void Connection::do_write(const string& response) {
+void Connection::do_write(const zerossg::String& response) {
     boost::asio::async_write(
         m_socket, boost::asio::buffer(response),
         [self = shared_from_this()](const boost::system::error_code& error, size_t) {
             if (error) {
-                std::cerr << "Write error: " << error.message() << std::endl;
+                zerossg::cerr << "Write error: " << error.message() << zerossg::endl;
             }
         }
     );
 }
 
-string Connection::create_response(const string& status, const string& message, const json& data) {
+zerossg::String Connection::create_response(const zerossg::String& status, const zerossg::String& message, const json& data) {
     json response = {
         {"status", status},
         {"message", message},
-        {"timestamp", std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count()}
+        {"timestamp", zerossg::chrono::duration_cast<zerossg::chrono::seconds>(
+            zerossg::chrono::system_clock::now().time_since_epoch()).count()}
     };
     
     if (!data.empty()) {
@@ -414,13 +415,13 @@ string Connection::create_response(const string& status, const string& message, 
     return response.dump();
 }
 
-string Connection::create_error_response(const string& error) {
+zerossg::String Connection::create_error_response(const zerossg::String& error) {
     return create_response("error", error);
 }
 
-void Connection::log_connection_event(const string& event_type, const string& details) {
+void Connection::log_connection_event(const zerossg::String& event_type, const zerossg::String& details) {
     // Simplified logging - in production, use the actual logger
-    std::cout << "[" << event_type << "] " << m_client_ip << ": " << details << std::endl;
+    zerossg::cout << "[" << event_type << "] " << m_client_ip << ": " << details << zerossg::endl;
 }
 
 } // namespace zerossg

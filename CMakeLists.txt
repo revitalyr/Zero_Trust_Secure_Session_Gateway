@@ -187,6 +187,20 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     )
     target_compile_features(zerossg.session.session_manager INTERFACE cxx_std_23)
     target_link_libraries(zerossg.session.session_manager INTERFACE zerossg.types zerossg.interfaces zerossg.std)
+    
+    # Create interface library for TLS handler
+    add_library(zerossg.tls.tls_handler INTERFACE 
+        include/zerossg/tls/tls_handler.ixx
+    )
+    target_compile_features(zerossg.tls.tls_handler INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.tls.tls_handler INTERFACE zerossg.interfaces zerossg.logging.logger zerossg.std zerossg.third_party.openssl)
+    
+    # Create interface library for network gateway server
+    add_library(zerossg.network.gateway_server INTERFACE 
+        include/zerossg/network/gateway_server.ixx
+    )
+    target_compile_features(zerossg.network.gateway_server INTERFACE cxx_std_23)
+    target_link_libraries(zerossg.network.gateway_server INTERFACE zerossg.tls.tls_handler zerossg.auth.authenticator zerossg.rbac.authorizer zerossg.session.session_manager zerossg.proxy.proxy_manager zerossg.security.security_manager zerossg.logging.logger zerossg.third_party.nlohmann_json zerossg.std)
 endif()
 
 # Add subdirectories

@@ -15,15 +15,15 @@ import zerossg.logging.logger;
 #include <algorithm>
 #include <ctime>
 
-// Logger class implementation using fully qualified names
-zerossg::Logger::Logger(const zerossg::String& name, zerossg::LogLevel level) : m_mutex(), m_logger(nullptr) {
+// Logger class implementation
+Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks();
     m_logger->set_name(name);
-    zerossg::Logger::set_level(level);
+    set_level(level);
 }
 
 // Private helper methods
-void zerossg::Logger::initialize_default_sinks() {
+void Logger::initialize_default_sinks() {
     // Create default file sink
     auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/zerossg.log", 1024*1024, 3);
     file_sink->set_level(spdlog::level::info);
@@ -33,7 +33,7 @@ void zerossg::Logger::initialize_default_sinks() {
     m_logger->flush_on(spdlog::level::info);
 }
 
-zerossg::String zerossg::Logger::format_timestamp() {
+String Logger::format_timestamp() {
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
@@ -41,7 +41,7 @@ zerossg::String zerossg::Logger::format_timestamp() {
     return ss.str();
 }
 
-zerossg::String zerossg::Logger::format_fields(const std::vector<std::pair<zerossg::String, zerossg::String>>& fields) {
+String Logger::format_fields(const std::vector<std::pair<String, String>>& fields) {
     std::stringstream ss;
     for (const auto& field : fields) {
         ss << field.first << "=" << field.second;
@@ -52,22 +52,22 @@ zerossg::String zerossg::Logger::format_fields(const std::vector<std::pair<zeros
     return ss.str();
 }
 
-spdlog::level::level_enum zerossg::Logger::convert_log_level(zerossg::LogLevel level) {
+spdlog::level::level_enum Logger::convert_log_level(LogLevel level) {
     switch (level) {
-        case zerossg::LogLevel::TRACE: return spdlog::level::trace;
-        case zerossg::LogLevel::DEBUG: return spdlog::level::debug;
-        case zerossg::LogLevel::INFO: return spdlog::level::info;
-        case zerossg::LogLevel::WARN: return spdlog::level::warn;
-        case zerossg::LogLevel::ERROR: return spdlog::level::err;
-        case zerossg::LogLevel::CRITICAL: return spdlog::level::critical;
+        case LogLevel::TRACE: return spdlog::level::trace;
+        case LogLevel::DEBUG: return spdlog::level::debug;
+        case LogLevel::INFO: return spdlog::level::info;
+        case LogLevel::WARN: return spdlog::level::warn;
+        case LogLevel::ERROR: return spdlog::level::err;
+        case LogLevel::CRITICAL: return spdlog::level::critical;
         default: return spdlog::level::info;
     }
 }
 
-void zerossg::Logger::log_security_event(const zerossg::String& event_type, const zerossg::String& details) {
+void Logger::log_session_event(const String& event_type, const String& details) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
-    zerossg::String formatted_event = zerossg::Logger::format_fields({
+    String formatted_event = format_fields({
         {"event_type", event_type},
         {"details", details}
     });
@@ -75,24 +75,24 @@ void zerossg::Logger::log_security_event(const zerossg::String& event_type, cons
     m_logger->info("SECURITY_EVENT: {}", formatted_event);
 }
 
-void zerossg::Logger::log_session_event(const zerossg::String& session_id, const zerossg::String& event_type, const zerossg::String& details) {
+void Logger::log_session_event(const String& session_id, const String& event_type, const String& details) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
     m_logger->info("SESSION_EVENT: session_id={}, event_type={}, details={}", 
                    session_id, event_type, details);
 }
 
-void zerossg::Logger::log_error(const zerossg::String& component, const zerossg::String& error) {
+void Logger::log_error(const String& component, const String& error) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_logger->info("ERROR [{}]: {}", component, error);
 }
 
-void zerossg::Logger::log_info(const zerossg::String& component, const zerossg::String& message) {
+void Logger::log_info(const String& component, const String& message) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_logger->info("INFO [{}]: {}", component, message);
 }
 
-void zerossg::Logger::log_debug(const zerossg::String& component, const zerossg::String& message) {
+void Logger::log_debug(const String& component, const String& message) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_logger->debug("DEBUG [{}]: {}", component, message);
 }
