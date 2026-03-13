@@ -15,7 +15,7 @@ AuthorizationManager::AuthorizationManager() {
 }
 
 zerossg::Result<bool> AuthorizationManager::can_access_service(const zerossg::User& user, const zerossg::ServiceName& service_name) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     auto service_it = m_services.find(service_name);
     if (service_it == m_services.end()) {
@@ -31,7 +31,7 @@ zerossg::Result<bool> AuthorizationManager::has_permission(const zerossg::User& 
 }
 
 zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(const zerossg::User& user) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     zerossg::Strings allowed_services;
     
@@ -46,14 +46,14 @@ zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(con
 }
 
 zerossg::Result<void> AuthorizationManager::add_service(const zerossg::TargetService& service) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     m_services[service.m_name] = service;
     return zerossg::Result<void>::success();
 }
 
 zerossg::Result<void> AuthorizationManager::update_service(const zerossg::ServiceName& service_name, const zerossg::TargetService& service) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     auto it = m_services.find(service_name);
     if (it == m_services.end()) {
@@ -65,7 +65,7 @@ zerossg::Result<void> AuthorizationManager::update_service(const zerossg::Servic
 }
 
 zerossg::Result<void> AuthorizationManager::remove_service(const zerossg::ServiceName& service_name) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     if (m_services.erase(service_name) == 0) {
         return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
@@ -75,7 +75,7 @@ zerossg::Result<void> AuthorizationManager::remove_service(const zerossg::Servic
 }
 
 zerossg::Result<std::optional<zerossg::TargetService>> AuthorizationManager::get_service(const zerossg::ServiceName& service_name) {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     auto it = m_services.find(service_name);
     if (it == m_services.end()) {
@@ -86,7 +86,7 @@ zerossg::Result<std::optional<zerossg::TargetService>> AuthorizationManager::get
 }
 
 zerossg::Result<zerossg::TargetServices> AuthorizationManager::list_services() {
-    std::lock_guard<std::mutex> lock(m_services_mutex);
+    LockGuard<std::mutex> lock(m_services_mutex);
     
     zerossg::TargetServices services;
     services.reserve(m_services.size());
@@ -99,14 +99,14 @@ zerossg::Result<zerossg::TargetServices> AuthorizationManager::list_services() {
 }
 
 zerossg::Result<void> AuthorizationManager::add_permission_to_role(zerossg::Role role, const zerossg::Permission& permission) {
-    std::lock_guard<std::mutex> lock(m_permissions_mutex);
+    LockGuard<std::mutex> lock(m_permissions_mutex);
     
     m_role_permissions[role].insert(permission);
     return zerossg::Result<void>::success();
 }
 
 zerossg::Result<void> AuthorizationManager::remove_permission_from_role(zerossg::Role role, const zerossg::Permission& permission) {
-    std::lock_guard<std::mutex> lock(m_permissions_mutex);
+    LockGuard<std::mutex> lock(m_permissions_mutex);
     
     auto role_it = m_role_permissions.find(role);
     if (role_it != m_role_permissions.end()) {
@@ -117,7 +117,7 @@ zerossg::Result<void> AuthorizationManager::remove_permission_from_role(zerossg:
 }
 
 zerossg::Result<zerossg::Permissions> AuthorizationManager::get_role_permissions(zerossg::Role role) {
-    std::lock_guard<std::mutex> lock(m_permissions_mutex);
+    LockGuard<std::mutex> lock(m_permissions_mutex);
     
     auto it = m_role_permissions.find(role);
     if (it == m_role_permissions.end()) {
@@ -129,14 +129,14 @@ zerossg::Result<zerossg::Permissions> AuthorizationManager::get_role_permissions
 }
 
 zerossg::Result<void> AuthorizationManager::set_role_hierarchy(zerossg::Role superior, zerossg::Role subordinate) {
-    std::lock_guard<std::mutex> lock(m_hierarchy_mutex);
+    LockGuard<std::mutex> lock(m_hierarchy_mutex);
     
     m_role_hierarchy[superior].insert(subordinate);
     return zerossg::Result<void>::success();
 }
 
 zerossg::Result<bool> AuthorizationManager::is_role_superior(zerossg::Role role_a, zerossg::Role role_b) {
-    std::lock_guard<std::mutex> lock(m_hierarchy_mutex);
+    LockGuard<std::mutex> lock(m_hierarchy_mutex);
     
     if (role_a == role_b) {
         return zerossg::Result<bool>::success(true);
@@ -245,7 +245,7 @@ bool AuthorizationManager::can_role_access_service(zerossg::Role role, const zer
 }
 
 bool AuthorizationManager::role_has_permission(zerossg::Role role, const zerossg::Permission& permission) {
-    std::lock_guard<std::mutex> lock(m_permissions_mutex);
+    LockGuard<std::mutex> lock(m_permissions_mutex);
     
     auto it = m_role_permissions.find(role);
     if (it == m_role_permissions.end()) {
@@ -258,7 +258,7 @@ bool AuthorizationManager::role_has_permission(zerossg::Role role, const zerossg
     }
     
     // Check hierarchical permissions
-    std::lock_guard<std::mutex> hierarchy_lock(m_hierarchy_mutex);
+    LockGuard<std::mutex> hierarchy_lock(m_hierarchy_mutex);
     for (const auto& pair : m_role_hierarchy) {
         if (pair.second.find(role) != pair.second.end()) {
             // role is subordinate to pair.first
@@ -274,7 +274,7 @@ bool AuthorizationManager::role_has_permission(zerossg::Role role, const zerossg
 }
 
 zerossg::Roles AuthorizationManager::get_inferior_roles(zerossg::Role role) {
-    std::lock_guard<std::mutex> lock(m_hierarchy_mutex);
+    LockGuard<std::mutex> lock(m_hierarchy_mutex);
     
     zerossg::Roles inferior_roles;
     auto it = m_role_hierarchy.find(role);

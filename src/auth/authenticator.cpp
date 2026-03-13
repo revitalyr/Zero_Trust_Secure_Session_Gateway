@@ -59,7 +59,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     
     // Check rate limiting first
     {
-        std::shared_lock lock(m_rate_limits_mutex);
+        SharedLock lock(m_rate_limits_mutex);
         auto& rate_info = m_rate_limits[std::string(username)];
         
         if (rate_info.should_block()) {
@@ -73,14 +73,14 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     
     // Check if user is blocked
     {
-        std::shared_lock lock(m_blocked_users_mutex);
+        SharedLock lock(m_blocked_users_mutex);
         if (m_blocked_users.contains(std::string(username))) {
             return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_ACCOUNT_BLOCKED);
         }
     }
     
     // Find user with modern concurrency
-    std::shared_lock lock(m_users_mutex);
+    SharedLock lock(m_users_mutex);
     const auto user_it = m_users.find(std::string(username));
     if (user_it == m_users.end()) {
         return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_USER_NOT_FOUND);
@@ -143,7 +143,7 @@ zerossg::Result<bool> AuthenticationManager::validate_token(const zerossg::Token
     
     // Check if token is revoked
     {
-        std::shared_lock lock(m_revoked_tokens_mutex);
+        SharedLock lock(m_revoked_tokens_mutex);
         if (m_revoked_tokens.contains(std::string(token))) {
             return zerossg::make_result_error<bool>(zerossg::ERROR_TOKEN_REVOKED);
         }
@@ -177,7 +177,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::get_user_from_token(const 
     
     // Check if token is revoked
     {
-        std::lock_guard<std::mutex> lock(m_tokens_mutex);
+        LockGuard<std::mutex> lock(m_tokens_mutex);
         auto revoked_it = m_revoked_tokens.find(token);
         if (revoked_it != m_revoked_tokens.end()) {
             return zerossg::make_result_error<zerossg::User>(zerossg::ERROR_TOKEN_REVOKED);
@@ -218,7 +218,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::generate_token(cons
 }
 
 zerossg::Result<void> AuthenticationManager::revoke_token(const zerossg::TokenString& token) {
-    std::lock_guard<std::mutex> lock(m_tokens_mutex);
+    LockGuard<std::mutex> lock(m_tokens_mutex);
     
     // Store token with expiry time for cleanup
     auto expiry_time = std::chrono::duration_cast<std::chrono::seconds>(
@@ -229,7 +229,7 @@ zerossg::Result<void> AuthenticationManager::revoke_token(const zerossg::TokenSt
 }
 
 zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(user.username) != m_users.end()) {
         return zerossg::make_result_error<void>(zerossg::ERROR_USER_ALREADY_EXISTS);
@@ -240,7 +240,7 @@ zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user)
 }
 
 zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName& username, const zerossg::User& user) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(username) == m_users.end()) {
         return zerossg::make_result_error<void>(zerossg::ERROR_USER_NOT_FOUND);
@@ -251,7 +251,7 @@ zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName
 }
 
 zerossg::Result<void> AuthenticationManager::delete_user(const zerossg::UserName& username) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.erase(username) == 0) {
         return zerossg::make_result_error<void>(zerossg::ERROR_USER_NOT_FOUND);
@@ -261,7 +261,7 @@ zerossg::Result<void> AuthenticationManager::delete_user(const zerossg::UserName
 }
 
 zerossg::Result<std::optional<zerossg::User>> AuthenticationManager::get_user(const zerossg::UserName& username) {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     auto it = m_users.find(username);
     if (it == m_users.end()) {
@@ -272,7 +272,7 @@ zerossg::Result<std::optional<zerossg::User>> AuthenticationManager::get_user(co
 }
 
 zerossg::Result<zerossg::Users> AuthenticationManager::list_users() {
-    std::lock_guard<std::mutex> lock(m_users_mutex);
+    LockGuard<std::mutex> lock(m_users_mutex);
     
     zerossg::Users users;
     users.reserve(m_users.size());
@@ -475,7 +475,7 @@ zerossg::TokenString AuthenticationManager::generate_secure_token() {
 void AuthenticationManager::cleanup_expired_tokens() {
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
-    std::lock_guard<std::mutex> lock(m_tokens_mutex);
+    LockGuard<std::mutex> lock(m_tokens_mutex);
     auto it = m_revoked_tokens.begin();
     while (it != m_revoked_tokens.end()) {
         try {
@@ -492,19 +492,19 @@ void AuthenticationManager::cleanup_expired_tokens() {
 }
 
 zerossg::UserCount AuthenticationManager::get_active_user_count() const noexcept {
-    std::shared_lock lock(m_users_mutex);
+    SharedLock lock(m_users_mutex);
     return std::ranges::count_if(m_users, 
         [](const auto& pair) { return pair.second.is_active(); });
 }
 
 zerossg::UserCount AuthenticationManager::get_blocked_user_count() const noexcept {
-    std::shared_lock lock(m_blocked_users_mutex);
+    SharedLock lock(m_blocked_users_mutex);
     return m_blocked_users.size();
 }
 
 zerossg::Strings AuthenticationManager::get_recent_failed_attempts(std::string_view username, zerossg::AttemptCount count) const noexcept {
     // Modern rate limiting with better tracking and semantic return type
-    std::shared_lock lock(m_rate_limits_mutex);
+    SharedLock lock(m_rate_limits_mutex);
     
     zerossg::Strings attempts;
     const auto it = m_rate_limits.find(zerossg::UserName{std::string(username)});

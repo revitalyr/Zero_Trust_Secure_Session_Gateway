@@ -1,5 +1,6 @@
 export module zerossg.types;
 
+export import zerossg.common;
 export import zerossg.std;
 
 export namespace zerossg {
@@ -9,24 +10,16 @@ template<typename T>
 export using Result = std::expected<T, std::string>;
 
 // Basic type aliases
-export using String = std::string;
-export using ErrorMessage = std::string;
-export using UserName = std::string;
-export using PasswordHash = std::string;
-export using TokenString = std::string;
-export using SecretKey = std::vector<unsigned char>;
-export using SessionId = std::string;
-export using UserCount = size_t;
-export using Strings = std::vector<std::string>;
-export using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
-export using ClientIp = std::string;
-export using ServiceName = std::string;
-export using systemClock = std::chrono::system_clock;
+// Aliases like String, UserName, etc., are now in zerossg.common
 
 // Import standard library types for clarity
-using std::string_view;
-using std::chrono::system_clock;
-using std::chrono::minutes;
+// These are now imported via zerossg.std and aliased in zerossg.common
+
+struct Session;
+struct User;
+struct TargetService;
+struct SecurityEvent;
+struct ConnectionInfo;
 
 
 // Modern enum class with explicit underlying type
@@ -37,16 +30,16 @@ export enum class Role : uint8_t {
 };
 
 // Modern constexpr functions for enum conversion
-export constexpr std::string_view role_to_string(Role role) noexcept {
+export constexpr StringView role_to_string(Role role) noexcept {
     switch (role) {
-        case Role::ADMIN: return std::string_view{"admin"};
-        case Role::OPERATOR: return std::string_view{"operator"};
-        case Role::VIEWER: return std::string_view{"viewer"};
-        default: return std::string_view{};
+        case Role::ADMIN: return StringView{"admin"};
+        case Role::OPERATOR: return StringView{"operator"};
+        case Role::VIEWER: return StringView{"viewer"};
+        default: return StringView{};
     }
 }
 
-export constexpr Role string_to_role(std::string_view role_str) noexcept {
+export constexpr Role string_to_role(StringView role_str) noexcept {
     if (role_str == "admin") return Role::ADMIN;
     if (role_str == "operator") return Role::OPERATOR;
     if (role_str == "viewer") return Role::VIEWER;
@@ -72,7 +65,7 @@ export struct User {
         , m_password_hash(std::move(password_hash))
         , m_role(role)
         , m_active(true)
-        , m_created_at(system_clock::now()) {}
+        , m_created_at(SystemClock::now()) {}
     
     // Modern accessor methods
     [[nodiscard]] constexpr const UserName& user_name() const noexcept { return m_user_name; }
@@ -109,8 +102,8 @@ export struct Session {
         , m_client_ip(std::move(client_ip))
         , m_target_service(std::move(target_service))
         , m_active(true)
-        , m_created_at(systemClock::now())
-        , m_expires_at(systemClock::now() + std::chrono::minutes(30)) {}
+        , m_created_at(SystemClock::now())
+        , m_expires_at(SystemClock::now() + Minutes(30)) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
@@ -128,11 +121,11 @@ export struct Session {
     
     // Utility methods
     [[nodiscard]] bool is_expired() const noexcept {
-        return system_clock::now() > m_expires_at;
+        return SystemClock::now() > m_expires_at;
     }
     
     [[nodiscard]] TimeoutDuration time_until_expiry() const noexcept {
-        const auto now = system_clock::now();
+        const auto now = SystemClock::now();
         if (now >= m_expires_at) {
             return TimeoutDuration{0};
         }
@@ -153,7 +146,7 @@ export enum class SecurityEventType : uint8_t {
 };
 
 // Modern constexpr function for security event type conversion
-constexpr string_view security_event_type_to_string(SecurityEventType type) noexcept {
+constexpr StringView security_event_type_to_string(SecurityEventType type) noexcept {
     constexpr std::array event_names = {
         "login_success",
         "login_failure", 
@@ -165,13 +158,13 @@ constexpr string_view security_event_type_to_string(SecurityEventType type) noex
         "brute_force_detected"
     };
     const auto index = static_cast<std::size_t>(type);
-    return index < event_names.size() ? event_names[index] : string_view{};
+    return index < event_names.size() ? event_names[index] : StringView{};
 }
 
 // Modern SecurityEvent with better encapsulation
-struct SecurityEvent {
+export struct SecurityEvent {
     SecurityEventType m_type;
-    system_clock::time_point m_timestamp;
+    TimePoint m_timestamp;
     UserName m_username;
     ClientIp m_client_ip;
     std::string m_details;
@@ -179,21 +172,21 @@ struct SecurityEvent {
     constexpr SecurityEvent(SecurityEventType type, UserName username, 
                         ClientIp client_ip, std::string details) noexcept
         : m_type(type)
-        , m_timestamp(system_clock::now())
+        , m_timestamp(SystemClock::now())
         , m_username(std::move(username))
         , m_client_ip(std::move(client_ip))
         , m_details(std::move(details)) {}
     
     // Accessors
     [[nodiscard]] constexpr SecurityEventType type() const noexcept { return m_type; }
-    [[nodiscard]] constexpr system_clock::time_point timestamp() const noexcept { return m_timestamp; }
+    [[nodiscard]] constexpr TimePoint timestamp() const noexcept { return m_timestamp; }
     [[nodiscard]] constexpr const UserName& username() const noexcept { return m_username; }
     [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
     [[nodiscard]] constexpr const std::string& details() const noexcept { return m_details; }
 };
 
 // Modern ConnectionInfo with better encapsulation
-struct ConnectionInfo {
+export struct ConnectionInfo {
     TcpEndpoint m_remote_endpoint;
     TcpEndpoint m_local_endpoint;
     ClientIp m_client_ip;
@@ -218,7 +211,7 @@ struct ConnectionInfo {
 };
 
 // Modern TargetService with better encapsulation and validation
-struct TargetService {
+export struct TargetService {
     ServiceName m_name;
     HostAddress m_host;
     PortNo m_port;
@@ -258,7 +251,7 @@ struct TargetService {
     
     // Utility methods
     [[nodiscard]] string get_address() const noexcept {
-        return m_host + ":" + std::to_string(m_port);
+        return std::format("{}:{}", m_host, m_port);
     }
 };
 
@@ -277,60 +270,49 @@ concept ChronoTimePoint = requires {
 };
 
 // Modern utility functions
-template<UserRole T>
-constexpr string_view role_name() noexcept {
+export template<UserRole T>
+constexpr StringView role_name() noexcept {
     return role_to_string(T{});
 }
 
-template<SecurityEvent T>
-constexpr string_view event_name() noexcept {
+export template<SecurityEvent T>
+constexpr StringView event_name() noexcept {
     return security_event_type_to_string(T{});
 }
 
 // Modern span-based utilities
-template<typename T>
-constexpr bool contains_role(const vector<T>& roles, T role) noexcept {
+export template<typename T>
+constexpr bool contains_role(const Vector<T>& roles, T role) noexcept {
     return std::ranges::any_of(roles, [role](const T& r) { return r == role; });
 }
 
 // Compile-time validation
-template<typename T>
+export template<typename T>
 concept ValidTargetService = requires(T service) {
-    { service.name() } -> std::convertible_to<string_view>;
-    { service.host() } -> std::convertible_to<string_view>;
+    { service.name() } -> std::convertible_to<StringView>;
+    { service.host() } -> std::convertible_to<StringView>;
     { service.port() } -> std::convertible_to<uint16_t>;
     { service.is_valid() } -> std::convertible_to<bool>;
 };
 
 // Additional type aliases for config
-export using ConfigFileName = std::string;
-export using HostAddress = std::string;
-export using FileName = std::string;
-export using PortNo = uint16_t;
-export using Count = size_t;
-export using RateLimit = size_t;
-export using Minutes = std::chrono::minutes;
-export using Threshold = size_t;
-export using Milliseconds = std::chrono::milliseconds;
-export using Seconds = std::chrono::seconds;
-export using TimeoutDuration = std::chrono::seconds;
+export using Users = Vector<User>;
+export using Sessions = Vector<Session>;
+export using TargetServices = Vector<TargetService>;
+export using SecurityEvents = Vector<SecurityEvent>;
+export using ConnectionInfos = Vector<ConnectionInfo>;
+export using Permissions = Vector<Permission>;
 
-// Additional type aliases for logging
-export using LogFileName = std::string;
-
-// Additional type aliases for database
-export using DbType = int;
-export using ConnectionString = std::string;
-export using Password = std::string;
-
-// Additional type aliases for sessions
-export using Hours = std::chrono::hours;
-export using SessionCount = size_t;
-
-// Additional type aliases for sessions and connections
-export using Sessions = std::vector<Session>;
-export using TargetServices = std::vector<TargetService>;
-export using TcpEndpoint = boost::asio::ip::tcp::endpoint;
-export using SslContext = boost::asio::ssl::context;
+// CLI aliases
+export using CommandLineArgs = Vector<String>;
+export using CommandName = String;
+export using CommandDescription = String;
+export using CommandUsage = String;
+export using RawInputString = String;
+export using TableData = Vector<Vector<String>>;
+export using TableHeaders = Vector<String>;
+export using SuccessString = String;
+export using InfoString = String;
+export using WarningString = String;
 
 } // namespace zerossg

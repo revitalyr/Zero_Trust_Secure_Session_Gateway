@@ -15,7 +15,7 @@ zerossg::ConfigManager::ConfigManager() {
 }
 
 zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigFileName& config_file) {
-    std::lock_guard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
+    LockGuard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
     
     try {
         if (!zerossg::file_exists(config_file)) {
@@ -54,12 +54,12 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
 }
 
 zerossg::ConfigValue ConfigManager::get_string(const zerossg::ConfigKey& key, const zerossg::ConfigValue& default_value) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     return get_config_value(key, default_value);
 }
 
 int ConfigManager::get_int(const zerossg::ConfigKey& key, int default_value) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     try {
         zerossg::ConfigValue value = get_config_value(key, std::to_string(default_value));
@@ -70,7 +70,7 @@ int ConfigManager::get_int(const zerossg::ConfigKey& key, int default_value) {
 }
 
 bool ConfigManager::get_bool(const zerossg::ConfigKey& key, bool default_value) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     zerossg::ConfigValue value = get_config_value(key, default_value ? "true" : "false");
     std::transform(value.begin(), value.end(), value.begin(), ::tolower);
@@ -79,7 +79,7 @@ bool ConfigManager::get_bool(const zerossg::ConfigKey& key, bool default_value) 
 }
 
 zerossg::StringArray ConfigManager::get_string_array(const zerossg::ConfigKey& key) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     try {
         auto json_value = m_config_json;
@@ -117,7 +117,7 @@ zerossg::StringArray ConfigManager::get_string_array(const zerossg::ConfigKey& k
 }
 
 zerossg::Result<zerossg::TargetService> ConfigManager::get_target_service(const zerossg::ServiceName& service_name) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     auto it = m_target_services.find(service_name);
     if (it == m_target_services.end()) {
@@ -128,7 +128,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::get_target_service(const 
 }
 
 zerossg::Result<zerossg::TargetServices> ConfigManager::get_all_target_services() {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     zerossg::TargetServices services;
     services.reserve(m_target_services.size());
@@ -175,7 +175,7 @@ zerossg::Result<void> ConfigManager::validate_config() {
 }
 
 zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& config_file) {
-    std::lock_guard<std::mutex> lock(m_config_mutex);
+    LockGuard<std::mutex> lock(m_config_mutex);
     
     try {
         nlohmann::json config;

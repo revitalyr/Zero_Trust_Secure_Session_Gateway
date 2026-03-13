@@ -14,7 +14,7 @@ SessionManager::SessionManager() : m_random_generator(m_random_device()) {
 }
 
 zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg::User& user, const zerossg::ClientIp& client_ip, const zerossg::ServiceName& target_service) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.m_user_name)) {
@@ -41,7 +41,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
 }
 
 zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::SessionId& session_id) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
@@ -61,7 +61,7 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
 }
 
 zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& session_id, const zerossg::Session& session) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
@@ -73,7 +73,7 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
 }
 
 zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId& session_id) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
         return zerossg::Result<void>::error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
@@ -83,7 +83,7 @@ zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
@@ -100,13 +100,13 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
 }
 
 zerossg::Result<void> SessionManager::cleanup_expired_sessions() {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     cleanup_expired_sessions_internal();
     return zerossg::Result<void>::success();
 }
 
 size_t SessionManager::get_active_session_count() const {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     size_t active_count = 0;
     auto now = std::chrono::system_clock::now();
@@ -124,8 +124,8 @@ size_t SessionManager::get_total_session_count() const {
     return m_total_sessions.load();
 }
 
-zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& session_id, std::chrono::seconds additional_time) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& session_id, Seconds additional_time) {
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
@@ -151,7 +151,7 @@ zerossg::Result<bool> SessionManager::is_session_valid(const zerossg::SessionId&
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const zerossg::UserName& username) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
@@ -167,7 +167,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const ze
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const zerossg::ServiceName& service_name) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
@@ -183,7 +183,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zerossg::ClientIp& client_ip) {
-    std::lock_guard<std::mutex> lock(m_sessions_mutex);
+    LockGuard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     

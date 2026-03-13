@@ -17,45 +17,57 @@ export import <vector>;
 // Boost exports
 export import <boost/asio.hpp>;
 export import <boost/asio/ssl.hpp>;
+export import <boost/asio/ssl/verify_context.hpp>;
 
 export namespace zerossg {
 
 // Modern C++26 type aliases with semantic naming
-export using stringView = std::string_view;
+export using StringView = std::string_view;
 
 template<typename T>
-export using uniquePtr = std::unique_ptr<T>;
+export using UniquePtr = std::unique_ptr<T>;
 
 template<typename T>
-export using sharedPtr = std::shared_ptr<T>;
+export using SharedPtr = std::shared_ptr<T>;
 
 template<typename T>
-export using weakPtr = std::weak_ptr<T>;
+export using WeakPtr = std::weak_ptr<T>;
 
 template<typename T>
-export using vector = std::vector<T>;
+export using Vector = std::vector<T>;
 
 template<typename K, typename V>
-export using unorderedMap = std::unordered_map<K, V>;
+export using UnorderedMap = std::unordered_map<K, V>;
 
-export using systemClock = std::chrono::system_clock;
-export using steadyClock = std::chrono::steady_clock;
-export using timePoint = std::chrono::system_clock::time_point;
-export using milliseconds = std::chrono::milliseconds;
-export using seconds = std::chrono::seconds;
+export using SystemClock = std::chrono::system_clock;
+export using SteadyClock = std::chrono::steady_clock;
+export using TimePoint = std::chrono::system_clock::time_point;
 
 // Semantic type aliases for basic types
 export using String = std::string;
 export using UserName = std::string;
 export using StringId = std::string;
 export using ServiceName = std::string;
-export using ClientIp = std::string;
+export using IpAddress = std::string; // Generic IP Address
+export using ClientIp = IpAddress; // Specific use
 export using ErrorMessage = std::string;
 export using SecretKey = std::vector<unsigned char>;
 export using TokenString = std::string;
 export using SessionId = std::string;
 export using PasswordHash = std::string;
 export using Password = std::string;
+export using Permission = std::string;
+export using RoleString = std::string;
+export using EventString = std::string;
+export using RoleStringView = std::string_view;
+export using EventStringView = std::string_view;
+export using SessionIdView = std::string_view;
+export using ClientIpView = std::string_view;
+export using DurationString = std::string;
+export using JwtPayloadString = std::string;
+export using JwtSignature = std::string;
+export using JwtHeaderPayload = std::string;
+export using Bytes = std::vector<unsigned char>;
 
 // Numeric type aliases
 export using PortNo = uint16_t;
@@ -67,23 +79,16 @@ export using AttemptCount = size_t;
 export using Count = size_t;
 
 // Time duration aliases
-export using timeoutDuration = std::chrono::seconds;
-export using milliseconds = std::chrono::milliseconds;
-export using hours = std::chrono::hours;
-export using minutes = std::chrono::minutes;
+export using TimeoutDuration = std::chrono::seconds;
+export using Milliseconds = std::chrono::milliseconds;
+export using Seconds = std::chrono::seconds;
+export using Hours = std::chrono::hours;
+export using Minutes = std::chrono::minutes;
 
 // Semantic type aliases for collections
-export using strings = std::vector<std::string>;
+export using Strings = std::vector<std::string>;
 template<typename T>
-export using roles = std::vector<T>;
-
-// Semantic type aliases for plural collections
-template<typename T>
-export using users = std::vector<T>;
-export using sessions = std::vector<Session>;
-export using targetServices = std::vector<TargetService>;
-export using securityEvents = std::vector<SecurityEvent>;
-export using connectionInfos = std::vector<ConnectionInfo>;
+export using Roles = std::vector<T>;
 
 // Smart pointer aliases
 template<typename T>
@@ -104,6 +109,8 @@ export using SslVerifyContext = boost::asio::ssl::verify_context;
 // Synchronization aliases
 template<typename Mutex>
 export using LockGuard = std::lock_guard<Mutex>;
+template<typename Mutex>
+export using SharedLock = std::shared_lock<Mutex>;
 
 // Modern expected-based error handling (C++23)
 export template<typename T>
@@ -132,9 +139,32 @@ export inline constexpr ResultVoid make_result_error(std::string error) noexcept
 }
 
 // File name aliases
+export using FilePath = std::string;
 export using FileName = std::string;
 export using LogFileName = std::string;
 export using ConfigFileName = std::string;
+export using DirectoryPath = std::string;
+export using FileContent = std::string;
+export using FileExtension = std::string;
+
+// Config aliases
+export using ConfigKey = std::string;
+export using ConfigValue = std::string;
+export using ConfigKeys = std::vector<ConfigKey>;
+export using StringArray = std::vector<std::string>;
+
+// TLS aliases
+export using CertificateData = std::string;
+export using CipherListString = std::string;
+
+// Network aliases
+export using RequestString = std::string;
+export using ResponseString = std::string;
+export using StatusString = std::string;
+export using MessageString = std::string;
+export using ErrorString = std::string;
+export using EventTypeString = std::string;
+export using LogDetails = std::string;
 
 // Database-related type aliases
 export using DbType = std::string;

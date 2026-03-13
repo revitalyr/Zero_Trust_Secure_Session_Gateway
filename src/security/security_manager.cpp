@@ -1,12 +1,12 @@
 // Project headers
 import zerossg.interfaces;
 import zerossg.logging.logger;
-#include <algorithm>
-#include <iostream>
+import zerossg.std;
 
 namespace zerossg {
 
 SecurityManager::SecurityManager() {
+    m_logger = Logger::get("SecurityManager");
     // Start background cleanup thread
     m_cleanup_thread = std::thread(&SecurityManager::cleanup_worker, this);
 }
@@ -19,14 +19,14 @@ SecurityManager::~SecurityManager() {
 }
 
 Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
-    std::lock_guard<std::mutex> lock(m_rate_limits_mutex);
+    LockGuard<std::mutex> lock(m_rate_limits_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     auto& info = m_rate_limits[client_ip];
     
     // Check if IP is currently blocked
     if (info.blocked && now < info.block_until) {
-        record_security_event("rate_limit_blocked", "IP " + client_ip + " blocked for exceeding rate limit");
+        record_security_event("rate_limit_blocked", std::format("IP {} blocked for exceeding rate limit", client_ip));
         return Result<bool>::success(false);
     }
     
@@ -43,9 +43,8 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
         info.block_until = now + m_default_block_duration;
         
         record_security_event("rate_limit_exceeded", 
-            "IP " + client_ip + " exceeded rate limit: " + 
-            std::to_string(info.request_count) + " requests in " +
-            std::to_string(m_rate_limit_window.count()) + " seconds");
+            std::format("IP {} exceeded rate limit: {} requests in {} seconds", 
+                client_ip, info.request_count, m_rate_limit_window.count()));
         
         return Result<bool>::success(false);
     }
@@ -55,9 +54,9 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
 }
 
 Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_ip) {
-    std::lock_guard<std::mutex> lock(m_brute_force_mutex);
+    LockGuard<std::mutex> lock(m_brute_force_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     auto& info = m_brute_force_data[client_ip];
     
     // Check if brute force is already detected
@@ -79,9 +78,8 @@ Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_i
         m_total_brute_force_detections.fetch_add(1);
         
         record_security_event("brute_force_detected", 
-            "Brute force attack detected from IP " + client_ip + ": " +
-            std::to_string(info.failed_attempts) + " failed attempts in " +
-            std::to_string(m_brute_force_window.count()) + " seconds");
+            std::format("Brute force attack detected from IP {}: {} failed attempts in {} seconds",
+                client_ip, info.failed_attempts, m_brute_force_window.count()));
         
         // Auto-block the IP
         block_ip(client_ip, m_default_block_duration);
@@ -94,10 +92,10 @@ Result<bool> SecurityManager::detect_brute_force(const zerossg::String& client_i
 
 void SecurityManager::record_failed_attempt(const string& client_ip) {
     {
-        std::lock_guard<std::mutex> lock(m_brute_force_mutex);
+        LockGuard<std::mutex> lock(m_brute_force_mutex);
         auto& info = m_brute_force_data[client_ip];
         
-        auto now = system_clock::now();
+        auto now = SystemClock::now();
         if (info.failed_attempts == 0) {
             info.first_attempt = now;
         }
@@ -106,12 +104,12 @@ void SecurityManager::record_failed_attempt(const string& client_ip) {
     }
     
     m_total_failed_attempts.fetch_add(1);
-    record_security_event("failed_attempt", "Failed authentication attempt from IP " + client_ip);
+    record_security_event("failed_attempt", std::format("Failed authentication attempt from IP {}", client_ip));
 }
 
 void SecurityManager::record_successful_login(const string& client_ip) {
     {
-        std::lock_guard<std::mutex> lock(m_brute_force_mutex);
+        LockGuard<std::mutex> lock(m_brute_force_mutex);
         // Reset failed attempts on successful login
         auto it = m_brute_force_data.find(client_ip);
         if (it != m_brute_force_data.end()) {
@@ -121,23 +119,23 @@ void SecurityManager::record_successful_login(const string& client_ip) {
     }
     
     m_total_successful_logins.fetch_add(1);
-    record_security_event("successful_login", "Successful authentication from IP " + client_ip);
+    record_security_event("successful_login", std::format("Successful authentication from IP {}", client_ip));
 }
 
 Result<void> SecurityManager::block_ip(const string& client_ip, milliseconds duration) {
-    std::lock_guard<std::mutex> lock(m_blocked_ips_mutex);
+    LockGuard<std::mutex> lock(m_blocked_ips_mutex);
     
-    auto block_until = system_clock::now() + duration;
+    auto block_until = SystemClock::now() + duration;
     m_blocked_ips[client_ip] = block_until;
     
     record_security_event("ip_blocked", 
-        "IP " + client_ip + " blocked for " + std::to_string(duration.count()) + " milliseconds");
+        std::format("IP {} blocked for {} milliseconds", client_ip, duration.count()));
     
     return Result<void>::success();
 }
 
 bool SecurityManager::is_ip_blocked(const string& client_ip) {
-    std::lock_guard<std::mutex> lock(m_blocked_ips_mutex);
+    LockGuard<std::mutex> lock(m_blocked_ips_mutex);
     
     auto it = m_blocked_ips.find(client_ip);
     if (it == m_blocked_ips.end()) {
@@ -145,7 +143,7 @@ bool SecurityManager::is_ip_blocked(const string& client_ip) {
     }
     
     // Check if block has expired
-    if (system_clock::now() > it->second) {
+    if (SystemClock::now() > it->second) {
         m_blocked_ips.erase(it);
         return false;
     }
@@ -154,9 +152,9 @@ bool SecurityManager::is_ip_blocked(const string& client_ip) {
 }
 
 size_t SecurityManager::get_blocked_ip_count() const {
-    std::lock_guard<std::mutex> lock(m_blocked_ips_mutex);
+    LockGuard<std::mutex> lock(m_blocked_ips_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     size_t count = 0;
     
     for (const auto& pair : m_blocked_ips) {
@@ -173,9 +171,9 @@ size_t SecurityManager::get_brute_force_attempts() const {
 }
 
 vector<string> SecurityManager::get_blocked_ips() const {
-    std::lock_guard<std::mutex> lock(m_blocked_ips_mutex);
+    LockGuard<std::mutex> lock(m_blocked_ips_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     vector<string> blocked_ips;
     
     for (const auto& pair : m_blocked_ips) {
@@ -200,15 +198,15 @@ void SecurityManager::cleanup_worker() {
             std::this_thread::sleep_for(std::chrono::minutes(5));
             cleanup_expired_data();
         } catch (const std::exception& e) {
-            std::cerr << "Security cleanup worker error: " << e.what() << std::endl;
+            m_logger->error(std::format("Security cleanup worker error: {}", e.what()));
         }
     }
 }
 
 void SecurityManager::cleanup_rate_limits() {
-    std::lock_guard<std::mutex> lock(m_rate_limits_mutex);
+    LockGuard<std::mutex> lock(m_rate_limits_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     auto it = m_rate_limits.begin();
     
     while (it != m_rate_limits.end()) {
@@ -231,9 +229,9 @@ void SecurityManager::cleanup_rate_limits() {
 }
 
 void SecurityManager::cleanup_brute_force_data() {
-    std::lock_guard<std::mutex> lock(m_brute_force_mutex);
+    LockGuard<std::mutex> lock(m_brute_force_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     auto it = m_brute_force_data.begin();
     
     while (it != m_brute_force_data.end()) {
@@ -249,9 +247,9 @@ void SecurityManager::cleanup_brute_force_data() {
 }
 
 void SecurityManager::cleanup_blocked_ips() {
-    std::lock_guard<std::mutex> lock(m_blocked_ips_mutex);
+    LockGuard<std::mutex> lock(m_blocked_ips_mutex);
     
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     auto it = m_blocked_ips.begin();
     
     while (it != m_blocked_ips.end()) {
@@ -264,7 +262,7 @@ void SecurityManager::cleanup_blocked_ips() {
 }
 
 void SecurityManager::cleanup_security_events() {
-    std::lock_guard<std::mutex> lock(m_events_mutex);
+    LockGuard<std::mutex> lock(m_events_mutex);
     
     // Keep only recent events
     while (m_security_events.size() > MAX_SECURITY_EVENTS) {
@@ -273,20 +271,15 @@ void SecurityManager::cleanup_security_events() {
 }
 
 void SecurityManager::record_security_event(const string& event_type, const string& details) {
-    std::lock_guard<std::mutex> lock(m_events_mutex);
+    LockGuard<std::mutex> lock(m_events_mutex);
     
     m_security_events.emplace(event_type, details);
     
-    // Log to console (in production, use proper logging)
-    auto now = system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    
-    std::cout << "[SECURITY] " << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S")
-              << " - " << event_type << ": " << details << std::endl;
+    m_logger->warn(std::format("[SECURITY] {}: {}", event_type, details));
 }
 
 bool SecurityManager::is_rate_limited(const string& client_ip, RateLimitInfo& info) {
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     
     // Check if currently blocked
     if (info.blocked && now < info.block_until) {
@@ -312,7 +305,7 @@ bool SecurityManager::is_rate_limited(const string& client_ip, RateLimitInfo& in
 }
 
 bool SecurityManager::is_brute_force_detected(const string& client_ip, BruteForceInfo& info) {
-    auto now = system_clock::now();
+    auto now = SystemClock::now();
     
     // Clean old attempts outside the window
     if (now - info.first_attempt > m_brute_force_window) {
