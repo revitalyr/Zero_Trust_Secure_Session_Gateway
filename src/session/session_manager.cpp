@@ -70,7 +70,7 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
     return zerossg::Result<void>::success();
 }
 
-zerossg::Result<void> SessionManager::terminate_session(const std::string& session_id) {
+zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId& session_id) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
@@ -80,12 +80,12 @@ zerossg::Result<void> SessionManager::terminate_session(const std::string& sessi
     return zerossg::Result<void>::success();
 }
 
-zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_active_sessions() {
+zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
-    std::vector<zerossg::Session> active_sessions;
+    zerossg::Sessions active_sessions;
     active_sessions.reserve(m_sessions.size());
     
     for (const auto& pair : m_sessions) {
@@ -94,7 +94,7 @@ zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_active_sessio
         }
     }
     
-    return zerossg::Result<std::vector<zerossg::Session>>::success(std::move(active_sessions));
+    return zerossg::Result<zerossg::Sessions>::success(std::move(active_sessions));
 }
 
 zerossg::Result<void> SessionManager::cleanup_expired_sessions() {
@@ -122,7 +122,7 @@ size_t SessionManager::get_total_session_count() const {
     return m_total_sessions.load();
 }
 
-zerossg::Result<void> SessionManager::extend_session(const std::string& session_id, std::chrono::seconds additional_time) {
+zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& session_id, std::chrono::seconds additional_time) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     auto it = m_sessions.find(session_id);
@@ -143,17 +143,17 @@ zerossg::Result<void> SessionManager::extend_session(const std::string& session_
     return zerossg::Result<void>::success();
 }
 
-zerossg::Result<bool> SessionManager::is_session_valid(const std::string& session_id) {
+zerossg::Result<bool> SessionManager::is_session_valid(const zerossg::SessionId& session_id) {
     auto session_result = get_session(session_id);
     return session_result.is_success() ? zerossg::Result<bool>::success(true) : zerossg::Result<bool>::error(session_result.error());
 }
 
-zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_user(const std::string& username) {
+zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const zerossg::UserName& username) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
-    std::vector<zerossg::Session> user_sessions;
+    zerossg::Sessions user_sessions;
     
     for (const auto& pair : m_sessions) {
         if (pair.second.username == username && pair.second.active) {
@@ -161,15 +161,15 @@ zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_u
         }
     }
     
-    return zerossg::Result<std::vector<zerossg::Session>>::success(std::move(user_sessions));
+    return zerossg::Result<zerossg::Sessions>::success(std::move(user_sessions));
 }
 
-zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_service(const std::string& service_name) {
+zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const zerossg::ServiceName& service_name) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
-    std::vector<zerossg::Session> service_sessions;
+    zerossg::Sessions service_sessions;
     
     for (const auto& pair : m_sessions) {
         if (pair.second.target_service == service_name && pair.second.active) {
@@ -177,15 +177,15 @@ zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_s
         }
     }
     
-    return zerossg::Result<std::vector<zerossg::Session>>::success(std::move(service_sessions));
+    return zerossg::Result<zerossg::Sessions>::success(std::move(service_sessions));
 }
 
-zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_ip(const std::string& client_ip) {
+zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zerossg::ClientIp& client_ip) {
     std::lock_guard<std::mutex> lock(m_sessions_mutex);
     
     cleanup_expired_sessions_internal();
     
-    std::vector<zerossg::Session> ip_sessions;
+    zerossg::Sessions ip_sessions;
     
     for (const auto& pair : m_sessions) {
         if (pair.second.client_ip == client_ip && pair.second.active) {
@@ -193,10 +193,10 @@ zerossg::Result<std::vector<zerossg::Session>> SessionManager::get_sessions_by_i
         }
     }
     
-    return zerossg::Result<std::vector<zerossg::Session>>::success(std::move(ip_sessions));
+    return zerossg::Result<zerossg::Sessions>::success(std::move(ip_sessions));
 }
 
-std::string SessionManager::generate_session_id() {
+zerossg::SessionId SessionManager::generate_session_id() {
     std::uniform_int_distribution<> dis(0, 255);
     
     std::stringstream ss;
@@ -209,7 +209,7 @@ std::string SessionManager::generate_session_id() {
     return ss.str();
 }
 
-bool SessionManager::is_user_at_session_limit(const std::string& username) {
+bool SessionManager::is_user_at_session_limit(const zerossg::UserName& username) {
     size_t user_session_count = 0;
     auto now = std::chrono::system_clock::now();
     
@@ -241,8 +241,8 @@ void SessionManager::cleanup_expired_sessions_internal() {
     }
 }
 
-std::string SessionManager::format_session_duration(const std::chrono::system_clock::time_point& start, 
-                                               const std::chrono::system_clock::time_point& end) {
+zerossg::DurationString SessionManager::format_session_duration(const std::chrono::system_clock::time_point& start, 
+                                                                const std::chrono::system_clock::time_point& end) {
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     
     if (duration.count() < 60) {

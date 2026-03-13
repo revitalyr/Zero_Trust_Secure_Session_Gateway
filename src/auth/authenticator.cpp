@@ -13,8 +13,8 @@ import zerossg.std;
 namespace zerossg {
 
 // Helper function to generate secure random bytes
-zerossg::Result<std::vector<unsigned char>> generate_secure_random_bytes(size_t size) {
-    std::vector<unsigned char> bytes(size);
+zerossg::Result<zerossg::Bytes> generate_secure_random_bytes(size_t size) {
+    zerossg::Bytes bytes(size);
     std::random_device rd;
     std::uniform_int_distribution<unsigned char> dist(0, 255);
     
@@ -22,7 +22,7 @@ zerossg::Result<std::vector<unsigned char>> generate_secure_random_bytes(size_t 
         bytes[i] = dist(rd);
     }
     
-    return zerossg::Result<std::vector<unsigned char>>::success(std::move(bytes));
+    return zerossg::Result<zerossg::Bytes>::success(std::move(bytes));
 }
 
 AuthenticationManager::AuthenticationManager() {
@@ -46,7 +46,7 @@ AuthenticationManager::AuthenticationManager() {
 
 AuthenticationManager::~AuthenticationManager() = default;
 
-zerossg::Result<zerossg::String> AuthenticationManager::authenticate(const zerossg::UserName& username, const zerossg::PasswordHash& password) {
+zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const zerossg::UserName& username, const zerossg::Password& password) {
     // Modern input validation
     if (!is_valid_username(username)) {
         return zerossg::make_result_error<zerossg::String>("Invalid username format");
@@ -270,20 +270,20 @@ zerossg::Result<std::optional<zerossg::User>> AuthenticationManager::get_user(co
     return zerossg::make_result_success<std::optional<zerossg::User>>(it->second);
 }
 
-zerossg::Result<std::vector<zerossg::User>> AuthenticationManager::list_users() {
+zerossg::Result<zerossg::Users> AuthenticationManager::list_users() {
     std::lock_guard<std::mutex> lock(m_users_mutex);
     
-    std::vector<zerossg::User> users;
+    zerossg::Users users;
     users.reserve(m_users.size());
     
     for (const auto& pair : m_users) {
         users.push_back(pair.second);
     }
     
-    return zerossg::make_result_success<std::vector<zerossg::User>>(std::move(users));
+    return zerossg::make_result_success<zerossg::Users>(std::move(users));
 }
 
-zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(const zerossg::String& password) {
+zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(const zerossg::Password& password) {
     // For production, use bcrypt or argon2. This is a simplified implementation using SHA-256 with salt
     zerossg::SecretKey salt(16);
     if (RAND_bytes(salt.data(), salt.size()) != 1) {
@@ -324,7 +324,7 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
     return zerossg::make_result_success<zerossg::PasswordHash>(base64_encode(result));
 }
 
-zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::String& password, const zerossg::PasswordHash& hash) {
+zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Password& password, const zerossg::PasswordHash& hash) {
     // Convert hex string back to bytes
     if (hash.length() % 2 != 0) {
         return zerossg::make_result_error<bool>("Invalid hash format");
@@ -366,7 +366,7 @@ zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Stri
         return zerossg::make_result_error<bool>("Failed to update hash");
     }
     
-    std::vector<unsigned char> computed_hash(EVP_MD_size(EVP_sha256()));
+    zerossg::Bytes computed_hash(EVP_MD_size(EVP_sha256()));
     unsigned int hash_len;
     if (EVP_DigestFinal_ex(mdctx, computed_hash.data(), &hash_len) != 1) {
         EVP_MD_CTX_free(mdctx);
@@ -384,7 +384,7 @@ zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Stri
                                            computed_hash.begin(), computed_hash.end()));
 }
 
-zerossg::String AuthenticationManager::create_jwt_payload(const zerossg::User& user) {
+zerossg::JwtPayloadString AuthenticationManager::create_jwt_payload(const zerossg::User& user) {
     json payload = {
         {"username", user.username},
         {"role", role_to_string(user.role)},
@@ -432,7 +432,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
     }
 }
 
-std::string AuthenticationManager::generate_jwt_signature(const std::string& header_payload) {
+zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) {
     unsigned char* hmac = nullptr;
     unsigned int hmac_len;
     
@@ -449,7 +449,7 @@ std::string AuthenticationManager::generate_jwt_signature(const std::string& hea
     return signature;
 }
 
-bool AuthenticationManager::verify_jwt_signature(const std::string& header_payload, const std::string& signature) {
+bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload& header_payload, const zerossg::JwtSignature& signature) {
     try {
         std::string computed_signature = generate_jwt_signature(header_payload);
         return computed_signature == signature;
@@ -519,7 +519,7 @@ zerossg::Strings AuthenticationManager::get_recent_failed_attempts(std::string_v
 }
 
 // Helper functions for JWT operations
-zerossg::String role_to_string(zerossg::Role role) {
+zerossg::RoleString role_to_string(zerossg::Role role) {
     switch (role) {
         case zerossg::Role::ADMIN: return "admin";
         case zerossg::Role::OPERATOR: return "operator";
@@ -528,7 +528,7 @@ zerossg::String role_to_string(zerossg::Role role) {
     }
 }
 
-zerossg::String AuthenticationManager::generate_jwt_signature(const zerossg::String& header_payload) const noexcept {
+zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
     try {
         unsigned char* hmac = nullptr;
         unsigned int hmac_len = 0;
@@ -546,7 +546,7 @@ zerossg::String AuthenticationManager::generate_jwt_signature(const zerossg::Str
     }
 }
 
-bool AuthenticationManager::verify_jwt_signature(const zerossg::String& header_payload, const zerossg::String& signature) const noexcept {
+bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload& header_payload, const zerossg::JwtSignature& signature) const noexcept {
     try {
         zerossg::String expected_signature = generate_jwt_signature(header_payload);
         return expected_signature == signature;

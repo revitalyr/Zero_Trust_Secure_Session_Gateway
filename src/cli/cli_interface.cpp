@@ -21,14 +21,14 @@ zerossg::CLIInterface::CLIInterface() {
 Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
 Result<int> CLIInterface::run(int argc, char* argv[]) {
     try {
-        std::vector<zerossg::String> args = parse_command_line(argc, argv);
+        zerossg::CommandLineArgs args = parse_command_line(argc, argv);
         
         if (args.empty()) {
             show_help();
             return Result<int>::success(1);
         }
         
-        zerossg::String command_name = args[0];
+        zerossg::CommandName command_name = args[0];
         CLICommand* command = find_command(command_name);
         
         if (!command) {
@@ -37,7 +37,7 @@ Result<int> CLIInterface::run(int argc, char* argv[]) {
             return Result<int>::success(1);
         }
         
-        std::vector<zerossg::String> command_args(args.begin() + 1, args.end());
+        zerossg::CommandLineArgs command_args(args.begin() + 1, args.end());
         
         if (!validate_arguments(*command, command_args)) {
             show_command_help(*command);
@@ -82,7 +82,7 @@ void CLIInterface::show_active_sessions() {
     }
 }
 
-void CLIInterface::export_audit_logs(const string& output_file) {
+void CLIInterface::export_audit_logs(const zerossg::FilePath& output_file) {
     try {
         // This would connect to the server and export logs
         // For now, show a placeholder
@@ -97,8 +97,8 @@ void CLIInterface::register_command(const CLICommand& command) {
     m_commands.push_back(command);
 }
 
-void CLIInterface::register_command(const zerossg::String& name, const zerossg::String& description, const zerossg::String& usage,
-                                    std::function<int(const std::vector<zerossg::String>&)> handler) {
+void CLIInterface::register_command(const zerossg::CommandName& name, const zerossg::CommandDescription& description, const zerossg::CommandUsage& usage,
+                                    std::function<int(const zerossg::CommandLineArgs&)> handler) {
     CLICommand cmd;
     cmd.name = name;
     cmd.description = description;
@@ -107,47 +107,47 @@ void CLIInterface::register_command(const zerossg::String& name, const zerossg::
     register_command(cmd);
 }
 
-int CLIInterface::start_server(const std::vector<string>& args) {
+int CLIInterface::start_server(const zerossg::CommandLineArgs& args) {
     return handle_start_command(args);
 }
 
-int CLIInterface::stop_server(const std::vector<string>& args) {
+int CLIInterface::stop_server(const zerossg::CommandLineArgs& args) {
     return handle_stop_command(args);
 }
 
-int CLIInterface::show_status(const std::vector<string>& args) {
+int CLIInterface::show_status(const zerossg::CommandLineArgs& args) {
     return handle_status_command(args);
 }
 
-int CLIInterface::list_users(const std::vector<string>& args) {
+int CLIInterface::list_users(const zerossg::CommandLineArgs& args) {
     return handle_users_command(args);
 }
 
-int CLIInterface::list_sessions(const std::vector<string>& args) {
+int CLIInterface::list_sessions(const zerossg::CommandLineArgs& args) {
     return handle_sessions_command(args);
 }
 
-int CLIInterface::show_security_stats(const std::vector<string>& args) {
+int CLIInterface::show_security_stats(const zerossg::CommandLineArgs& args) {
     return handle_security_command(args);
 }
 
-int CLIInterface::export_logs(const std::vector<string>& args) {
+int CLIInterface::export_logs(const zerossg::CommandLineArgs& args) {
     return handle_logs_command(args);
 }
 
-int CLIInterface::add_user(const std::vector<string>& args) {
+int CLIInterface::add_user(const zerossg::CommandLineArgs& args) {
     return handle_user_add_command(args);
 }
 
-int CLIInterface::remove_user(const std::vector<string>& args) {
+int CLIInterface::remove_user(const zerossg::CommandLineArgs& args) {
     return handle_user_remove_command(args);
 }
 
-int CLIInterface::show_config(const std::vector<string>& args) {
+int CLIInterface::show_config(const zerossg::CommandLineArgs& args) {
     return handle_config_command(args);
 }
 
-int CLIInterface::test_connection(const std::vector<string>& args) {
+int CLIInterface::test_connection(const zerossg::CommandLineArgs& args) {
     return handle_test_command(args);
 }
 
@@ -160,10 +160,10 @@ void CLIInterface::show_prompt() {
     std::cout << "zerossg> " << std::flush;
 }
 
-std::vector<string> CLIInterface::parse_input(const string& input) {
-    std::vector<string> tokens;
+zerossg::CommandLineArgs CLIInterface::parse_input(const zerossg::RawInputString& input) {
+    zerossg::CommandLineArgs tokens;
     std::istringstream iss(input);
-    string token;
+    zerossg::String token;
     
     while (iss >> token) {
         tokens.push_back(token);
@@ -172,7 +172,7 @@ std::vector<string> CLIInterface::parse_input(const string& input) {
     return tokens;
 }
 
-void CLIInterface::print_table(const std::vector<std::vector<string>>& data, const std::vector<string>& headers) {
+void CLIInterface::print_table(const zerossg::TableData& data, const zerossg::TableHeaders& headers) {
     if (data.empty() && headers.empty()) {
         return;
     }
@@ -226,7 +226,7 @@ void CLIInterface::print_table(const std::vector<std::vector<string>>& data, con
     }
 }
 
-void CLIInterface::print_error(const string& error) {
+void CLIInterface::print_error(const zerossg::ErrorString& error) {
     if (CLIUtils::supports_color()) {
         std::cout << CLIUtils::color_red("ERROR: ") << error << std::endl;
     } else {
@@ -234,7 +234,7 @@ void CLIInterface::print_error(const string& error) {
     }
 }
 
-void CLIInterface::print_success(const string& message) {
+void CLIInterface::print_success(const zerossg::SuccessString& message) {
     if (CLIUtils::supports_color()) {
         std::cout << CLIUtils::color_green("SUCCESS: ") << message << std::endl;
     } else {
@@ -242,7 +242,7 @@ void CLIInterface::print_success(const string& message) {
     }
 }
 
-void CLIInterface::print_info(const string& message) {
+void CLIInterface::print_info(const zerossg::InfoString& message) {
     if (CLIUtils::supports_color()) {
         std::cout << CLIUtils::color_blue("INFO: ") << message << std::endl;
     } else {
@@ -250,7 +250,7 @@ void CLIInterface::print_info(const string& message) {
     }
 }
 
-void CLIInterface::print_warning(const string& message) {
+void CLIInterface::print_warning(const zerossg::WarningString& message) {
     if (CLIUtils::supports_color()) {
         std::cout << CLIUtils::color_yellow("WARNING: ") << message << std::endl;
     } else {
@@ -260,37 +260,37 @@ void CLIInterface::print_warning(const string& message) {
 
 void CLIInterface::register_builtin_commands() {
     register_command("start", "Start the Zero Trust gateway server", "start [config-file]",
-                     [this](const std::vector<string>& args) { return start_server(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return start_server(args); });
     
     register_command("stop", "Stop the Zero Trust gateway server", "stop",
-                     [this](const std::vector<string>& args) { return stop_server(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return stop_server(args); });
     
     register_command("status", "Show server status and statistics", "status",
-                     [this](const std::vector<string>& args) { return show_status(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return show_status(args); });
     
     register_command("users", "List all users", "users",
-                     [this](const std::vector<string>& args) { return list_users(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return list_users(args); });
     
     register_command("sessions", "List active sessions", "sessions",
-                     [this](const std::vector<string>& args) { return list_sessions(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return list_sessions(args); });
     
     register_command("security", "Show security statistics", "security",
-                     [this](const std::vector<string>& args) { return show_security_stats(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return show_security_stats(args); });
     
     register_command("logs", "Export audit logs", "logs <output-file>",
-                     [this](const std::vector<string>& args) { return export_logs(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return export_logs(args); });
     
     register_command("add-user", "Add a new user", "add-user <username> <role> [password]",
-                     [this](const std::vector<string>& args) { return add_user(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return add_user(args); });
     
     register_command("remove-user", "Remove a user", "remove-user <username>",
-                     [this](const std::vector<string>& args) { return remove_user(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return remove_user(args); });
     
     register_command("config", "Show configuration", "config",
-                     [this](const std::vector<string>& args) { return show_config(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return show_config(args); });
     
     register_command("test", "Test connection to services", "test [service-name]",
-                     [this](const std::vector<string>& args) { return test_connection(args); });
+                     [this](const zerossg::CommandLineArgs& args) { return test_connection(args); });
     
     register_command("interactive", "Enter interactive mode", "interactive",
                      [this](const std::vector<string>& args) { 
@@ -299,7 +299,7 @@ void CLIInterface::register_builtin_commands() {
                      });
     
     register_command("help", "Show help information", "help [command]",
-                     [this](const std::vector<string>& args) { 
+                     [this](const zerossg::CommandLineArgs& args) { 
                          if (args.empty()) {
                              show_help();
                          } else {
@@ -314,7 +314,7 @@ void CLIInterface::register_builtin_commands() {
                      });
 }
 
-CLICommand* CLIInterface::find_command(const string& name) {
+CLICommand* CLIInterface::find_command(const zerossg::CommandName& name) {
     auto it = std::find_if(m_commands.begin(), m_commands.end(),
                            [&name](const CLICommand& cmd) {
                                return cmd.name == name;
@@ -323,8 +323,8 @@ CLICommand* CLIInterface::find_command(const string& name) {
     return (it != m_commands.end()) ? &(*it) : nullptr;
 }
 
-std::vector<string> CLIInterface::parse_command_line(int argc, char* argv[]) {
-    std::vector<string> args;
+zerossg::CommandLineArgs CLIInterface::parse_command_line(int argc, char* argv[]) {
+    zerossg::CommandLineArgs args;
     
     for (int i = 1; i < argc; ++i) {
         args.emplace_back(argv[i]);
@@ -333,7 +333,7 @@ std::vector<string> CLIInterface::parse_command_line(int argc, char* argv[]) {
     return args;
 }
 
-bool CLIInterface::validate_arguments(const CLICommand& command, const std::vector<string>& args) {
+bool CLIInterface::validate_arguments(const CLICommand& command, const zerossg::CommandLineArgs& args) {
     if (args.size() < command.required_args.size()) {
         return false;
     }
@@ -361,7 +361,7 @@ void CLIInterface::show_command_help(const CLICommand& command) {
     }
 }
 
-int CLIInterface::handle_start_command(const std::vector<string>& args) {
+int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
     try {
         string config_file = m_config_file;
         if (!args.empty()) {
@@ -410,7 +410,7 @@ int CLIInterface::handle_start_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_stop_command(const std::vector<string>& args) {
+int CLIInterface::handle_stop_command(const zerossg::CommandLineArgs& args) {
     try {
         if (!m_server || !m_server->is_running()) {
             print_warning("Server is not running");
@@ -433,7 +433,7 @@ int CLIInterface::handle_stop_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_status_command(const std::vector<string>& args) {
+int CLIInterface::handle_status_command(const zerossg::CommandLineArgs& args) {
     try {
         if (!m_server || !m_server->is_running()) {
             print_info("Server status: STOPPED");
@@ -451,17 +451,17 @@ int CLIInterface::handle_status_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_users_command(const std::vector<string>& args) {
+int CLIInterface::handle_users_command(const zerossg::CommandLineArgs& args) {
     try {
         // This would connect to the server and get users
         // For now, show placeholder data
-        std::vector<std::vector<string>> user_data = {
+        zerossg::TableData user_data = {
             {"admin", "admin", "admin", "Active"},
             {"operator", "operator", "operator", "Active"},
             {"viewer", "viewer", "viewer", "Active"}
         };
         
-        std::vector<string> headers = {"Username", "Role", "Created", "Status"};
+        zerossg::TableHeaders headers = {"Username", "Role", "Created", "Status"};
         print_table(user_data, headers);
         
         return 0;
@@ -471,7 +471,7 @@ int CLIInterface::handle_users_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_sessions_command(const std::vector<string>& args) {
+int CLIInterface::handle_sessions_command(const zerossg::CommandLineArgs& args) {
     try {
         show_active_sessions();
         return 0;
@@ -481,7 +481,7 @@ int CLIInterface::handle_sessions_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_security_command(const std::vector<string>& args) {
+int CLIInterface::handle_security_command(const zerossg::CommandLineArgs& args) {
     try {
         print_info("Security Statistics:");
         std::cout << "Blocked IPs: 0" << std::endl;
@@ -495,7 +495,7 @@ int CLIInterface::handle_security_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_logs_command(const std::vector<string>& args) {
+int CLIInterface::handle_logs_command(const zerossg::CommandLineArgs& args) {
     if (args.empty()) {
         print_error("Output file required");
         return 1;
@@ -505,7 +505,7 @@ int CLIInterface::handle_logs_command(const std::vector<string>& args) {
     return 0;
 }
 
-int CLIInterface::handle_user_add_command(const std::vector<string>& args) {
+int CLIInterface::handle_user_add_command(const zerossg::CommandLineArgs& args) {
     if (args.size() < 2) {
         print_error("Username and role required");
         return 1;
@@ -537,7 +537,7 @@ int CLIInterface::handle_user_add_command(const std::vector<string>& args) {
     return 0;
 }
 
-int CLIInterface::handle_user_remove_command(const std::vector<string>& args) {
+int CLIInterface::handle_user_remove_command(const zerossg::CommandLineArgs& args) {
     if (args.empty()) {
         print_error("Username required");
         return 1;
@@ -550,7 +550,7 @@ int CLIInterface::handle_user_remove_command(const std::vector<string>& args) {
     return 0;
 }
 
-int CLIInterface::handle_config_command(const std::vector<string>& args) {
+int CLIInterface::handle_config_command(const zerossg::CommandLineArgs& args) {
     try {
         auto config_manager = std::make_unique<ConfigManager>();
         auto config_result = config_manager->load_config(m_config_file);
@@ -572,7 +572,7 @@ int CLIInterface::handle_config_command(const std::vector<string>& args) {
     }
 }
 
-int CLIInterface::handle_test_command(const std::vector<string>& args) {
+int CLIInterface::handle_test_command(const zerossg::CommandLineArgs& args) {
     try {
         string service_name = args.empty() ? "all" : args[0];
         print_info("Testing connection to service: " + service_name);

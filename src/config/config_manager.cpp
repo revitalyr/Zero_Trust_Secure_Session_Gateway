@@ -21,7 +21,7 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
             return zerossg::make_result_error(zerossg::ERROR_CONFIG_FILE_NOT_FOUND + config_file);
         }
         
-        std::string extension = get_file_extension(config_file);
+        zerossg::FileExtension extension = get_file_extension(config_file);
         
         if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
@@ -52,37 +52,37 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
     }
 }
 
-zerossg::String ConfigManager::get_string(const zerossg::String& key, const zerossg::String& default_value) {
+zerossg::ConfigValue ConfigManager::get_string(const zerossg::ConfigKey& key, const zerossg::ConfigValue& default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     return get_config_value(key, default_value);
 }
 
-int ConfigManager::get_int(const std::string& key, int default_value) {
+int ConfigManager::get_int(const zerossg::ConfigKey& key, int default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
-        std::string value = get_config_value(key, std::to_string(default_value));
+        zerossg::ConfigValue value = get_config_value(key, std::to_string(default_value));
         return std::stoi(value);
     } catch (const std::exception& e) {
         return default_value;
     }
 }
 
-bool ConfigManager::get_bool(const std::string& key, bool default_value) {
+bool ConfigManager::get_bool(const zerossg::ConfigKey& key, bool default_value) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
-    std::string value = get_config_value(key, default_value ? "true" : "false");
+    zerossg::ConfigValue value = get_config_value(key, default_value ? "true" : "false");
     std::transform(value.begin(), value.end(), value.begin(), ::tolower);
     
     return value == "true" || value == "1" || value == "yes" || value == "on";
 }
 
-zerossg::Strings ConfigManager::get_string_array(const zerossg::String& key) {
+zerossg::StringArray ConfigManager::get_string_array(const zerossg::ConfigKey& key) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
         auto json_value = m_config_json;
-        std::vector<std::string> keys;
+        zerossg::ConfigKeys keys;
         size_t pos = 0;
         std::string key_copy = key;
         
@@ -100,7 +100,7 @@ zerossg::Strings ConfigManager::get_string_array(const zerossg::String& key) {
         }
         
         if (json_value.is_array()) {
-            std::vector<std::string> result;
+            zerossg::StringArray result;
             for (const auto& item : json_value) {
                 if (item.is_string()) {
                     result.push_back(item.get<std::string>());
@@ -126,17 +126,17 @@ zerossg::Result<zerossg::TargetService> ConfigManager::get_target_service(const 
     return zerossg::Result<TargetService>{it->second};
 }
 
-zerossg::Result<std::vector<zerossg::TargetService>> ConfigManager::get_all_target_services() {
+zerossg::Result<zerossg::TargetServices> ConfigManager::get_all_target_services() {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
-    std::vector<zerossg::TargetService> services;
+    zerossg::TargetServices services;
     services.reserve(m_target_services.size());
     
     for (const auto& pair : m_target_services) {
         services.push_back(pair.second);
     }
     
-    return zerossg::Result<std::vector<zerossg::TargetService>>::success(std::move(services));
+    return zerossg::Result<zerossg::TargetServices>::success(std::move(services));
 }
 
 zerossg::Result<void> ConfigManager::validate_config() {
@@ -173,7 +173,7 @@ zerossg::Result<void> ConfigManager::validate_config() {
     return zerossg::Result<void>{};
 }
 
-zerossg::Result<void> ConfigManager::save_config(const std::string& config_file) {
+zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& config_file) {
     std::lock_guard<std::mutex> lock(m_config_mutex);
     
     try {
@@ -245,7 +245,7 @@ zerossg::Result<void> ConfigManager::reload_config() {
 
 // Private methods implementation
 
-zerossg::Result<void> ConfigManager::load_yaml_config(const std::string& config_file) {
+zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileName& config_file) {
     try {
         YAML::Node config = YAML::LoadFile(config_file);
         
@@ -269,7 +269,7 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const std::string& config_
     }
 }
 
-zerossg::Result<void> ConfigManager::load_json_config(const std::string& config_file) {
+zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileName& config_file) {
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
@@ -381,7 +381,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
             if (roles_json.is_array()) {
                 for (const auto& role_json : roles_json) {
                     if (role_json.is_string()) {
-                        std::string role_str = role_json.get<std::string>();
+                        zerossg::RoleString role_str = role_json.get<std::string>();
                         try {
                             zerossg::Role role = string_to_role(role_str);
                             service.allowed_roles.push_back(role);
@@ -507,12 +507,12 @@ void ConfigManager::load_from_environment() {
 }
 
 // Helper methods for ConfigManager
-std::string ConfigManager::get_config_value(const std::string& key, const std::string& default_value) {
+zerossg::ConfigValue ConfigManager::get_config_value(const zerossg::ConfigKey& key, const zerossg::ConfigValue& default_value) {
     try {
         auto json_value = m_config_json;
-        std::vector<std::string> keys;
+        zerossg::ConfigKeys keys;
         size_t pos = 0;
-        std::string key_copy = key;
+        zerossg::ConfigKey key_copy = key;
         
         while ((pos = key_copy.find('.')) != std::string::npos) {
             keys.push_back(key_copy.substr(0, pos));
@@ -539,12 +539,12 @@ std::string ConfigManager::get_config_value(const std::string& key, const std::s
     return default_value;
 }
 
-bool ConfigManager::file_exists(const std::string& filename) {
+bool ConfigManager::file_exists(const zerossg::FilePath& filename) {
     std::ifstream file(filename);
     return file.good();
 }
 
-std::string ConfigManager::get_file_extension(const std::string& filename) {
+zerossg::FileExtension ConfigManager::get_file_extension(const zerossg::FilePath& filename) {
     size_t pos = filename.find_last_of('.');
     if (pos != std::string::npos && pos != filename.length() - 1) {
         return filename.substr(pos + 1);
@@ -567,7 +567,7 @@ void ConfigManager::set_default_config() {
 // ConfigUtils namespace implementation
 namespace ConfigUtils {
 
-bool is_valid_ip_address(const std::string& ip) {
+bool is_valid_ip_address(const zerossg::IpAddress& ip) {
     // Simple IP validation - in production would use proper validation
     if (ip.empty() || ip == "0.0.0.0") {
         return true;
@@ -605,22 +605,22 @@ bool is_valid_ip_address(const std::string& ip) {
     return true;
 }
 
-zerossg::Result<std::string> read_file(const std::string& filename) {
+zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         return make_result_error("Failed to open file: " + filename);
     }
     
     try {
-        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        zerossg::FileContent content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         file.close();
-        return zerossg::Result<std::string>{content};
+        return zerossg::Result<zerossg::FileContent>{content};
     } catch (const std::exception& e) {
         return make_result_error("Failed to read file: " + std::string(e.what()));
     }
 }
 
-zerossg::Result<void> write_file(const std::string& filename, const std::string& content) {
+zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zerossg::FileContent& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         return make_result_error("Failed to open file for writing: " + filename);
@@ -635,7 +635,7 @@ zerossg::Result<void> write_file(const std::string& filename, const std::string&
     }
 }
 
-bool create_directory(const std::string& path) {
+bool create_directory(const zerossg::DirectoryPath& path) {
     return std::filesystem::create_directories(path);
 }
 

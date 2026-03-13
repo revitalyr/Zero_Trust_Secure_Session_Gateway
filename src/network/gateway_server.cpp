@@ -26,7 +26,7 @@ GatewayServer::~GatewayServer() {
     stop();
 }
 
-Result<void> GatewayServer::initialize(const zerossg::String& config_file) {
+Result<void> GatewayServer::initialize(const zerossg::ConfigFileName& config_file) {
     try {
         // Initialize TLS handler
         m_tls_handler = zerossg::make_unique<TlsHandler>(m_io_context);
@@ -251,7 +251,7 @@ void Connection::handle_read(const boost::system::error_code& error, size_t byte
     do_read();
 }
 
-void Connection::handle_request(const zerossg::String& request) {
+void Connection::handle_request(const zerossg::RequestString& request) {
     try {
         json request_json = json::parse(request);
         zerossg::String request_type = request_json.value("type", "");
@@ -278,7 +278,7 @@ void Connection::handle_request(const zerossg::String& request) {
     }
 }
 
-zerossg::String Connection::process_login_request(const zerossg::String& request) {
+zerossg::ResponseString Connection::process_login_request(const zerossg::RequestString& request) {
     json request_json = json::parse(request);
     zerossg::String username = request_json.value("username", "");
     zerossg::String password = request_json.value("password", "");
@@ -324,7 +324,7 @@ zerossg::String Connection::process_login_request(const zerossg::String& request
     return create_response("success", "Login successful", response_data);
 }
 
-zerossg::String Connection::process_session_request(const zerossg::String& request) {
+zerossg::ResponseString Connection::process_session_request(const zerossg::RequestString& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }
@@ -358,7 +358,7 @@ zerossg::String Connection::process_session_request(const zerossg::String& reque
     return create_response("success", "Session created", response_data);
 }
 
-zerossg::String Connection::process_proxy_request(const zerossg::String& request) {
+zerossg::ResponseString Connection::process_proxy_request(const zerossg::RequestString& request) {
     if (!m_authenticated || m_session_id.empty()) {
         return create_error_response("No active session");
     }
@@ -373,7 +373,7 @@ zerossg::String Connection::process_proxy_request(const zerossg::String& request
     return create_response("success", "Proxy request processed", response_data);
 }
 
-zerossg::String Connection::process_logout_request(const zerossg::String& request) {
+zerossg::ResponseString Connection::process_logout_request(const zerossg::RequestString& request) {
     if (!m_authenticated) {
         return create_error_response("Not authenticated");
     }
@@ -389,7 +389,7 @@ zerossg::String Connection::process_logout_request(const zerossg::String& reques
     return create_response("success", "Logout successful");
 }
 
-void Connection::do_write(const zerossg::String& response) {
+void Connection::do_write(const zerossg::ResponseString& response) {
     boost::asio::async_write(
         m_socket, boost::asio::buffer(response),
         [self = shared_from_this()](const boost::system::error_code& error, size_t) {
@@ -400,7 +400,7 @@ void Connection::do_write(const zerossg::String& response) {
     );
 }
 
-zerossg::String Connection::create_response(const zerossg::String& status, const zerossg::String& message, const json& data) {
+zerossg::ResponseString Connection::create_response(const zerossg::StatusString& status, const zerossg::MessageString& message, const json& data) {
     json response = {
         {"status", status},
         {"message", message},
@@ -415,11 +415,11 @@ zerossg::String Connection::create_response(const zerossg::String& status, const
     return response.dump();
 }
 
-zerossg::String Connection::create_error_response(const zerossg::String& error) {
+zerossg::ResponseString Connection::create_error_response(const zerossg::ErrorString& error) {
     return create_response("error", error);
 }
 
-void Connection::log_connection_event(const zerossg::String& event_type, const zerossg::String& details) {
+void Connection::log_connection_event(const zerossg::EventTypeString& event_type, const zerossg::LogDetails& details) {
     // Simplified logging - in production, use the actual logger
     zerossg::cout << "[" << event_type << "] " << m_client_ip << ": " << details << zerossg::endl;
 }

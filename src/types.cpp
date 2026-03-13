@@ -8,7 +8,7 @@ namespace zerossg {
 // Note: These are deprecated in favor of constexpr versions
 
 [[deprecated("Use constexpr role_to_string instead")]]
-std::string role_to_string(Role role) {
+zerossg::RoleString role_to_string(Role role) {
     switch (role) {
         case Role::ADMIN: return zerossg::ROLE_ADMIN;
         case Role::OPERATOR: return zerossg::ROLE_OPERATOR;
@@ -18,7 +18,7 @@ std::string role_to_string(Role role) {
 }
 
 [[deprecated("Use constexpr string_to_role instead")]]
-Role string_to_role(const std::string& role_str) {
+Role string_to_role(const zerossg::RoleString& role_str) {
     if (role_str == zerossg::ROLE_ADMIN) return Role::ADMIN;
     if (role_str == zerossg::ROLE_OPERATOR) return Role::OPERATOR;
     if (role_str == zerossg::ROLE_VIEWER) return Role::VIEWER;
@@ -26,7 +26,7 @@ Role string_to_role(const std::string& role_str) {
 }
 
 [[deprecated("Use constexpr security_event_type_to_string instead")]]
-std::string security_event_type_to_string(SecurityEventType type) {
+zerossg::EventString security_event_type_to_string(SecurityEventType type) {
     switch (type) {
         case SecurityEventType::LOGIN_SUCCESS: return zerossg::EVENT_LOGIN_SUCCESS;
         case SecurityEventType::LOGIN_FAILURE: return zerossg::EVENT_LOGIN_FAILURE;
@@ -45,7 +45,7 @@ std::string security_event_type_to_string(SecurityEventType type) {
 namespace utils {
 
 // Advanced role validation with error handling
-constexpr zerossg::Result<Role> validate_role(std::string_view role_str) noexcept {
+constexpr zerossg::Result<Role> validate_role(zerossg::RoleStringView role_str) noexcept {
     if (role_str.empty()) {
         return zerossg::make_result_error<Role>("Role string cannot be empty");
     }
@@ -65,13 +65,13 @@ constexpr std::strong_ordering compare_roles(Role lhs, Role rhs) noexcept {
 }
 
 // Security event validation with modern error handling
-constexpr zerossg::Result<SecurityEventType> validate_security_event(std::string_view event_str) noexcept {
+constexpr zerossg::Result<SecurityEventType> validate_security_event(zerossg::EventStringView event_str) noexcept {
     if (event_str.empty()) {
         return zerossg::make_result_error<SecurityEventType>("Event string cannot be empty");
     }
     
     // Use constexpr lookup table for validation
-    constexpr std::array<std::string_view, 8> valid_events = {
+    constexpr std::array<zerossg::EventStringView, 8> valid_events = {
         "login_success",
         "login_failure",
         "session_start",
@@ -111,12 +111,12 @@ constexpr bool all_roles_valid() noexcept {
 }
 
 // Modern string utilities with constexpr support
-constexpr bool is_valid_role_string(std::string_view role_str) noexcept {
+constexpr bool is_valid_role_string(zerossg::RoleStringView role_str) noexcept {
     return role_str == "admin" || role_str == "operator" || role_str == "viewer";
 }
 
-constexpr bool is_valid_security_event_string(std::string_view event_str) noexcept {
-    constexpr std::array valid_events = {
+constexpr bool is_valid_security_event_string(zerossg::EventStringView event_str) noexcept {
+    constexpr std::array<zerossg::EventStringView, 8> valid_events = {
         "login_success",
         "login_failure", 
         "session_start",
@@ -176,20 +176,20 @@ public:
 // Modern type-safe builders
 class UserBuilder {
 private:
-    std::string m_username;
-    std::string m_password_hash;
+    zerossg::UserName m_username;
+    zerossg::PasswordHash m_password_hash;
     Role m_role{Role::VIEWER};
     bool m_active{false};
     
 public:
     constexpr UserBuilder() noexcept = default;
     
-    constexpr UserBuilder& username(std::string uname) noexcept {
+    constexpr UserBuilder& username(zerossg::UserName uname) noexcept {
         m_username = std::move(uname);
         return *this;
     }
     
-    constexpr UserBuilder& password_hash(std::string hash) noexcept {
+    constexpr UserBuilder& password_hash(zerossg::PasswordHash hash) noexcept {
         m_password_hash = std::move(hash);
         return *this;
     }
@@ -219,11 +219,11 @@ class SessionValidator {
 public:
     constexpr SessionValidator() noexcept = default;
     
-    [[nodiscard]] static constexpr bool is_valid_session_id(std::string_view session_id) noexcept {
+    [[nodiscard]] static constexpr bool is_valid_session_id(zerossg::SessionIdView session_id) noexcept {
         return !session_id.empty() && session_id.size() >= 16;
     }
     
-    [[nodiscard]] static constexpr bool is_valid_client_ip(std::string_view ip) noexcept {
+    [[nodiscard]] static constexpr bool is_valid_client_ip(zerossg::ClientIpView ip) noexcept {
         if (ip.empty()) return false;
         
         // Basic IPv4 validation
