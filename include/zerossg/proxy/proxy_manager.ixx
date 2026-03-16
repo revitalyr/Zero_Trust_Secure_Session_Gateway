@@ -1,11 +1,6 @@
 module;
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include <mutex>
-
 export module zerossg.proxy.proxy_manager;
 
 export import zerossg.common;

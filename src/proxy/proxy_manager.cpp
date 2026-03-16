@@ -4,7 +4,7 @@ module;
 // Project headers
 module zerossg.proxy.proxy_manager;
 import zerossg.interfaces;
-import zerossg.logging.logger;
+import zerossg.common; // For Result, make_result_success, make_result_error
 
 // Standard library imports
 import zerossg.std;
@@ -28,7 +28,7 @@ Result<void> ProxyManager::start_proxy(const string& session_id, const Connectio
     
     // Check if proxy already exists for this session
     if (m_proxies.find(session_id) != m_proxies.end()) {
-        return Result<void>::error("Proxy already exists for session: " + session_id);
+        return make_result_error<void>("Proxy already exists for session: " + session_id);
     }
     
     try {
@@ -39,11 +39,11 @@ Result<void> ProxyManager::start_proxy(const string& session_id, const Connectio
         // Start the proxy
         proxy->start();
         
-        return zerossg::Result<void>::success();
+        return make_result_success();
     } catch (const std::exception& e) {
         // Clean up on failure
         m_proxies.erase(session_id);
-        return zerossg::Result<void>::error("Failed to start proxy: " + std::string(e.what()));
+        return make_result_error<void>("Failed to start proxy: " + std::string(e.what()));
     }
 }
 
@@ -52,14 +52,14 @@ Result<void> ProxyManager::stop_proxy(const string& session_id) {
     
     auto it = m_proxies.find(session_id);
     if (it == m_proxies.end()) {
-        return zerossg::Result<void>::error("Proxy not found for session: " + session_id);
+        return make_result_error<void>("Proxy not found for session: " + session_id);
     }
     
     // Stop and remove the proxy
     it->second->stop();
     m_proxies.erase(it);
     
-    return zerossg::Result<void>::success();
+    return make_result_success();
 }
 
 bool ProxyManager::is_proxy_active(const string& session_id) {
@@ -69,18 +69,18 @@ bool ProxyManager::is_proxy_active(const string& session_id) {
     return it != m_proxies.end() && it->second->is_active();
 }
 
-Result<zerossg::String> ProxyManager::get_active_proxies() {
+Result<std::vector<std::string>> ProxyManager::get_active_proxies() {
     std::lock_guard<std::mutex> lock(m_proxies_mutex);
     
-    zerossg::String active_proxies;
+    std::vector<std::string> active_proxies;
     
     for (const auto& pair : m_proxies) {
         if (pair.second->is_active()) {
             active_proxies.push_back(pair.first);
         }
     }
-    
-    return zerossg::Result<std::vector<std::string>>::success(std::move(active_proxies));
+
+    return make_result_success(std::move(active_proxies));
 }
 
 zerossg::Result<void> ProxyManager::cleanup_inactive_proxies() {
@@ -95,7 +95,7 @@ zerossg::Result<void> ProxyManager::cleanup_inactive_proxies() {
         }
     }
     
-    return zerossg::Result<void>::success();
+    return make_result_success();
 }
 
 size_t ProxyManager::get_active_proxy_count() const {

@@ -5,7 +5,7 @@ module zerossg.rbac.authorizer;
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
-import zerossg.std;
+import zerossg.common; // For make_result_error, make_result_success, LockGuard
 
 namespace zerossg {
 
@@ -57,7 +57,7 @@ zerossg::Result<void> AuthorizationManager::update_service(const zerossg::Servic
     
     auto it = m_services.find(service_name);
     if (it == m_services.end()) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     m_services[service_name] = service;
@@ -68,7 +68,7 @@ zerossg::Result<void> AuthorizationManager::remove_service(const zerossg::Servic
     LockGuard<std::mutex> lock(m_services_mutex);
     
     if (m_services.erase(service_name) == 0) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     return zerossg::make_result_success();

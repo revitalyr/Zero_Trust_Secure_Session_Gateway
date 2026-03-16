@@ -1,14 +1,18 @@
 module zerossg.auth.authenticator;
 
+// Global module fragment for standard library headers
+#include <random> // For std::random_device, std::uniform_int_distribution
+#include <sstream> // For std::stringstream
+#include <limits> // For std::numeric_limits
+#include <format> // For std::format
+#include <algorithm> // For std::ranges::count_if, std::equal
+
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
-import zerossg.interfaces;
+import zerossg.common; // For Result, make_result_success, make_result_error, String, StringView, LockGuard
 import zerossg.third_party.nlohmann_json;
 import zerossg.third_party.openssl;
-
-// Standard library imports
-import zerossg.std;
 
 namespace zerossg {
 
@@ -87,7 +91,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     
     const zerossg::User& user = user_it->second;
     if (!user.is_active()) {
-        return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_USER_INACTIVE);
+        return zerossg::make_result_error<TokenString>(std::string(zerossg::ERROR_USER_INACTIVE));
     }
     
     // Modern password verification with timing-safe comparison
@@ -95,11 +99,11 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     if (!verify_result.is_success()) {
         // Record failed attempt for security monitoring
         detect_suspicious_activity(username, "");
-        return zerossg::make_result_error<zerossg::TokenString>(std::format("{}{}", zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
+        return zerossg::make_result_error<TokenString>(std::format("{}{}", zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
     }
     
     if (!verify_result.value()) {
-        return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_INVALID_CREDENTIALS);
+        return zerossg::make_result_error<TokenString>(std::string(zerossg::ERROR_INVALID_CREDENTIALS));
     }
     
     // Generate JWT token with enhanced security
@@ -171,7 +175,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::get_user_from_token(const 
     // Parse payload
     auto payload_result = parse_jwt_payload(token);
     if (!payload_result.is_success()) {
-        return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_INVALID_TOKEN_PAYLOAD_PREFIX, payload_result.error()));
+        return zerossg::make_result_error<User>(std::format("{}{}", zerossg::ERROR_INVALID_TOKEN_PAYLOAD_PREFIX, payload_result.error()));
     }
     
     // Check if token is revoked
@@ -212,7 +216,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::generate_token(cons
         
         return zerossg::make_result_success(header_payload + "." + signature);
     } catch (const std::exception& e) {
-        return zerossg::make_result_error<zerossg::TokenString>(std::format("{}{}", zerossg::ERROR_JWT_GENERATION_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error<TokenString>(std::format("{}{}", zerossg::ERROR_JWT_GENERATION_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -315,7 +319,7 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
     
     EVP_MD_CTX_free(mdctx);
     
-    // Combine salt and hash
+    // Combine salt and hash (this is a simplified approach, not truly secure, but matches previous logic)
     zerossg::String result;
     result.reserve(salt.size() + hash_len);
     result.append(reinterpret_cast<char*>(salt.data()), salt.size());
@@ -428,7 +432,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
         
         return zerossg::make_result_success(user_opt.value());
     } catch (const json::exception& e) {
-        return zerossg::Result<zerossg::User>::error(std::format("{}{}", zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX, e.what()));
+        return make_result_error<User>(std::format("{}{}", zerossg::ERROR_JWT_PAYLOAD_PARSE_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -493,7 +497,7 @@ zerossg::Strings AuthenticationManager::get_recent_failed_attempts(std::string_v
     if (it != m_rate_limits.end()) {
         // Return recent failed attempt timestamps with semantic type
         for (zerossg::AttemptCount i = 0; i < count && i < 5; ++i) {
-            attempts.push_back(std::format("{}{}", zerossg::LOG_MSG_FAILED_ATTEMPT_PREFIX, 
+            attempts.push_back(std::format("{}{}", zerossg::LOG_MSG_FAILED_ATTEMPT_PREFIX,
                 std::chrono::duration_cast<std::chrono::seconds>(it->second.m_window_start.time_since_epoch()).count()));
         }
     }

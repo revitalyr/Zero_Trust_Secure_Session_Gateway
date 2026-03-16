@@ -1,13 +1,21 @@
+module;
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <array>
+#include <chrono>
+#include <utility>
+#include <algorithm>
+#include <format>
+
 export module zerossg.types;
 
 export import zerossg.common;
 export import zerossg.std;
 
 export namespace zerossg {
-
-// Result template for error handling
-template<typename T>
-export using Result = std::expected<T, std::string>;
 
 // Basic type aliases
 // Aliases like String, UserName, etc., are now in zerossg.common
@@ -39,7 +47,7 @@ export constexpr StringView role_to_string(Role role) noexcept {
     }
 }
 
-export constexpr Role string_to_role(StringView role_str) noexcept {
+export inline Role string_to_role(StringView role_str) noexcept {
     if (role_str == "admin") return Role::ADMIN;
     if (role_str == "operator") return Role::OPERATOR;
     if (role_str == "viewer") return Role::VIEWER;
@@ -56,11 +64,11 @@ export struct User {
     TimePoint m_last_login;
     bool m_active;
     
-    constexpr User() noexcept 
+    User() noexcept 
         : m_role(Role::VIEWER)
         , m_active(false) {}
     
-    constexpr User(UserName username, PasswordHash password_hash, Role role) noexcept
+    User(UserName username, PasswordHash password_hash, Role role) noexcept
         : m_user_name(std::move(username))
         , m_password_hash(std::move(password_hash))
         , m_role(role)
@@ -90,11 +98,11 @@ export struct Session {
     ServiceName m_target_service;
     bool m_active;
     
-    constexpr Session() noexcept 
+    Session() noexcept 
         : m_role(Role::VIEWER)
         , m_active(false) {}
     
-    constexpr Session(SessionId session_id, UserName username, Role role, 
+    Session(SessionId session_id, UserName username, Role role, 
                    ClientIp client_ip, ServiceName target_service) noexcept
         : m_session_id(std::move(session_id))
         , m_user_name(std::move(username))
@@ -157,7 +165,7 @@ constexpr StringView security_event_type_to_string(SecurityEventType type) noexc
         "rate_limit_exceeded",
         "brute_force_detected"
     };
-    const auto index = static_cast<std::size_t>(type);
+    const auto index = static_cast<size_t>(type);
     return index < event_names.size() ? event_names[index] : StringView{};
 }
 
@@ -169,7 +177,7 @@ export struct SecurityEvent {
     ClientIp m_client_ip;
     std::string m_details;
     
-    constexpr SecurityEvent(SecurityEventType type, UserName username, 
+    SecurityEvent(SecurityEventType type, UserName username, 
                         ClientIp client_ip, std::string details) noexcept
         : m_type(type)
         , m_timestamp(SystemClock::now())
@@ -192,7 +200,7 @@ export struct ConnectionInfo {
     ClientIp m_client_ip;
     PortNo m_client_port;
     
-    constexpr ConnectionInfo(const TcpEndpoint& remote,
+    ConnectionInfo(const TcpEndpoint& remote,
                          const TcpEndpoint& local) noexcept
         : m_remote_endpoint(remote)
         , m_local_endpoint(local)
@@ -218,11 +226,11 @@ export struct TargetService {
     Roles<Role> m_allowed_roles;
     bool m_tls_enabled;
     
-    constexpr TargetService() noexcept 
+    TargetService() noexcept 
         : m_port(0)
         , m_tls_enabled(false) {}
     
-    constexpr TargetService(ServiceName name, HostAddress host, PortNo port, 
+    TargetService(ServiceName name, HostAddress host, PortNo port, 
                        Roles<Role> allowed_roles, bool tls_enabled) noexcept
         : m_name(std::move(name))
         , m_host(std::move(host))
@@ -250,7 +258,7 @@ export struct TargetService {
     }
     
     // Utility methods
-    [[nodiscard]] string get_address() const noexcept {
+    [[nodiscard]] String get_address() const noexcept {
         return std::format("{}:{}", m_host, m_port);
     }
 };
@@ -260,7 +268,7 @@ template<typename T>
 concept UserRole = std::is_same_v<T, Role>;
 
 template<typename T>
-concept SecurityEvent = std::is_same_v<T, SecurityEventType>;
+concept IsSecurityEventType = std::is_same_v<T, SecurityEventType>;
 
 template<typename T>
 concept ChronoTimePoint = requires {
@@ -275,7 +283,7 @@ constexpr StringView role_name() noexcept {
     return role_to_string(T{});
 }
 
-export template<SecurityEvent T>
+export template<IsSecurityEventType T>
 constexpr StringView event_name() noexcept {
     return security_event_type_to_string(T{});
 }

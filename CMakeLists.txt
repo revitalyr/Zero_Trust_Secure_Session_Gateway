@@ -135,7 +135,6 @@ target_sources(zerossg_lib PUBLIC
         "include/zerossg/network/gateway_server.ixx"
         "include/zerossg/proxy/proxy_manager.ixx"
         "include/zerossg/rbac/authorizer.ixx"
-        "include/zerossg/result.ixx"
         "include/zerossg/security/security_manager.ixx"
         "include/zerossg/session/session_manager.ixx"
         "include/zerossg/std.ixx"

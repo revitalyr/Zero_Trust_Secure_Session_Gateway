@@ -12,6 +12,7 @@ import zerossg.network.gateway_server;
 import zerossg.config.config_manager;
 import zerossg.auth.authenticator;
 import zerossg.session.session_manager;
+import zerossg.common; // For make_result_success, make_result_error
 import zerossg.security.security_manager;
 
 namespace zerossg {
@@ -639,7 +640,7 @@ bool CLIInterface::is_server_running() {
 
 Result<void> CLIInterface::connect_to_server() {
     // In a real implementation, this would establish IPC connection
-    return Result<void>::success();
+    return make_result_success();
 }
 
 void CLIInterface::disconnect_from_server() {

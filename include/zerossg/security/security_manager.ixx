@@ -2,7 +2,6 @@ export module zerossg.security.security_manager;
 
 export import zerossg.interfaces;
 export import zerossg.std;
-export import zerossg.result;
 
 export namespace zerossg {
 

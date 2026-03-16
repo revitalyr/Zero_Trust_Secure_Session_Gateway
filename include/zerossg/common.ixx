@@ -32,8 +32,8 @@ using Vector = std::vector<T>;
 template<typename K, typename V>
 using UnorderedMap = std::unordered_map<K, V>;
 
-template<typename T, typename U>
-using Result = std::expected<T, U>;
+template<typename T, typename E = std::string>
+using Result = std::expected<T, E>;
 
 using SystemClock = std::chrono::system_clock;
 using SteadyClock = std::chrono::steady_clock;
@@ -108,29 +108,18 @@ using LockGuard = std::lock_guard<Mutex>;
 template<typename Mutex>
 using SharedLock = std::shared_lock<Mutex>;
 
-// Modern expected-based error handling (C++23)
-template<typename T>
-using ResultType = std::expected<T, std::string>;
-
 // Helper functions for Result creation
 template<typename T>
-constexpr ResultType<T> make_result_success(T&& value) noexcept {
-    return ResultType<T>{std::forward<T>(value)};
+constexpr Result<std::decay_t<T>> make_result_success(T&& value) noexcept {
+    return std::forward<T>(value);
 }
 
-template<typename T>
-constexpr ResultType<T> make_result_error(std::string error) noexcept {
-    return std::unexpected(std::move(error));
+inline constexpr Result<void> make_result_success() noexcept {
+    return {};
 }
 
-// Specialization for void using std::expected
-using ResultVoid = std::expected<void, std::string>;
-
-inline constexpr ResultVoid make_result_success_void() noexcept {
-    return ResultVoid{};
-}
-
-inline constexpr ResultVoid make_result_error_void(std::string error) noexcept {
+template<typename T, typename E = std::string>
+constexpr Result<T, E> make_result_error(E error) noexcept {
     return std::unexpected(std::move(error));
 }
 
@@ -168,14 +157,7 @@ using ConnectionString = std::string;
 using HostAddress = std::string;
 
 // C++23 modern features
-template<typename T>
-concept ResultTypeConcept = requires(T t) {
-    typename T::value_type;
-    typename T::error_type;
-    { t.has_value() } -> std::convertible_to<bool>;
-    { t.value() } -> std::convertible_to<typename T::value_type>;
-    { t.error() } -> std::convertible_to<typename T::error_type>;
-};
+template<typename T> concept ResultTypeConcept = requires(T t) { typename T::value_type; typename T::error_type; { t.has_value() } -> std::convertible_to<bool>; { t.value() } -> std::convertible_to<typename T::value_type>; { t.error() } -> std::convertible_to<typename T::error_type>; };
 
 // Modern monadic operations for Result
 template<typename T, typename F>
@@ -198,12 +180,12 @@ constexpr auto and_then(const ResultType<T>& result, F&& func) noexcept {
 
 // C++23 std::expected utilities
 template<typename T>
-constexpr bool is_success(const ResultType<T>& result) noexcept {
+constexpr bool is_success(const Result<T>& result) noexcept {
     return result.has_value();
 }
 
 template<typename T>
-constexpr bool is_error(const ResultType<T>& result) noexcept {
+constexpr bool is_error(const Result<T>& result) noexcept {
     return !result.has_value();
 }
 

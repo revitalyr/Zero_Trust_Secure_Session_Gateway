@@ -3,8 +3,7 @@ module zerossg.config.config_manager;
 // C++23 module imports
 import zerossg.constants;
 import zerossg.interfaces;
-import zerossg.std;
-import zerossg.result;
+import zerossg.common; // For Result, make_result_success, make_result_error, LockGuard, String
 import zerossg.third_party.nlohmann_json;
 import zerossg.third_party.yaml_cpp;
 
@@ -19,7 +18,7 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
     
     try {
         if (!zerossg::file_exists(config_file)) {
-            return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_CONFIG_FILE_NOT_FOUND, config_file));
+            return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_FILE_NOT_FOUND, config_file));
         }
         
         zerossg::FileExtension extension = get_file_extension(config_file);
@@ -27,15 +26,15 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
             if (!result.is_success()) {
-                return result;
+                return zerossg::make_result_error<void>(result.error());
             }
         } else if (extension == FORMAT_JSON) {
             auto result = load_json_config(config_file);
             if (!result.is_success()) {
-                return result;
+                return zerossg::make_result_error<void>(result.error());
             }
         } else {
-            return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT, extension));
+            return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT, extension));
         }
         
         // Load environment variables (override config file)
@@ -44,12 +43,12 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         // Validate configuration
         auto validation_result = validate_config();
         if (!validation_result.is_success()) {
-            return validation_result;
+            return zerossg::make_result_error<void>(validation_result.error());
         }
         
-        return zerossg::Result<void>{};
+        return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
     }
 }
 
@@ -121,7 +120,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::get_target_service(const 
     
     auto it = m_target_services.find(service_name);
     if (it == m_target_services.end()) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return zerossg::make_result_error<TargetService>(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     return zerossg::make_result_success(it->second);
@@ -136,7 +135,7 @@ zerossg::Result<zerossg::TargetServices> ConfigManager::get_all_target_services(
     for (const auto& pair : m_target_services) {
         services.push_back(pair.second);
     }
-    
+
     return zerossg::make_result_success(std::move(services));
 }
 
@@ -226,7 +225,7 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         std::string json_str = config.dump(4);
         std::ofstream file(config_file);
         if (!file.is_open()) {
-            return make_result_error(std::format("{}{}", zerossg::ERROR_CONFIG_WRITE_OPEN_FAILED_PREFIX, config_file));
+            return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_WRITE_OPEN_FAILED_PREFIX, config_file));
         }
         
         file << json_str;
@@ -234,7 +233,7 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -253,7 +252,7 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         // Convert YAML to JSON for easier processing
         // This is a simplified approach - in production would use proper YAML parsing
         std::string json_str = YAML::Dump(config);
-        m_config_json = json.parse(json_str);
+        m_config_json = nlohmann::json::parse(json_str);
         
         parse_server_config(m_config_json);
         parse_security_config(m_config_json);
@@ -264,9 +263,9 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const YAML::Exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_YAML_PARSE_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_YAML_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_YAML_LOAD_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_YAML_LOAD_PREFIX, e.what()));
     }
 }
 
@@ -274,7 +273,7 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
-            return make_result_error(std::format("{}{}", zerossg::ERROR_CONFIG_OPEN_FAILED_PREFIX, config_file));
+            return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_OPEN_FAILED_PREFIX, config_file));
         }
         
         file >> m_config_json;
@@ -288,9 +287,9 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const nlohmann::json::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_JSON_PARSE_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_JSON_LOAD_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
 
@@ -395,19 +394,19 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
         }
         
         if (service.host.empty() || service.port == 0) {
-            return make_result_error(zerossg::ERROR_TARGET_SERVICE_HOST_PORT_MISSING);
+            return make_result_error<TargetService>(std::string(zerossg::ERROR_TARGET_SERVICE_HOST_PORT_MISSING));
         }
         
         return zerossg::make_result_success(service);
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what()));
+        return make_result_error<TargetService>(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what()));
     }
 }
 
 zerossg::Result<void> ConfigManager::validate_server_config() {
     if (!ConfigUtils::is_valid_ip_address(m_server_config.listen_address) && 
         m_server_config.listen_address != "0.0.0.0") {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_INVALID_LISTEN_ADDRESS, m_server_config.listen_address));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_INVALID_LISTEN_ADDRESS, m_server_config.listen_address));
     }
     
     if (m_server_config.listen_port < 1 || m_server_config.listen_port > 65535) {
@@ -419,11 +418,11 @@ zerossg::Result<void> ConfigManager::validate_server_config() {
 
 zerossg::Result<void> ConfigManager::validate_security_config() {
     if (m_security_config.jwt_secret.length() < 16) {
-        return make_result_error(zerossg::ERROR_JWT_SECRET_TOO_SHORT);
+        return make_result_error<void>(std::string(zerossg::ERROR_JWT_SECRET_TOO_SHORT));
     }
     
     if (m_security_config.token_expiry_hours < 1 || m_security_config.token_expiry_hours > 168) {
-        return make_result_error(zerossg::ERROR_INVALID_TOKEN_EXPIRY);
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_TOKEN_EXPIRY));
     }
     
     return zerossg::make_result_success();
@@ -431,11 +430,11 @@ zerossg::Result<void> ConfigManager::validate_security_config() {
 
 zerossg::Result<void> ConfigManager::validate_session_config() {
     if (m_session_config.timeout_seconds < 60 || m_session_config.timeout_seconds > 86400) {
-        return make_result_error(zerossg::ERROR_INVALID_SESSION_TIMEOUT);
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_SESSION_TIMEOUT));
     }
     
     if (m_session_config.max_concurrent_sessions < 1 || m_session_config.max_concurrent_sessions > 1000) {
-        return make_result_error(zerossg::ERROR_INVALID_MAX_SESSIONS);
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_MAX_SESSIONS));
     }
     
     return zerossg::make_result_success();
@@ -445,15 +444,15 @@ zerossg::Result<void> ConfigManager::validate_logging_config() {
     if (m_logging_config.level != "trace" && m_logging_config.level != "debug" && 
         m_logging_config.level != "info" && m_logging_config.level != "warn" && 
         m_logging_config.level != "error" && m_logging_config.level != "critical") {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_INVALID_LOG_LEVEL, m_logging_config.level));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_INVALID_LOG_LEVEL, m_logging_config.level));
     }
     
     if (m_logging_config.max_file_size_mb < 1 || m_logging_config.max_file_size_mb > 1000) {
-        return make_result_error(zerossg::ERROR_INVALID_LOG_MAX_SIZE);
+        return make_result_error(std::string(zerossg::ERROR_INVALID_LOG_MAX_SIZE));
     }
     
     if (m_logging_config.max_files < 1 || m_logging_config.max_files > 100) {
-        return make_result_error(zerossg::ERROR_INVALID_LOG_MAX_FILES);
+        return make_result_error(std::string(zerossg::ERROR_INVALID_LOG_MAX_FILES));
     }
     
     return zerossg::make_result_success();
@@ -461,15 +460,15 @@ zerossg::Result<void> ConfigManager::validate_logging_config() {
 
 zerossg::Result<void> ConfigManager::validate_database_config() {
     if (m_database_config.host.empty()) {
-        return make_result_error(zerossg::ERROR_DB_HOST_EMPTY);
+        return make_result_error<void>(std::string(zerossg::ERROR_DB_HOST_EMPTY));
     }
     
     if (m_database_config.port < 1 || m_database_config.port > 65535) {
-        return make_result_error(zerossg::ERROR_INVALID_DB_PORT);
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_DB_PORT));
     }
     
     if (m_database_config.name.empty()) {
-        return make_result_error(zerossg::ERROR_DB_NAME_EMPTY);
+        return make_result_error<void>(std::string(zerossg::ERROR_DB_NAME_EMPTY));
     }
     
     return zerossg::make_result_success();
@@ -481,19 +480,19 @@ zerossg::Result<void> ConfigManager::validate_target_services() {
         const auto& name = service.name;
         
         if (service.name.empty()) {
-            return make_result_error(zerossg::ERROR_TARGET_SERVICE_NAME_EMPTY);
+            return make_result_error<void>(std::string(zerossg::ERROR_TARGET_SERVICE_NAME_EMPTY));
         }
         
         if (service.host.empty()) {
-            return make_result_error(std::format("{}'{}' host cannot be empty", zerossg::ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' host cannot be empty", zerossg::ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX, name));
         }
         
         if (service.port < 1 || service.port > 65535) {
-            return make_result_error(std::format("{}'{}' port must be between 1 and 65535", zerossg::ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' port must be between 1 and 65535", zerossg::ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX, name));
         }
         
         if (service.allowed_roles.empty()) {
-            return make_result_error(std::format("{}'{}' must have at least one allowed role", zerossg::ERROR_TARGET_SERVICE_NO_ROLES_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' must have at least one allowed role", zerossg::ERROR_TARGET_SERVICE_NO_ROLES_PREFIX, name));
         }
     }
     
@@ -609,7 +608,7 @@ bool is_valid_ip_address(const zerossg::IpAddress& ip) {
 zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_FILE_OPEN_FAILED_PREFIX, filename));
+        return make_result_error<FileContent>(std::format("{}{}", zerossg::ERROR_FILE_OPEN_FAILED_PREFIX, filename));
     }
     
     try {
@@ -617,14 +616,14 @@ zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filenam
         file.close();
         return zerossg::make_result_success(content);
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_FILE_READ_FAILED_PREFIX, e.what()));
+        return make_result_error<FileContent>(std::format("{}{}", zerossg::ERROR_FILE_READ_FAILED_PREFIX, e.what()));
     }
 }
 
 zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zerossg::FileContent& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_FILE_WRITE_OPEN_FAILED_PREFIX, filename));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_FILE_WRITE_OPEN_FAILED_PREFIX, filename));
     }
     
     try {
@@ -632,7 +631,7 @@ zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zeross
         file.close();
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_FILE_WRITE_FAILED_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_FILE_WRITE_FAILED_PREFIX, e.what()));
     }
 }
 
