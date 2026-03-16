@@ -149,7 +149,7 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
 
 zerossg::Result<bool> SessionManager::is_session_valid(const zerossg::SessionId& session_id) {
     auto session_result = get_session(session_id);
-    return session_result.is_success() ? make_result_success(true) : make_result_error<bool>(session_result.error());
+    return session_result.has_value() ? make_result_success(true) : make_result_error<bool>(session_result.error());
 }
 
 zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const zerossg::UserName& username) {

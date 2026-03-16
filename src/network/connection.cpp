@@ -117,12 +117,12 @@ ResponseString Connection::process_login_request(const RequestString& request) {
     }
     
     auto rate_limit_result = m_server.m_security_manager->check_rate_limit(m_client_ip);
-    if (!rate_limit_result.is_success() || !rate_limit_result.value()) {
+    if (!rate_limit_result.has_value() || !rate_limit_result.value()) {
         return create_error_response(zerossg::ERROR_RATE_LIMIT_EXCEEDED);
     }
     
     auto auth_result = m_server.m_auth_manager->authenticate(username, password);
-    if (!auth_result.is_success()) {
+    if (!auth_result.has_value()) {
         m_server.m_security_manager->record_failed_attempt(m_client_ip);
         return create_error_response(std::format("Authentication failed: {}", auth_result.error()));
     }
@@ -130,7 +130,7 @@ ResponseString Connection::process_login_request(const RequestString& request) {
     m_server.m_security_manager->record_successful_login(m_client_ip);
     
     auto user_result = m_server.m_auth_manager->get_user(username);
-    if (!user_result.is_success() || !user_result.value().has_value()) {
+    if (!user_result.has_value() || !user_result.value().has_value()) {
         return create_error_response(zerossg::ERROR_USER_NOT_FOUND_AFTER_AUTH);
     }
     
@@ -163,12 +163,12 @@ ResponseString Connection::process_session_request(const RequestString& request)
     }
     
     auto authz_result = m_server.m_authz_manager->can_access_service(m_user, target_service);
-    if (!authz_result.is_success() || !authz_result.value()) {
+    if (!authz_result.has_value() || !authz_result.value()) {
         return create_error_response(std::format("Access denied to service: {}", target_service));
     }
     
     auto session_result = m_server.m_session_manager->create_session(m_user, m_client_ip, target_service);
-    if (!session_result.is_success()) {
+    if (!session_result.has_value()) {
         return create_error_response(std::format("Session creation failed: {}", session_result.error()));
     }
     

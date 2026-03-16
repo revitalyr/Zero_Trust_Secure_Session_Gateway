@@ -25,12 +25,12 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         
         if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
-            if (!result.is_success()) {
+            if (!result.has_value()) {
                 return zerossg::make_result_error<void>(result.error());
             }
         } else if (extension == FORMAT_JSON) {
             auto result = load_json_config(config_file);
-            if (!result.is_success()) {
+            if (!result.has_value()) {
                 return zerossg::make_result_error<void>(result.error());
             }
         } else {
@@ -42,7 +42,7 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         
         // Validate configuration
         auto validation_result = validate_config();
-        if (!validation_result.is_success()) {
+        if (!validation_result.has_value()) {
             return zerossg::make_result_error<void>(validation_result.error());
         }
         
@@ -141,32 +141,32 @@ zerossg::Result<zerossg::TargetServices> ConfigManager::get_all_target_services(
 
 zerossg::Result<void> ConfigManager::validate_config() {
     auto server_result = validate_server_config();
-    if (!server_result.is_success()) {
+    if (!server_result.has_value()) {
         return server_result;
     }
     
     auto security_result = validate_security_config();
-    if (!security_result.is_success()) {
+    if (!security_result.has_value()) {
         return security_result;
     }
     
     auto session_result = validate_session_config();
-    if (!session_result.is_success()) {
+    if (!session_result.has_value()) {
         return session_result;
     }
     
     auto logging_result = validate_logging_config();
-    if (!logging_result.is_success()) {
+    if (!logging_result.has_value()) {
         return logging_result;
     }
     
     auto database_result = validate_database_config();
-    if (!database_result.is_success()) {
+    if (!database_result.has_value()) {
         return database_result;
     }
     
     auto services_result = validate_target_services();
-    if (!services_result.is_success()) {
+    if (!services_result.has_value()) {
         return services_result;
     }
     
@@ -357,7 +357,7 @@ void ConfigManager::parse_target_services(const nlohmann::json& config) {
         if (services.is_array()) {
             for (const auto& service_json : services) {
                 auto service_result = parse_target_service(service_json);
-                if (service_result.is_success()) {
+                if (service_result.has_value()) {
                     const auto& service = service_result.value();
                     m_target_services[service.name()] = service;
                 }

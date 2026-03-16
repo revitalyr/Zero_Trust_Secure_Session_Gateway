@@ -29,7 +29,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
     // Check if IP is currently blocked
     if (info.blocked && now < info.block_until) {
         record_security_event("rate_limit_blocked", std::format("IP {} blocked for exceeding rate limit", client_ip));
-        return make_result_success(false);
+        return make_result_error<bool>("IP is currently blocked due to rate limiting");
     }
     
     // Reset window if needed
@@ -48,7 +48,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
             std::format("IP {} exceeded rate limit: {} requests in {} seconds", 
                 client_ip, info.request_count, m_rate_limit_window.count()));
         
-        return make_result_success(false);
+        return make_result_error<bool>("Rate limit exceeded");
     }
     
     info.request_count++;

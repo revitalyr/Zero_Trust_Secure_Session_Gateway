@@ -37,13 +37,13 @@ zerossg::Result<void> TlsHandler::initialize(const zerossg::FilePath& cert_file,
     try {
         // Load certificate chain
         auto cert_result = load_certificate_chain(cert_file);
-        if (!cert_result.is_success()) {
+        if (!cert_result.has_value()) {
             return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_CERT_LOAD_FAILED_PREFIX, cert_result.error()));
         }
         
         // Load private key
         auto key_result = load_private_key(key_file);
-        if (!key_result.is_success()) {
+        if (!key_result.has_value()) {
             return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_KEY_LOAD_FAILED_PREFIX, key_result.error()));
         }
         
@@ -95,7 +95,7 @@ zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateD
 
 zerossg::Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath& cert_file) {
     auto validation_result = validate_certificate_file(cert_file);
-    if (!validation_result.is_success()) {
+    if (!validation_result.has_value()) {
         return validation_result;
     }
     
@@ -109,7 +109,7 @@ zerossg::Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath
 
 zerossg::Result<void> TlsHandler::load_private_key(const zerossg::FilePath& key_file) {
     auto validation_result = validate_key_file(key_file);
-    if (!validation_result.is_success()) {
+    if (!validation_result.has_value()) {
         return validation_result;
     }
     

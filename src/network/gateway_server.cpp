@@ -42,7 +42,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
         // Initialize TLS handler
         m_tls_handler = std::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);
-        if (!tls_result.is_success()) {
+        if (!tls_result.has_value()) {
             return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_TLS_INIT_FAILED_PREFIX, tls_result.error()));
         }
         
@@ -57,7 +57,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
         
         // Setup networking
         auto setup_result = setup_acceptor();
-        if (!setup_result.is_success()) {
+        if (!setup_result.has_value()) {
             return setup_result;
         }
         
@@ -69,7 +69,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
 
 Result<void> GatewayServer::start() {
     if (m_running.load()) {
-        return zerossg::make_result_error(zerossg::ERROR_SERVER_ALREADY_RUNNING);
+        return zerossg::make_result_error<void>(zerossg::ERROR_SERVER_ALREADY_RUNNING);
     }
     
     try {
@@ -86,7 +86,7 @@ Result<void> GatewayServer::start() {
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
         m_running.store(false);
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVER_START_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_SERVER_START_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -113,7 +113,7 @@ Result<void> GatewayServer::stop() {
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_SERVER_STOP_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_SERVER_STOP_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -130,7 +130,7 @@ Result<void> GatewayServer::setup_acceptor() {
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::make_result_error(std::format("{}{}", zerossg::ERROR_ACCEPTOR_SETUP_FAILED_PREFIX, e.what()));
+        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_ACCEPTOR_SETUP_FAILED_PREFIX, e.what()));
     }
 }
 

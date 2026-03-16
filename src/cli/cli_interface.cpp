@@ -378,7 +378,7 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
         // Initialize configuration manager
         auto config_manager = std::make_unique<ConfigManager>();
         auto config_result = config_manager->load_config(config_file);
-        if (!config_result.is_success()) {
+        if (!config_result.has_value()) {
             print_error("Failed to load configuration: " + config_result.error());
             return 1;
         }
@@ -386,14 +386,14 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
         // Create and initialize server
         m_server = std::make_unique<GatewayServer>();
         auto init_result = m_server->initialize(*config_manager);
-        if (!init_result.is_success()) {
+        if (!init_result.has_value()) {
             print_error("Failed to initialize server: " + init_result.error());
             return 1;
         }
         
         // Start the server
         auto start_result = m_server->start();
-        if (!start_result.is_success()) {
+        if (!start_result.has_value()) {
             print_error("Failed to start server: " + start_result.error());
             return 1;
         }
@@ -431,7 +431,7 @@ int CLIInterface::handle_stop_command(const zerossg::CommandLineArgs& args) {
         print_info("Stopping server...");
         
         auto stop_result = m_server->stop();
-        if (!stop_result.is_success()) {
+        if (!stop_result.has_value()) {
             print_error("Failed to stop server: " + stop_result.error());
             return 1;
         }
@@ -580,7 +580,7 @@ int CLIInterface::handle_config_command(const zerossg::CommandLineArgs& args) {
     try {
         auto config_manager = std::make_unique<ConfigManager>();
         auto config_result = config_manager->load_config(m_config_file);
-        if (!config_result.is_success()) {
+        if (!config_result.has_value()) {
             print_error("Failed to load configuration: " + config_result.error());
             return 1;
         }
@@ -843,7 +843,7 @@ void InteractiveShell::process_command(const string& command) {
         }
         
         auto result = m_cli.run(static_cast<int>(argv.size()), argv.data());
-        if (!result.is_success()) {
+        if (!result.has_value()) {
             std::cout << "Command failed" << std::endl;
         }
     } catch (const std::exception& e) {

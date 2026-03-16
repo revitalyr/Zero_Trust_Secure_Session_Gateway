@@ -31,14 +31,14 @@ AuthenticationManager::AuthenticationManager() {
     
     // Generate JWT secret key with better randomness
     const auto secret_result = generate_secure_random_bytes(zerossg::JWT_SECRET_SIZE);
-    if (!secret_result.is_success()) {
+    if (!secret_result.has_value()) {
         throw std::runtime_error(zerossg::ERROR_JWT_SECRET_GENERATION_FAILED);
     }
     m_jwt_secret = secret_result.value();
     
     // Add default admin user with stronger password
     auto admin_hash_result = hash_password(zerossg::DEFAULT_ADMIN_PASSWORD);
-    if (admin_hash_result.is_success()) {
+    if (admin_hash_result.has_value()) {
         zerossg::User admin_user("admin", admin_hash_result.value(), zerossg::Role::ADMIN);
         add_user(std::move(admin_user));
     }
@@ -92,7 +92,7 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     
     // Modern password verification with timing-safe comparison
     const auto verify_result = verify_password(password, user.password_hash());
-    if (!verify_result.is_success()) {
+    if (!verify_result.has_value()) {
         // Record failed attempt for security monitoring
         detect_suspicious_activity(username, "");
         return zerossg::make_result_error<TokenString>(std::format("{}{}", zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
@@ -170,7 +170,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::get_user_from_token(const 
     
     // Parse payload
     auto payload_result = parse_jwt_payload(token);
-    if (!payload_result.is_success()) {
+    if (!payload_result.has_value()) {
         return zerossg::make_result_error<User>(std::format("{}{}", zerossg::ERROR_INVALID_TOKEN_PAYLOAD_PREFIX, payload_result.error()));
     }
     
@@ -409,7 +409,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
         // Get user
         std::string username = payload["username"];
         auto user_result = get_user(username);
-        if (!user_result.is_success()) {
+        if (!user_result.has_value()) {
             return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         

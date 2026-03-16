@@ -155,7 +155,7 @@ zerossg::Result<bool> AuthorizationManager::is_role_superior(zerossg::Role role_
         
         // Recursively check subordinates
         auto subordinate_result = is_role_superior(subordinate, role_b);
-        if (subordinate_result.is_success() && subordinate_result.value()) {
+        if (subordinate_result.has_value() && subordinate_result.value()) {
             return zerossg::make_result_success(true);
         }
     }
@@ -236,7 +236,7 @@ bool AuthorizationManager::can_role_access_service(zerossg::Role role, const zer
     // Check role hierarchy - if this role is superior to any allowed role
     for (zerossg::Role allowed_role : service.allowed_roles()) {
         auto hierarchy_result = is_role_superior(role, allowed_role);
-        if (hierarchy_result.is_success() && hierarchy_result.value()) {
+        if (hierarchy_result.has_value() && hierarchy_result.value()) {
             return true;
         }
     }
