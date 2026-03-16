@@ -15,15 +15,15 @@ export constexpr const char* DEFAULT_DB_PASSWORD = "";
 
 // JWT constants
 export constexpr size_t JWT_SECRET_SIZE = 32;
-export constexpr Seconds TOKEN_EXPIRY_TIME = 3600; // 1 hour
+export constexpr std::chrono::seconds TOKEN_EXPIRY_TIME{3600}; // 1 hour
 export constexpr std::size_t BCRYPT_ROUNDS = 12;
-export constexpr Seconds SECRET_ROTATION_INTERVAL = 86400; // 24 hours
+export constexpr std::chrono::seconds SECRET_ROTATION_INTERVAL{86400}; // 24 hours
 export constexpr size_t MAX_FAILED_ATTEMPTS = 5;
-export constexpr Seconds FAILED_ATTEMPT_WINDOW = 900; // 15 minutes
+export constexpr std::chrono::seconds FAILED_ATTEMPT_WINDOW{900}; // 15 minutes
 
 // Database constants
 export constexpr Count DEFAULT_CONNECTION_POOL_SIZE = 10;
-export constexpr Seconds DEFAULT_CONNECTION_TIMEOUT = 30;
+export constexpr std::chrono::seconds DEFAULT_CONNECTION_TIMEOUT{30};
 
 // Logging constants
 export constexpr Count DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -215,11 +215,11 @@ export constexpr size_t MAX_REQUEST_SIZE = 1024 * 1024; // 1MB
 export constexpr size_t MAX_RESPONSE_SIZE = 1024 * 1024; // 1MB
 
 // Timeout values
-export constexpr Milliseconds NETWORK_TIMEOUT{30000}; // 30 seconds
-export constexpr Milliseconds TLS_HANDSHAKE_TIMEOUT{10000}; // 10 seconds
-export constexpr Milliseconds READ_TIMEOUT{60000}; // 1 minute
-export constexpr Milliseconds WRITE_TIMEOUT{60000}; // 1 minute
-export constexpr Milliseconds KEEP_ALIVE_TIMEOUT{30000}; // 30 seconds
+export constexpr std::chrono::milliseconds NETWORK_TIMEOUT{30000}; // 30 seconds
+export constexpr std::chrono::milliseconds TLS_HANDSHAKE_TIMEOUT{10000}; // 10 seconds
+export constexpr std::chrono::milliseconds READ_TIMEOUT{60000}; // 1 minute
+export constexpr std::chrono::milliseconds WRITE_TIMEOUT{60000}; // 1 minute
+export constexpr std::chrono::milliseconds KEEP_ALIVE_TIMEOUT{30000}; // 30 seconds
 
 // Buffer sizes
 export constexpr size_t BUFFER_SIZE_SMALL = 1024;
@@ -238,9 +238,9 @@ export constexpr size_t MAX_CACHE_SIZE = 10000;
 
 // Retry configuration
 export constexpr Count MAX_RETRY_ATTEMPTS = 3;
-export constexpr Milliseconds RETRY_DELAY_BASE{1000}; // 1 second
-export constexpr Milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
+export constexpr std::chrono::milliseconds RETRY_DELAY_BASE{1000}; // 1 second
+export constexpr std::chrono::milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
 
 // Health check intervals
-export constexpr Seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
-export constexpr Seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
+export constexpr std::chrono::seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
+export constexpr std::chrono::seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds

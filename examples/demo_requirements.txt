@@ -12,8 +12,9 @@ System Requirements
    - Windows 10+ (with WSL2 recommended)
 
 2. **Build Tools**
-   - CMake 3.20 or higher
-   - GCC 10+ or Clang 12+ (for C++20 support)
+   - CMake 3.28 or higher (for C++23 module support)
+   - GCC 13+ or Clang 17+ (for C++23 support)
+   - MSVC 19.34+ (Visual Studio 2022 17.4+) on Windows
    - Make 3.81 or higher
    - Git for version control
 
@@ -42,30 +43,66 @@ Quick Setup Guide
 ### Linux/macOS
 
 ```bash
-# 1. Install build dependencies (Ubuntu/Debian)
+# 1. Install build dependencies (Ubuntu/22.04+ for C++23 support)
 sudo apt-get update
 sudo apt-get install -y \
     build-essential cmake git \
     libboost-all-dev libssl-dev \
     python3 python3-pip curl jq
 
-# 2. Install Python demo dependencies
+# 2. For C++23 support, you may need newer compilers:
+# Ubuntu 22.04+ includes GCC 11, but for full C++23 support:
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt-get install gcc-13 g++-13
+
+# 3. Set GCC 13 as default
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+
+# 4. Install Python demo dependencies
 pip3 install --user -r examples/demo_requirements.txt
 
-# 3. Clone and build
+# 5. Clone and build
 git clone <repository-url>
 cd zero-trust-secure-session-gateway
 chmod +x examples/demo_script.sh
 ./examples/demo_script.sh
 ```
 
+### Windows (Native with Visual Studio 2022)
+
+```powershell
+# 1. Install Visual Studio 2022 17.4+ with C++ development tools
+# Download from: https://visualstudio.microsoft.com/downloads/
+
+# 2. Install vcpkg for package management
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+.\vcpkg integrate install
+
+# 3. Install required packages via vcpkg
+.\vcpkg install boostasio boostsystem openssl spdlog nlohmann-json yaml-cpp gtest
+
+# 4. Build with CMake (from Developer Command Prompt)
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config Release
+
+# 5. Run demo
+.\bin\Release\zerossg_gateway.exe --help
+```
+
 ### Windows (WSL2)
 
 ```bash
-# 1. Enable WSL2 and install Ubuntu
+# 1. Enable WSL2 and install Ubuntu 22.04+
 wsl --install -d Ubuntu
 
 # 2. In WSL2 Ubuntu, follow Linux instructions above
+# Note: Ensure C++23 compatible compiler is installed
 ```
 
 ### Docker (Recommended for Easy Demo)

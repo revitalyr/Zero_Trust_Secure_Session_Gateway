@@ -45,7 +45,15 @@ Use the Python client to interact with a running gateway:
 
 ```bash
 # Start the gateway first (in another terminal)
-./build/zerossg_gateway start examples/config.json
+# On Linux/macOS:
+./build/bin/zerossg_gateway start examples/config.json
+# Or with YAML configuration:
+./build/bin/zerossg_gateway start examples/config.yaml
+
+# On Windows:
+.\build\bin\zerossg_gateway.exe start examples\config.json
+# Or with YAML configuration:
+.\build\bin\zerossg_gateway.exe start examples\config.yaml
 
 # Run the Python client demo
 python3 examples/demo_client.py --demo basic
@@ -122,7 +130,34 @@ Tests various security controls:
 ```
 
 #### `config.yaml`
-Same configuration in YAML format for those who prefer YAML.
+```yaml
+# Zero Trust Secure Session Gateway Configuration
+server:
+  listen_address: "0.0.0.0"
+  listen_port: 8443
+  tls_cert_file: "certs/server.crt"
+  tls_key_file: "certs/server.key"
+
+target_services:
+  ssh:
+    host: "internal-ssh-server"
+    port: 22
+    tls_enabled: false
+    allowed_roles:
+      - "admin"
+      - "operator"
+  
+  web-admin:
+    host: "internal-web-server"
+    port: 443
+    tls_enabled: true
+    allowed_roles:
+      - "admin"
+      - "operator"
+      - "viewer"
+```
+
+Both JSON and YAML formats are fully supported with identical functionality.
 
 ### Test Certificates
 
@@ -250,11 +285,18 @@ openssl x509 -req -days 365 -in certs/server.csr -signkey certs/server.key -out 
 
 **Build failures:**
 ```bash
-# Clean and rebuild
+# On Linux/macOS:
 rm -rf build
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
+
+# On Windows (from Developer Command Prompt):
+rmdir /s build
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>\scripts\buildsystems\vcpkg.cmake
+cmake --build . --config Release
 ```
 
 **Connection refused:**

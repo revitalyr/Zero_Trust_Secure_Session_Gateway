@@ -5,6 +5,9 @@ module;
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 
+// Standard library exports
+#include <expected>
+
 export module zerossg.common;
 
 import zerossg.std;
@@ -125,7 +128,7 @@ export inline constexpr ResultVoid make_result_success() noexcept {
 }
 
 export inline constexpr ResultVoid make_result_error(std::string error) noexcept {
-    return std::unexpected<void>(std::move(error));
+    return std::unexpected(std::move(error));
 }
 
 // File name aliases

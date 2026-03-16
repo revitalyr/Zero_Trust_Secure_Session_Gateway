@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(ZeroTrustSecureSessionGateway VERSION 1.0.0 LANGUAGES CXX)
 
+# Windows-specific definitions
+if(WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x0601) # Windows 7
+endif()
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

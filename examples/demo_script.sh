@@ -20,6 +20,20 @@ GATEWAY_PORT="8443"
 CONFIG_FILE="examples/config.json"
 LOG_DIR="logs"
 
+# Detect OS and set appropriate paths
+detect_os() {
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+        OS="Windows"
+        GATEWAY_EXECUTABLE="./build/bin/zerossg_gateway.exe"
+        CONFIG_FILE="examples\\config.json"
+    else
+        OS="Linux/macOS"
+        GATEWAY_EXECUTABLE="./build/bin/zerossg_gateway"
+        CONFIG_FILE="examples/config.json"
+    fi
+    echo "Detected OS: $OS"
+}
+
 # Functions
 print_banner() {
     echo -e "${PURPLE}"
@@ -129,7 +143,7 @@ start_gateway() {
     
     # Start server in background
     print_info "Starting Zero Trust Gateway on port $GATEWAY_PORT..."
-    ./build/zerossg_gateway start "$CONFIG_FILE" > "$LOG_DIR/gateway.log" 2>&1 &
+    $GATEWAY_EXECUTABLE start "$CONFIG_FILE" > "$LOG_DIR/gateway.log" 2>&1 &
     GATEWAY_PID=$!
     
     # Wait for server to start
@@ -308,8 +322,8 @@ show_menu() {
             fi
             ;;
         4)
-            if [ -f "build/zerossg_gateway" ]; then
-                ./build/zerossg_gateway status
+            if [ -f "$GATEWAY_EXECUTABLE" ]; then
+                $GATEWAY_EXECUTABLE status
             else
                 print_error "Gateway not built. Run option 1 or 2 first."
             fi
@@ -327,8 +341,10 @@ show_menu() {
 # Check if running interactively
 if [ -t 0 ]; then
     # Interactive mode
+    detect_os
     show_menu
 else
     # Non-interactive mode - run full demo
+    detect_os
     run_demo
 fi
