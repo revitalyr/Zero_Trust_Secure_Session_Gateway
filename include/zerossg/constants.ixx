@@ -1,3 +1,9 @@
+module;
+
+#include <chrono>
+#undef EXIT_SUCCESS
+#undef EXIT_FAILURE
+
 export module zerossg.constants;
 
 // Type aliases for time and size

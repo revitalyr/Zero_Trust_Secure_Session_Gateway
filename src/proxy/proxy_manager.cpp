@@ -1,7 +1,10 @@
+module;
+#include <boost/asio.hpp>
+
 // Project headers
+module zerossg.proxy.proxy_manager;
 import zerossg.interfaces;
 import zerossg.logging.logger;
-import zerossg.proxy.proxy_manager;
 
 // Standard library imports
 import zerossg.std;

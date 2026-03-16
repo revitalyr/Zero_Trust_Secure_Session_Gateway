@@ -1,8 +1,13 @@
+module;
+
+#include <memory>
+#include <string>
+#include <vector>
+
 export module zerossg.rbac.authorizer;
 
-export import <memory>;
-export import <string>;
-export import <vector>;
+export import zerossg.common;
+export import zerossg.types;
 
 export namespace zerossg {
 

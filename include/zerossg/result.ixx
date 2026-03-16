@@ -1,106 +1,102 @@
-export module zerossg.result;
+module;
 
-export import zerossg.std;
+#include <string>
+#include <utility>
+#include <stdexcept>
+#include <optional>
+
+export module zerossg.result;
 
 export namespace zerossg {
 
-export template<typename T>
-class Result {
-public:
-    // Constructors
-    Result() = default;
-    Result(const T& value) : m_value(value), m_has_value(true) {}
-    Result(T&& value) : m_value(std::move(value)), m_has_value(true) {}
-    Result(const String& error) : m_error(error), m_has_value(false) {}
-    
-    // Factory methods
-    static Result<T> success(const T& value) { return Result<T>(value); }
-    static Result<T> success(T&& value) { return Result<T>(std::move(value)); }
-    static Result<T> error(const String& message) { return Result<T>(message); }
-    
-    // Accessors
-    bool is_success() const { return m_has_value; }
-    bool is_error() const { return !m_has_value; }
-    
-    const T& value() const {
-        if (!m_has_value) {
-            throw std::runtime_error("Attempted to access value of error result");
+    // Forward declaration
+    template <typename T>
+    class Result;
+
+    using String = std::string;
+
+    template <typename T>
+    class Result {
+    public:
+        // Constructors for success case
+        Result(const T& value) noexcept
+            : m_value(value), m_is_success(true) {}
+
+        Result(T&& value) noexcept
+            : m_value(std::move(value)), m_is_success(true) {}
+
+        // Static factory for creating an error result
+        [[nodiscard]] static Result<T> error(const String& message) noexcept {
+            return Result(message);
         }
-        return m_value;
-    }
-    
-    T& value() {
-        if (!m_has_value) {
-            throw std::runtime_error("Attempted to access value of error result");
+
+        // Check status
+        [[nodiscard]] bool is_success() const noexcept {
+            return m_is_success;
         }
-        return m_value;
-    }
-    
-    const String& error() const {
-        if (m_has_value) {
-            throw std::runtime_error("Attempted to access error of success result");
+
+        // Accessors (throw on incorrect access)
+        const T& value() const {
+            if (!m_is_success) throw std::runtime_error("Attempted to access value of an error Result.");
+            return m_value.value();
         }
-        return m_error;
-    }
-    
-    // Convenience operators
-    explicit operator bool() const { return m_has_value; }
-    T& operator*() { return value(); }
-    const T& operator*() const { return value(); }
-    T* operator->() { return &value(); }
-    const T* operator->() const { return &value(); }
 
-private:
-    T m_value{};
-    String m_error{};
-    bool m_has_value = false;
-};
-
-// Specialization for void
-export template<>
-class Result<void> {
-public:
-    Result() = default;
-    Result(const String& error) : m_error(error), m_has_value(false) {}
-    
-    static Result<void> success() { return Result<void>(); }
-    static Result<void> error(const String& message) { return Result<void>(message); }
-    
-    bool is_success() const { return m_has_value; }
-    bool is_error() const { return !m_has_value; }
-    
-    const String& error() const {
-        if (m_has_value) {
-            throw std::runtime_error("Attempted to access error of success result");
+        const String& error() const {
+            if (m_is_success) throw std::runtime_error("Attempted to access error of a success Result.");
+            return m_error;
         }
-        return m_error;
+
+    private:
+        // Private constructor for error case
+        explicit Result(const String& error_message) noexcept
+            : m_error(error_message), m_is_success(false) {}
+
+        std::optional<T> m_value;
+        String m_error;
+        bool m_is_success;
+    };
+
+    // Specialization for void results
+    template <>
+    class Result<void> {
+    public:
+        // Default constructor for success
+        Result() noexcept : m_is_success(true) {}
+
+        [[nodiscard]] static Result<void> error(const String& message) noexcept {
+            return Result<void>(message);
+        }
+
+        [[nodiscard]] bool is_success() const noexcept {
+            return m_is_success;
+        }
+
+        const String& error() const {
+            if (m_is_success) throw std::runtime_error("Attempted to access error of a success Result.");
+            return m_error;
+        }
+
+    private:
+        explicit Result(const String& error_message) noexcept
+            : m_error(error_message), m_is_success(false) {}
+
+        String m_error;
+        bool m_is_success;
+    };
+
+    // Helper functions used in other parts of the code
+    template <typename T>
+    [[nodiscard]] inline Result<std::decay_t<T>> make_result_success(T&& value) noexcept {
+        return Result<std::decay_t<T>>(std::forward<T>(value));
     }
-    
-    explicit operator bool() const { return m_has_value; }
 
-private:
-    String m_error{};
-    bool m_has_value = true;
-};
+    [[nodiscard]] inline Result<void> make_result_success() noexcept {
+        return Result<void>();
+    }
 
-// Helper functions
-export template<typename T>
-Result<T> make_result_success(const T& value) {
-    return Result<T>::success(value);
-}
-
-export template<typename T>
-Result<T> make_result_success(T&& value) {
-    return Result<T>::success(std::move(value));
-}
-
-inline Result<void> make_result_success() {
-    return Result<void>::success();
-}
-
-export template<typename T>
-Result<T> make_result_error(const String& message) {
-    return Result<T>::error(message);
-}
+    template <typename T>
+    [[nodiscard]] inline Result<T> make_result_error(const String& message) noexcept {
+        return Result<T>::error(message);
+    }
 
 } // namespace zerossg

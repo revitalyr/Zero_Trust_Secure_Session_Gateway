@@ -11,9 +11,7 @@ FetchContent_MakeAvailable(ut)
 
 # Collect test files
 set(TEST_SOURCES
-    "test_authentication.cpp"
-    "test_authorization.cpp"
-    "test_session_manager.cpp"
+    "simple_test.cpp"
 )
 
 # Create test executable

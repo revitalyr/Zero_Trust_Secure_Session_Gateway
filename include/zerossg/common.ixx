@@ -1,11 +1,8 @@
 module;
 
-// Boost exports
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
-
-// Standard library exports
 #include <expected>
 
 export module zerossg.common;
@@ -15,158 +12,164 @@ import zerossg.std;
 export namespace zerossg {
 
 // Modern C++26 type aliases with semantic naming
-export using StringView = std::string_view;
+using StringView = std::string_view;
 
 template<typename T>
-export using UniquePtr = std::unique_ptr<T>;
+using UniquePtr = std::unique_ptr<T>;
 
 template<typename T>
-export using SharedPtr = std::shared_ptr<T>;
+using SharedPtr = std::shared_ptr<T>;
 
 template<typename T>
-export using WeakPtr = std::weak_ptr<T>;
+using WeakPtr = std::weak_ptr<T>;
 
 template<typename T>
-export using Vector = std::vector<T>;
+using Optional = std::optional<T>;
+
+template<typename T>
+using Vector = std::vector<T>;
 
 template<typename K, typename V>
-export using UnorderedMap = std::unordered_map<K, V>;
+using UnorderedMap = std::unordered_map<K, V>;
 
-export using SystemClock = std::chrono::system_clock;
-export using SteadyClock = std::chrono::steady_clock;
-export using TimePoint = std::chrono::system_clock::time_point;
+template<typename T, typename U>
+using Result = std::expected<T, U>;
+
+using SystemClock = std::chrono::system_clock;
+using SteadyClock = std::chrono::steady_clock;
+using TimePoint = std::chrono::system_clock::time_point;
 
 // Semantic type aliases for basic types
-export using String = std::string;
-export using UserName = std::string;
-export using StringId = std::string;
-export using ServiceName = std::string;
-export using IpAddress = std::string; // Generic IP Address
-export using ClientIp = IpAddress; // Specific use
-export using ErrorMessage = std::string;
-export using SecretKey = std::vector<unsigned char>;
-export using TokenString = std::string;
-export using SessionId = std::string;
-export using PasswordHash = std::string;
-export using Password = std::string;
-export using Permission = std::string;
-export using RoleString = std::string;
-export using EventString = std::string;
-export using RoleStringView = std::string_view;
-export using EventStringView = std::string_view;
-export using SessionIdView = std::string_view;
-export using ClientIpView = std::string_view;
-export using DurationString = std::string;
-export using JwtPayloadString = std::string;
-export using JwtSignature = std::string;
-export using JwtHeaderPayload = std::string;
-export using Bytes = std::vector<unsigned char>;
+using String = std::string;
+using UserName = std::string;
+using StringId = std::string;
+using ServiceName = std::string;
+using IpAddress = std::string; // Generic IP Address
+using ClientIp = IpAddress; // Specific use
+using ErrorMessage = std::string;
+using SecretKey = std::vector<unsigned char>;
+using TokenString = std::string;
+using SessionId = std::string;
+using PasswordHash = std::string;
+using Password = std::string;
+using Permission = std::string;
+using RoleString = std::string;
+using EventString = std::string;
+using RoleStringView = std::string_view;
+using EventStringView = std::string_view;
+using SessionIdView = std::string_view;
+using ClientIpView = std::string_view;
+using DurationString = std::string;
+using JwtPayloadString = std::string;
+using JwtSignature = std::string;
+using JwtHeaderPayload = std::string;
+using Bytes = std::vector<unsigned char>;
 
 // Numeric type aliases
-export using PortNo = uint16_t;
-export using RateLimit = size_t;
-export using Threshold = size_t;
-export using UserCount = size_t;
-export using SessionCount = size_t;
-export using AttemptCount = size_t;
-export using Count = size_t;
+using PortNo = uint16_t;
+using RateLimit = size_t;
+using Threshold = size_t;
+using UserCount = size_t;
+using SessionCount = size_t;
+using AttemptCount = size_t;
+using Count = size_t;
 
 // Time duration aliases
-export using TimeoutDuration = std::chrono::seconds;
-export using Milliseconds = std::chrono::milliseconds;
-export using Seconds = std::chrono::seconds;
-export using Hours = std::chrono::hours;
-export using Minutes = std::chrono::minutes;
+using TimeoutDuration = std::chrono::seconds;
+using Milliseconds = std::chrono::milliseconds;
+using Seconds = std::chrono::seconds;
+using Hours = std::chrono::hours;
+using Minutes = std::chrono::minutes;
 
 // Semantic type aliases for collections
-export using Strings = std::vector<std::string>;
+using Strings = std::vector<std::string>;
 template<typename T>
-export using Roles = std::vector<T>;
+using Roles = std::vector<T>;
 
 // Smart pointer aliases
 template<typename T>
-export using SessionManagerPtr = std::unique_ptr<T>;
+using SessionManagerPtr = std::unique_ptr<T>;
 
 // Network type aliases
-export using TcpEndpoint = boost::asio::ip::tcp::endpoint;
-export using SslContext = boost::asio::ssl::context;
-export using SslStream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
-export using TcpSocket = boost::asio::ip::tcp::socket;
-export using TcpAcceptor = boost::asio::ip::tcp::acceptor;
-export using IoContext = boost::asio::io_context;
+using TcpEndpoint = boost::asio::ip::tcp::endpoint;
+using SslContext = boost::asio::ssl::context;
+using SslStream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
+using TcpSocket = boost::asio::ip::tcp::socket;
+using TcpAcceptor = boost::asio::ip::tcp::acceptor;
+using IoContext = boost::asio::io_context;
 
 // SSL verification type aliases
-export using SslVerifyMode = boost::asio::ssl::verify_mode;
-export using SslVerifyContext = boost::asio::ssl::verify_context;
+using SslVerifyMode = boost::asio::ssl::verify_mode;
+using SslVerifyContext = boost::asio::ssl::verify_context;
 
 // Synchronization aliases
 template<typename Mutex>
-export using LockGuard = std::lock_guard<Mutex>;
+using LockGuard = std::lock_guard<Mutex>;
 template<typename Mutex>
-export using SharedLock = std::shared_lock<Mutex>;
+using SharedLock = std::shared_lock<Mutex>;
 
 // Modern expected-based error handling (C++23)
-export template<typename T>
-using Result = std::expected<T, std::string>;
+template<typename T>
+using ResultType = std::expected<T, std::string>;
 
 // Helper functions for Result creation
-export template<typename T>
-constexpr Result<T> make_result_success(T&& value) noexcept {
-    return Result<T>{std::forward<T>(value)};
+template<typename T>
+constexpr ResultType<T> make_result_success(T&& value) noexcept {
+    return ResultType<T>{std::forward<T>(value)};
 }
 
-export template<typename T>
-constexpr Result<T> make_result_error(std::string error) noexcept {
-    return std::unexpected<T>(std::move(error));
+template<typename T>
+constexpr ResultType<T> make_result_error(std::string error) noexcept {
+    return std::unexpected(std::move(error));
 }
 
 // Specialization for void using std::expected
-export using ResultVoid = std::expected<void, std::string>;
+using ResultVoid = std::expected<void, std::string>;
 
-export inline constexpr ResultVoid make_result_success() noexcept {
+inline constexpr ResultVoid make_result_success_void() noexcept {
     return ResultVoid{};
 }
 
-export inline constexpr ResultVoid make_result_error(std::string error) noexcept {
+inline constexpr ResultVoid make_result_error_void(std::string error) noexcept {
     return std::unexpected(std::move(error));
 }
 
 // File name aliases
-export using FilePath = std::string;
-export using FileName = std::string;
-export using LogFileName = std::string;
-export using ConfigFileName = std::string;
-export using DirectoryPath = std::string;
-export using FileContent = std::string;
-export using FileExtension = std::string;
+using FilePath = std::string;
+using FileName = std::string;
+using LogFileName = std::string;
+using ConfigFileName = std::string;
+using DirectoryPath = std::string;
+using FileContent = std::string;
+using FileExtension = std::string;
 
 // Config aliases
-export using ConfigKey = std::string;
-export using ConfigValue = std::string;
-export using ConfigKeys = std::vector<ConfigKey>;
-export using StringArray = std::vector<std::string>;
+using ConfigKey = std::string;
+using ConfigValue = std::string;
+using ConfigKeys = std::vector<ConfigKey>;
+using StringArray = std::vector<std::string>;
 
 // TLS aliases
-export using CertificateData = std::string;
-export using CipherListString = std::string;
+using CertificateData = std::string;
+using CipherListString = std::string;
 
 // Network aliases
-export using RequestString = std::string;
-export using ResponseString = std::string;
-export using StatusString = std::string;
-export using MessageString = std::string;
-export using ErrorString = std::string;
-export using EventTypeString = std::string;
-export using LogDetails = std::string;
+using RequestString = std::string;
+using ResponseString = std::string;
+using StatusString = std::string;
+using MessageString = std::string;
+using ErrorString = std::string;
+using EventTypeString = std::string;
+using LogDetails = std::string;
 
 // Database-related type aliases
-export using DbType = std::string;
-export using ConnectionString = std::string;
-export using HostAddress = std::string;
+using DbType = std::string;
+using ConnectionString = std::string;
+using HostAddress = std::string;
 
 // C++23 modern features
-export template<typename T>
-concept ResultType = requires(T t) {
+template<typename T>
+concept ResultTypeConcept = requires(T t) {
     typename T::value_type;
     typename T::error_type;
     { t.has_value() } -> std::convertible_to<bool>;
@@ -175,18 +178,18 @@ concept ResultType = requires(T t) {
 };
 
 // Modern monadic operations for Result
-export template<typename T, typename F>
+template<typename T, typename F>
 requires std::invocable<F, T>
-constexpr auto transform(const Result<T>& result, F&& func) noexcept {
+constexpr auto transform(const ResultType<T>& result, F&& func) noexcept {
     if (result) {
         return make_result_success(std::invoke(std::forward<F>(func), *result));
     }
     return make_result_error<T>(result.error());
 }
 
-export template<typename T, typename F>
+template<typename T, typename F>
 requires std::invocable<F, T>
-constexpr auto and_then(const Result<T>& result, F&& func) noexcept {
+constexpr auto and_then(const ResultType<T>& result, F&& func) noexcept {
     if (result) {
         return std::invoke(std::forward<F>(func), *result);
     }
@@ -194,13 +197,13 @@ constexpr auto and_then(const Result<T>& result, F&& func) noexcept {
 }
 
 // C++23 std::expected utilities
-export template<typename T>
-constexpr bool is_success(const Result<T>& result) noexcept {
+template<typename T>
+constexpr bool is_success(const ResultType<T>& result) noexcept {
     return result.has_value();
 }
 
-export template<typename T>
-constexpr bool is_error(const Result<T>& result) noexcept {
+template<typename T>
+constexpr bool is_error(const ResultType<T>& result) noexcept {
     return !result.has_value();
 }
 

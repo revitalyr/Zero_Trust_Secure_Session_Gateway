@@ -1,10 +1,11 @@
+module;
+#include <format>;
 module zerossg.rbac.authorizer;
 
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
 import zerossg.std;
-import <format>;
 
 namespace zerossg {
 

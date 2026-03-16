@@ -21,11 +21,12 @@ zerossg::CLIInterface::CLIInterface() {
 }
 
 Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
+    try {
         zerossg::CommandLineArgs args = parse_command_line(argc, argv);
         
         if (args.empty()) {
             show_help();
-            return make_result_success(1);
+            return 1;
         }
         
         zerossg::CommandName command_name = args[0];
@@ -34,21 +35,22 @@ Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
         if (!command) {
             print_error("Unknown command: " + command_name);
             show_help();
-            return make_result_success(1);
+            return 1;
         }
         
         zerossg::CommandLineArgs command_args(args.begin() + 1, args.end());
         
         if (!validate_arguments(*command, command_args)) {
             show_command_help(*command);
-            return make_result_success(1);
+            return 1;
         }
         
         int result = command->handler(command_args);
-        return Result<int>::success(result);
+        return result;
     } catch (const std::exception& e) {
         print_error("CLI error: " + zerossg::String(e.what()));
-        return Result<int>::success(1);
+        return 1;
+    }
 }
 
 void CLIInterface::show_help() {
@@ -70,7 +72,7 @@ void CLIInterface::show_help() {
     std::cout << "Use 'zerossg interactive' to enter interactive mode." << std::endl;
 }
 
-void CLIInterface::show_active_sessions() {
+void CLIInterface::show_sessions() {
     try {
         // This would connect to the server and get active sessions
         // For now, show a placeholder
@@ -519,7 +521,7 @@ int CLIInterface::handle_users_command(const zerossg::CommandLineArgs& args) {
 
 int CLIInterface::handle_sessions_command(const zerossg::CommandLineArgs& args) {
     try {
-        show_active_sessions();
+        show_sessions();
         return 0;
     } catch (const std::exception& e) {
         print_error("Failed to list sessions: " + string(e.what()));
