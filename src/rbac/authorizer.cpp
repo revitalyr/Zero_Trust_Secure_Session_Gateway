@@ -23,11 +23,11 @@ zerossg::Result<bool> AuthorizationManager::can_access_service(const zerossg::Us
     }
     
     const zerossg::TargetService& service = service_it->second;
-    return zerossg::make_result_success(can_role_access_service(user.m_role, service));
+    return zerossg::make_result_success(can_role_access_service(user.role(), service));
 }
 
 zerossg::Result<bool> AuthorizationManager::has_permission(const zerossg::User& user, const zerossg::Permission& permission) {
-    return zerossg::make_result_success(role_has_permission(user.m_role, permission));
+    return zerossg::make_result_success(role_has_permission(user.role(), permission));
 }
 
 zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(const zerossg::User& user) {
@@ -37,7 +37,7 @@ zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(con
     
     for (const auto& pair : m_services) {
         const zerossg::TargetService& service = pair.second;
-        if (can_role_access_service(user.m_role, service)) {
+        if (can_role_access_service(user.role(), service)) {
             allowed_services.push_back(service.m_name);
         }
     }

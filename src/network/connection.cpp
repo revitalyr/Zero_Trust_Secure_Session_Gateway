@@ -69,11 +69,13 @@ void Connection::handle_read(const boost::system::error_code& error, size_t byte
         return;
     }
     
-    std::istream is(&m_buffer);
-    std::string request_line;
-    std::getline(is, request_line);
+    // Корректное извлечение всего сообщения из буфера до разделителя
+    const auto data = m_buffer.data();
+    std::string message(boost::asio::buffers_begin(data), boost::asio::buffers_begin(data) + bytes_transferred - std::string(zerossg::MESSAGE_DELIMITER).length());
+    m_buffer.consume(bytes_transferred);
     
-    handle_request(request_line);
+    // Обработка полного сообщения
+    handle_request(message);
     
     do_read();
 }

@@ -19,13 +19,9 @@ namespace zerossg {
 // Helper function to generate secure random bytes
 zerossg::Result<zerossg::Bytes> generate_secure_random_bytes(size_t size) {
     zerossg::Bytes bytes(size);
-    std::random_device rd;
-    std::uniform_int_distribution<unsigned char> dist(0, 255);
-    
-    for (size_t i = 0; i < size; ++i) {
-        bytes[i] = dist(rd);
+    if (RAND_bytes(bytes.data(), bytes.size()) != 1) {
+        return zerossg::make_result_error<zerossg::Bytes>("Failed to generate secure random bytes using OpenSSL");
     }
-    
     return zerossg::make_result_success(std::move(bytes));
 }
 
