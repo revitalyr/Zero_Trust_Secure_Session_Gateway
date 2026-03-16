@@ -1,3 +1,6 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 module zerossg.session.session_manager;
 
 // C++23 module imports
@@ -16,8 +19,8 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     LockGuard<std::mutex> lock(m_sessions_mutex);
     
     // Check if user has reached session limit
-    if (is_user_at_session_limit(user.m_user_name)) {
-        return make_result_error<SessionId>(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.m_user_name));
+    if (is_user_at_session_limit(user.user_name())) {
+        return make_result_error<SessionId>(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.user_name()));
     }
     
     // Generate unique session ID
@@ -29,7 +32,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     }
     
     // Create session
-    zerossg::Session session(session_id, user.m_user_name, user.m_role, client_ip, target_service);
+    zerossg::Session session(session_id, user.user_name(), user.role(), client_ip, target_service);
     session.m_expires_at = std::chrono::system_clock::now() + zerossg::DEFAULT_SESSION_TIMEOUT;
     
     // Store session
@@ -50,7 +53,7 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     const zerossg::Session& session = it->second;
     
     // Check if session has expired
-    if (std::chrono::system_clock::now() > session.m_expires_at) {
+    if (session.is_expired()) {
         // Remove expired session
         m_sessions.erase(it);
         return make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_EXPIRED_PREFIX, session_id));
@@ -90,7 +93,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_active_sessions() {
     active_sessions.reserve(m_sessions.size());
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.active && std::chrono::system_clock::now() <= pair.second.expires_at) {
+        if (pair.second.is_active() && !pair.second.is_expired()) {
             active_sessions.push_back(pair.second);
         }
     }
@@ -111,7 +114,7 @@ size_t SessionManager::get_active_session_count() const {
     auto now = std::chrono::system_clock::now();
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.active && now <= pair.second.expires_at) {
+        if (pair.second.is_active() && now <= pair.second.expires_at()) {
             active_count++;
         }
     }
@@ -134,12 +137,12 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
     zerossg::Session& session = it->second;
     
     // Check if session is still active
-    if (!session.active || std::chrono::system_clock::now() > session.expires_at) {
+    if (!session.is_active() || session.is_expired()) {
         return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
     }
     
     // Extend session
-    session.expires_at += additional_time;
+    session.set_expires_at(session.expires_at() + additional_time);
     
     return make_result_success();
 }
@@ -157,7 +160,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_user(const ze
     zerossg::Sessions user_sessions;
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.username == username && pair.second.active) {
+        if (pair.second.user_name() == username && pair.second.is_active()) {
             user_sessions.push_back(pair.second);
         }
     }
@@ -173,7 +176,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_service(const
     zerossg::Sessions service_sessions;
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.target_service == service_name && pair.second.active) {
+        if (pair.second.target_service() == service_name && pair.second.is_active()) {
             service_sessions.push_back(pair.second);
         }
     }
@@ -189,7 +192,7 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zero
     zerossg::Sessions ip_sessions;
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.client_ip == client_ip && pair.second.active) {
+        if (pair.second.client_ip() == client_ip && pair.second.is_active()) {
             ip_sessions.push_back(pair.second);
         }
     }
@@ -215,9 +218,9 @@ bool SessionManager::is_user_at_session_limit(const zerossg::UserName& username)
     auto now = std::chrono::system_clock::now();
     
     for (const auto& pair : m_sessions) {
-        if (pair.second.username == username && 
-            pair.second.active && 
-            now <= pair.second.expires_at) {
+        if (pair.second.user_name() == username && 
+            pair.second.is_active() && 
+            now <= pair.second.expires_at()) {
             user_session_count++;
             
             if (user_session_count >= zerossg::MAX_SESSIONS_PER_USER) {
@@ -234,7 +237,7 @@ void SessionManager::cleanup_expired_sessions_internal() {
     auto it = m_sessions.begin();
     
     while (it != m_sessions.end()) {
-        if (now > it->second.expires_at) {
+        if (now > it->second.expires_at()) {
             it = m_sessions.erase(it);
         } else {
             ++it;

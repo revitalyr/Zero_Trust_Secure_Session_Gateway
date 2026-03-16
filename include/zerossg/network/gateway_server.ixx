@@ -2,6 +2,7 @@ module;
 
 export module zerossg.network.gateway_server;
 
+import zerossg.network;
 // Import required modules
 import zerossg.tls.tls_handler;
 import zerossg.auth.authenticator;

@@ -109,12 +109,12 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
     auto exp = std::chrono::duration_cast<zerossg::Seconds>((now + zerossg::Seconds(3600)).time_since_epoch()).count();
     
     json payload = {
-        {zerossg::JWT_PAYLOAD_USERNAME, user.m_user_name},
-        {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.m_role)},
+        {zerossg::JWT_PAYLOAD_USERNAME, user.user_name()},
+        {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role())},
         {zerossg::JWT_PAYLOAD_IAT, iat},
         {zerossg::JWT_PAYLOAD_EXP, exp},
         {zerossg::JWT_PAYLOAD_SUB, "zerossg"},
-        {zerossg::JWT_PAYLOAD_JTI, std::to_string(std::hash<std::string>{}(std::string(user.m_user_name) + std::to_string(iat)))}
+        {zerossg::JWT_PAYLOAD_JTI, std::to_string(std::hash<std::string>{}(std::string(user.user_name()) + std::to_string(iat)))}
     };
     
     // Create JWT header
@@ -196,8 +196,8 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::generate_token(cons
         
         // Create JWT payload
         json payload = {
-            {zerossg::JWT_PAYLOAD_USERNAME, user.username},
-            {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role)},
+            {zerossg::JWT_PAYLOAD_USERNAME, user.user_name()},
+            {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role())},
             {zerossg::JWT_PAYLOAD_IAT, std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()},
             {zerossg::JWT_PAYLOAD_EXP, std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + zerossg::TOKEN_EXPIRY_TIME).time_since_epoch()).count()}
         };
@@ -230,11 +230,11 @@ zerossg::Result<void> AuthenticationManager::revoke_token(const zerossg::TokenSt
 zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user) {
     LockGuard<std::mutex> lock(m_users_mutex);
     
-    if (m_users.find(user.username) != m_users.end()) {
+    if (m_users.find(user.user_name()) != m_users.end()) {
         return zerossg::make_result_error(zerossg::ERROR_USER_ALREADY_EXISTS);
     }
     
-    m_users[user.username] = user;
+    m_users[user.user_name()] = user;
     return zerossg::make_result_success();
 }
 
@@ -378,8 +378,8 @@ zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Pass
 
 zerossg::JwtPayloadString AuthenticationManager::create_jwt_payload(const zerossg::User& user) {
     json payload = {
-        {zerossg::JWT_PAYLOAD_USERNAME, user.username},
-        {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role)},
+        {zerossg::JWT_PAYLOAD_USERNAME, user.user_name()},
+        {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role())},
         {zerossg::JWT_PAYLOAD_IAT, std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()},
         {zerossg::JWT_PAYLOAD_EXP, std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + zerossg::TOKEN_EXPIRY_TIME).time_since_epoch()).count()}
     };

@@ -4,6 +4,7 @@ module;
 export module zerossg.proxy.proxy_manager;
 
 export import zerossg.common;
+import zerossg.network;
 export import zerossg.types;
 
 export namespace zerossg {

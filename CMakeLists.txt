@@ -138,6 +138,7 @@ target_sources(zerossg_lib PUBLIC
         "include/zerossg/security/security_manager.ixx"
         "include/zerossg/session/session_manager.ixx"
         "include/zerossg/std.ixx"
+        "include/zerossg/network.ixx"
         "include/zerossg/third_party/nlohmann_json.ixx"
         "include/zerossg/third_party/openssl.ixx"
         "include/zerossg/third_party/yaml_cpp.ixx"

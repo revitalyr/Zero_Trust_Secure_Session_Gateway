@@ -211,12 +211,12 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         for (const auto& pair : m_target_services) {
             const auto& service = pair.second;
             nlohmann::json service_json;
-            service_json[zerossg::CONFIG_KEY_NAME] = service.name;
-            service_json[zerossg::CONFIG_KEY_HOST] = service.host;
-            service_json[zerossg::CONFIG_KEY_PORT] = service.port;
-            service_json[zerossg::CONFIG_KEY_TLS_ENABLED] = service.tls_enabled;
+            service_json[zerossg::CONFIG_KEY_NAME] = service.name();
+            service_json[zerossg::CONFIG_KEY_HOST] = service.host();
+            service_json[zerossg::CONFIG_KEY_PORT] = service.port();
+            service_json[zerossg::CONFIG_KEY_TLS_ENABLED] = service.is_tls_enabled();
             service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES] = nlohmann::json::array();
-            for (const auto& role : service.allowed_roles) {
+            for (const auto& role : service.allowed_roles()) {
                 service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES].push_back(role_to_string(role));
             }
             config[zerossg::CONFIG_KEY_TARGET_SERVICES].push_back(service_json);
@@ -359,7 +359,7 @@ void ConfigManager::parse_target_services(const nlohmann::json& config) {
                 auto service_result = parse_target_service(service_json);
                 if (service_result.is_success()) {
                     const auto& service = service_result.value();
-                    m_target_services[service.name] = service;
+                    m_target_services[service.name()] = service;
                 }
             }
         }
@@ -370,10 +370,10 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
     try {
         zerossg::TargetService service;
         
-        service.name = service_json.value("name", "");
-        service.host = service_json.value("host", "");
-        service.port = service_json.value("port", 0);
-        service.tls_enabled = service_json.value("tls_enabled", false);
+        service.m_name = service_json.value("name", "");
+        service.m_host = service_json.value("host", "");
+        service.m_port = service_json.value("port", 0);
+        service.m_tls_enabled = service_json.value("tls_enabled", false);
         
         // Parse allowed roles
         if (service_json.contains("allowed_roles")) {
@@ -384,7 +384,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
                         zerossg::RoleString role_str = role_json.get<std::string>();
                         try {
                             zerossg::Role role = string_to_role(role_str);
-                            service.allowed_roles.push_back(role);
+                            service.m_allowed_roles.push_back(role);
                         } catch (const std::exception&) {
                             // Invalid role, skip
                         }
@@ -393,7 +393,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
             }
         }
         
-        if (service.host.empty() || service.port == 0) {
+        if (service.host().empty() || service.port() == 0) {
             return make_result_error<TargetService>(std::string(zerossg::ERROR_TARGET_SERVICE_HOST_PORT_MISSING));
         }
         
@@ -410,7 +410,7 @@ zerossg::Result<void> ConfigManager::validate_server_config() {
     }
     
     if (m_server_config.listen_port < 1 || m_server_config.listen_port > 65535) {
-        return make_result_error(zerossg::ERROR_INVALID_SERVER_PORT);
+        return make_result_error<void>(zerossg::ERROR_INVALID_SERVER_PORT);
     }
     
     return zerossg::make_result_success();
@@ -448,11 +448,11 @@ zerossg::Result<void> ConfigManager::validate_logging_config() {
     }
     
     if (m_logging_config.max_file_size_mb < 1 || m_logging_config.max_file_size_mb > 1000) {
-        return make_result_error(std::string(zerossg::ERROR_INVALID_LOG_MAX_SIZE));
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_LOG_MAX_SIZE));
     }
     
     if (m_logging_config.max_files < 1 || m_logging_config.max_files > 100) {
-        return make_result_error(std::string(zerossg::ERROR_INVALID_LOG_MAX_FILES));
+        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_LOG_MAX_FILES));
     }
     
     return zerossg::make_result_success();
@@ -477,21 +477,21 @@ zerossg::Result<void> ConfigManager::validate_database_config() {
 zerossg::Result<void> ConfigManager::validate_target_services() {
     for (const auto& pair : m_target_services) {
         const auto& service = pair.second;
-        const auto& name = service.name;
+        const auto& name = service.name();
         
-        if (service.name.empty()) {
+        if (service.name().empty()) {
             return make_result_error<void>(std::string(zerossg::ERROR_TARGET_SERVICE_NAME_EMPTY));
         }
         
-        if (service.host.empty()) {
+        if (service.host().empty()) {
             return make_result_error<void>(std::format("{}'{}' host cannot be empty", zerossg::ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX, name));
         }
         
-        if (service.port < 1 || service.port > 65535) {
+        if (service.port() < 1 || service.port() > 65535) {
             return make_result_error<void>(std::format("{}'{}' port must be between 1 and 65535", zerossg::ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX, name));
         }
         
-        if (service.allowed_roles.empty()) {
+        if (service.allowed_roles().empty()) {
             return make_result_error<void>(std::format("{}'{}' must have at least one allowed role", zerossg::ERROR_TARGET_SERVICE_NO_ROLES_PREFIX, name));
         }
     }

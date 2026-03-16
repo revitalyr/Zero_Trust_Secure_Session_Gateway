@@ -38,7 +38,7 @@ zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(con
     for (const auto& pair : m_services) {
         const zerossg::TargetService& service = pair.second;
         if (can_role_access_service(user.role(), service)) {
-            allowed_services.push_back(service.m_name);
+            allowed_services.push_back(service.name());
         }
     }
     
@@ -48,7 +48,7 @@ zerossg::Result<zerossg::Strings> AuthorizationManager::get_allowed_services(con
 zerossg::Result<void> AuthorizationManager::add_service(const zerossg::TargetService& service) {
     LockGuard<std::mutex> lock(m_services_mutex);
     
-    m_services[service.m_name] = service;
+    m_services[service.name()] = service;
     return zerossg::make_result_success();
 }
 
@@ -199,42 +199,42 @@ void AuthorizationManager::initialize_default_permissions() {
 
 void AuthorizationManager::initialize_default_services() {
     // SSH service example
-    zerossg::TargetService ssh_service;
-    ssh_service.name = zerossg::SERVICE_SSH_INTERNAL;
-    ssh_service.host = zerossg::HOST_SSH_SERVER;
-    ssh_service.port = zerossg::DEFAULT_SSH_PORT;
-    ssh_service.allowed_roles = {zerossg::Role::ADMIN, zerossg::Role::OPERATOR};
-    ssh_service.tls_enabled = false;
+    zerossg::TargetService ssh_service(
+        zerossg::SERVICE_SSH_INTERNAL,
+        zerossg::HOST_SSH_SERVER,
+        zerossg::DEFAULT_SSH_PORT,
+        {zerossg::Role::ADMIN, zerossg::Role::OPERATOR},
+        false);
     m_services[zerossg::SERVICE_SSH_INTERNAL] = ssh_service;
     
     // Web service example
-    zerossg::TargetService web_service;
-    web_service.name = zerossg::SERVICE_WEB_ADMIN;
-    web_service.host = zerossg::HOST_WEB_SERVER;
-    web_service.port = zerossg::DEFAULT_WEB_PORT;
-    web_service.allowed_roles = {zerossg::Role::ADMIN, zerossg::Role::OPERATOR, zerossg::Role::VIEWER};
-    web_service.tls_enabled = true;
+    zerossg::TargetService web_service(
+        zerossg::SERVICE_WEB_ADMIN,
+        zerossg::HOST_WEB_SERVER,
+        zerossg::DEFAULT_WEB_PORT,
+        {zerossg::Role::ADMIN, zerossg::Role::OPERATOR, zerossg::Role::VIEWER},
+        true);
     m_services[zerossg::SERVICE_WEB_ADMIN] = web_service;
     
     // Database service example
-    zerossg::TargetService db_service;
-    db_service.name = zerossg::SERVICE_DATABASE_INTERNAL;
-    db_service.host = zerossg::HOST_DB_SERVER;
-    db_service.port = zerossg::DEFAULT_DATABASE_PORT;
-    db_service.allowed_roles = {zerossg::Role::ADMIN};
-    db_service.tls_enabled = true;
+    zerossg::TargetService db_service(
+        zerossg::SERVICE_DATABASE_INTERNAL,
+        zerossg::HOST_DB_SERVER,
+        zerossg::DEFAULT_DATABASE_PORT,
+        {zerossg::Role::ADMIN},
+        true);
     m_services[zerossg::SERVICE_DATABASE_INTERNAL] = db_service;
 }
 
 bool AuthorizationManager::can_role_access_service(zerossg::Role role, const zerossg::TargetService& service) {
     // Check if role is explicitly allowed
-    if (std::find(service.allowed_roles.begin(), service.allowed_roles.end(), role) 
-        != service.allowed_roles.end()) {
+    if (std::find(service.allowed_roles().begin(), service.allowed_roles().end(), role) 
+        != service.allowed_roles().end()) {
         return true;
     }
     
     // Check role hierarchy - if this role is superior to any allowed role
-    for (zerossg::Role allowed_role : service.allowed_roles) {
+    for (zerossg::Role allowed_role : service.allowed_roles()) {
         auto hierarchy_result = is_role_superior(role, allowed_role);
         if (hierarchy_result.is_success() && hierarchy_result.value()) {
             return true;
