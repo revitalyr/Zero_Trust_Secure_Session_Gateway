@@ -1,5 +1,6 @@
 module;
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 // Project headers
 module zerossg.proxy.proxy_manager;

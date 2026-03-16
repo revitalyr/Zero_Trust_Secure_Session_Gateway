@@ -1,5 +1,6 @@
 module;
 #include <boost/asio.hpp> // Include boost asio header in global module fragment
+#include <boost/asio/ssl.hpp>
 module zerossg.network.gateway_server;
 
 // Project headers
@@ -18,6 +19,7 @@ import zerossg.std;
 // Import new connection module
 import zerossg.network.connection;
 import zerossg.auth.authenticator;
+import zerossg.config.config_manager;
 
 namespace zerossg {
 
@@ -28,8 +30,15 @@ GatewayServer::~GatewayServer() {
     stop();
 }
 
-Result<void> GatewayServer::initialize(const zerossg::ConfigFileName& config_file) {
+Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
     try {
+        // Load configuration from ConfigManager
+        m_listen_address = config.get_string("server.listen_address", "127.0.0.1");
+        m_listen_port = static_cast<uint16_t>(config.get_int("server.listen_port", 8080));
+        m_tls_cert_file = config.get_string("server.tls_cert_file", "server.crt");
+        m_tls_key_file = config.get_string("server.tls_key_file", "server.key");
+        m_thread_count = static_cast<size_t>(config.get_int("server.thread_count", 4));
+
         // Initialize TLS handler
         m_tls_handler = std::make_unique<TlsHandler>(m_io_context);
         auto tls_result = m_tls_handler->initialize(m_tls_cert_file, m_tls_key_file);

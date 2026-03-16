@@ -1,3 +1,7 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
 module zerossg.network.connection;
 
 import zerossg.network.gateway_server;
@@ -76,43 +80,43 @@ void Connection::handle_read(const boost::system::error_code& error, size_t byte
 
 void Connection::handle_request(const RequestString& request) {
     try {
-        json request_json = json::parse(request);
-        String request_type = request_json.value(JSON_KEY_TYPE, "");
+        const json request_json = json::parse(request);
+        const String request_type = request_json.value(zerossg::JSON_KEY_TYPE, "");
         
         String response;
         
-        if (request_type == JSON_VALUE_LOGIN) {
+        if (request_type == zerossg::JSON_VALUE_LOGIN) {
             response = process_login_request(request);
-        } else if (request_type == JSON_VALUE_SESSION) {
+        } else if (request_type == zerossg::JSON_VALUE_SESSION) {
             response = process_session_request(request);
-        } else if (request_type == JSON_VALUE_PROXY) {
+        } else if (request_type == zerossg::JSON_VALUE_PROXY) {
             response = process_proxy_request(request);
-        } else if (request_type == JSON_VALUE_LOGOUT) {
+        } else if (request_type == zerossg::JSON_VALUE_LOGOUT) {
             response = process_logout_request(request);
         } else {
             response = create_error_response(std::format("Unknown request type: {}", request_type));
         }
         
-        do_write(response + MESSAGE_DELIMITER);
+        do_write(response + zerossg::MESSAGE_DELIMITER);
     } catch (const json::exception& e) {
-        do_write(create_error_response(std::format("Invalid JSON: {}", e.what())) + MESSAGE_DELIMITER);
+        do_write(create_error_response(std::format("Invalid JSON: {}", e.what())) + zerossg::MESSAGE_DELIMITER);
     } catch (const std::exception& e) {
-        do_write(create_error_response(std::format("Request processing error: {}", e.what())) + MESSAGE_DELIMITER);
+        do_write(create_error_response(std::format("Request processing error: {}", e.what())) + zerossg::MESSAGE_DELIMITER);
     }
 }
 
 ResponseString Connection::process_login_request(const RequestString& request) {
     json request_json = json::parse(request);
-    String username = request_json.value(JSON_KEY_USERNAME, "");
-    String password = request_json.value(JSON_KEY_PASSWORD, "");
+    String username = request_json.value(zerossg::JSON_KEY_USERNAME, "");
+    String password = request_json.value(zerossg::JSON_KEY_PASSWORD, "");
     
     if (username.empty() || password.empty()) {
-        return create_error_response(ERROR_USERNAME_PASSWORD_REQUIRED);
+        return create_error_response(zerossg::ERROR_USERNAME_PASSWORD_REQUIRED);
     }
     
     auto rate_limit_result = m_server.m_security_manager->check_rate_limit(m_client_ip);
     if (!rate_limit_result.is_success() || !rate_limit_result.value()) {
-        return create_error_response(ERROR_RATE_LIMIT_EXCEEDED);
+        return create_error_response(zerossg::ERROR_RATE_LIMIT_EXCEEDED);
     }
     
     auto auth_result = m_server.m_auth_manager->authenticate(username, password);
@@ -125,7 +129,7 @@ ResponseString Connection::process_login_request(const RequestString& request) {
     
     auto user_result = m_server.m_auth_manager->get_user(username);
     if (!user_result.is_success() || !user_result.value().has_value()) {
-        return create_error_response(ERROR_USER_NOT_FOUND_AFTER_AUTH);
+        return create_error_response(zerossg::ERROR_USER_NOT_FOUND_AFTER_AUTH);
     }
     
     m_user = user_result.value().value();
@@ -134,26 +138,26 @@ ResponseString Connection::process_login_request(const RequestString& request) {
     String token = auth_result.value();
     
     json response_data = {
-        {JSON_KEY_TOKEN, token},
-        {JSON_KEY_USER, {
-            {JSON_KEY_USERNAME, m_user.user_name()},
-            {JSON_KEY_ROLE, role_to_string(m_user.role())}
+        {zerossg::JSON_KEY_TOKEN, token},
+        {zerossg::JSON_KEY_USER, {
+            {zerossg::JSON_KEY_USERNAME, m_user.user_name()},
+            {zerossg::JSON_KEY_ROLE, role_to_string(m_user.role())}
         }}
     };
     
-    return create_response(JSON_VALUE_SUCCESS, MESSAGE_LOGIN_SUCCESSFUL, response_data);
+    return create_response(zerossg::JSON_VALUE_SUCCESS, zerossg::MESSAGE_LOGIN_SUCCESSFUL, response_data);
 }
 
 ResponseString Connection::process_session_request(const RequestString& request) {
     if (!m_authenticated) {
-        return create_error_response(ERROR_NOT_AUTHENTICATED);
+        return create_error_response(zerossg::ERROR_NOT_AUTHENTICATED);
     }
     
     json request_json = json::parse(request);
-    String target_service = request_json.value(JSON_KEY_TARGET_SERVICE, "");
+    String target_service = request_json.value(zerossg::JSON_KEY_TARGET_SERVICE, "");
     
     if (target_service.empty()) {
-        return create_error_response(ERROR_TARGET_SERVICE_REQUIRED);
+        return create_error_response(zerossg::ERROR_TARGET_SERVICE_REQUIRED);
     }
     
     auto authz_result = m_server.m_authz_manager->can_access_service(m_user, target_service);
@@ -169,29 +173,29 @@ ResponseString Connection::process_session_request(const RequestString& request)
     m_session_id = session_result.value();
     
     json response_data = {
-        {JSON_KEY_SESSION_ID, m_session_id},
-        {JSON_KEY_TARGET_SERVICE, target_service}
+        {zerossg::JSON_KEY_SESSION_ID, m_session_id},
+        {zerossg::JSON_KEY_TARGET_SERVICE, target_service}
     };
     
-    return create_response(JSON_VALUE_SUCCESS, MESSAGE_SESSION_CREATED, response_data);
+    return create_response(zerossg::JSON_VALUE_SUCCESS, zerossg::MESSAGE_SESSION_CREATED, response_data);
 }
 
 ResponseString Connection::process_proxy_request(const RequestString& request) {
     if (!m_authenticated || m_session_id.empty()) {
-        return create_error_response(ERROR_NO_ACTIVE_SESSION);
+        return create_error_response(zerossg::ERROR_NO_ACTIVE_SESSION);
     }
     
     json response_data = {
-        {JSON_KEY_SESSION_ID, m_session_id},
-        {JSON_KEY_STATUS, JSON_VALUE_PROXY_ACTIVE}
+        {zerossg::JSON_KEY_SESSION_ID, m_session_id},
+        {zerossg::JSON_KEY_STATUS, zerossg::JSON_VALUE_PROXY_ACTIVE}
     };
     
-    return create_response(JSON_VALUE_SUCCESS, MESSAGE_PROXY_REQUEST_PROCESSED, response_data);
+    return create_response(zerossg::JSON_VALUE_SUCCESS, zerossg::MESSAGE_PROXY_REQUEST_PROCESSED, response_data);
 }
 
 ResponseString Connection::process_logout_request(const RequestString& request) {
     if (!m_authenticated) {
-        return create_error_response(ERROR_NOT_AUTHENTICATED);
+        return create_error_response(zerossg::ERROR_NOT_AUTHENTICATED);
     }
     
     if (!m_session_id.empty()) {
@@ -201,7 +205,7 @@ ResponseString Connection::process_logout_request(const RequestString& request) 
     
     m_authenticated = false;
     
-    return create_response(JSON_VALUE_SUCCESS, MESSAGE_LOGOUT_SUCCESSFUL);
+    return create_response(zerossg::JSON_VALUE_SUCCESS, zerossg::MESSAGE_LOGOUT_SUCCESSFUL);
 }
 
 void Connection::do_write(const ResponseString& response) {
@@ -217,21 +221,21 @@ void Connection::do_write(const ResponseString& response) {
 
 ResponseString Connection::create_response(const StatusString& status, const MessageString& message, const json& data) {
     json response = {
-        {JSON_KEY_STATUS, status},
-        {JSON_KEY_MESSAGE, message},
-        {JSON_KEY_TIMESTAMP, std::chrono::duration_cast<std::chrono::seconds>(
+        {zerossg::JSON_KEY_STATUS, status},
+        {zerossg::JSON_KEY_MESSAGE, message},
+        {zerossg::JSON_KEY_TIMESTAMP, std::chrono::duration_cast<std::chrono::seconds>(
             SystemClock::now().time_since_epoch()).count()}
     };
     
     if (!data.empty()) {
-        response[JSON_KEY_DATA] = data;
+        response[zerossg::JSON_KEY_DATA] = data;
     }
     
     return response.dump();
 }
 
 ResponseString Connection::create_error_response(const ErrorString& error) {
-    return create_response(JSON_VALUE_ERROR, error);
+    return create_response(zerossg::JSON_VALUE_ERROR, error);
 }
 
 void Connection::log_connection_event(const EventTypeString& event_type, const LogDetails& details) {

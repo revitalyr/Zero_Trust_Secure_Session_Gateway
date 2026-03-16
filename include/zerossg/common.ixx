@@ -162,7 +162,7 @@ template<typename T> concept ResultTypeConcept = requires(T t) { typename T::val
 // Modern monadic operations for Result
 template<typename T, typename F>
 requires std::invocable<F, T>
-constexpr auto transform(const ResultType<T>& result, F&& func) noexcept {
+constexpr auto transform(const Result<T>& result, F&& func) noexcept {
     if (result) {
         return make_result_success(std::invoke(std::forward<F>(func), *result));
     }
@@ -171,7 +171,7 @@ constexpr auto transform(const ResultType<T>& result, F&& func) noexcept {
 
 template<typename T, typename F>
 requires std::invocable<F, T>
-constexpr auto and_then(const ResultType<T>& result, F&& func) noexcept {
+constexpr auto and_then(const Result<T>& result, F&& func) noexcept {
     if (result) {
         return std::invoke(std::forward<F>(func), *result);
     }

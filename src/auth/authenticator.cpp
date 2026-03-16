@@ -329,29 +329,21 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
 }
 
 zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Password& password, const zerossg::PasswordHash& hash) {
-    // Convert hex string back to bytes
-    if (hash.length() % 2 != 0) {
-        return zerossg::make_result_error<bool>(zerossg::ERROR_INVALID_HASH_FORMAT);
-    }
+    // Decode base64 hash back to bytes
+    zerossg::String decoded_hash_str = base64_decode(hash);
     
-    zerossg::String hash_bytes;
-    hash_bytes.reserve(hash.length() / 2);
-    
-    for (size_t i = 0; i < hash.length(); i += 2) {
-        unsigned int byte;
-        std::stringstream ss;
-        ss << std::hex << hash.substr(i, 2);
-        ss >> byte;
-        hash_bytes.push_back(static_cast<char>(byte));
-    }
-    
-    if (hash_bytes.size() < 16) { // salt + at least some hash
+    // Check minimum size: 16 bytes for salt + SHA256_DIGEST_LENGTH for hash
+    if (decoded_hash_str.size() < 16 + SHA256_DIGEST_LENGTH) {
         return zerossg::make_result_error<bool>(zerossg::ERROR_HASH_TOO_SHORT);
     }
     
-    // Extract salt and hash
-    zerossg::String salt = hash_bytes.substr(0, 16);
-    zerossg::String stored_hash = hash_bytes.substr(16);
+    // Extract salt and stored hash as Bytes
+    zerossg::Bytes salt_bytes(decoded_hash_str.begin(), decoded_hash_str.begin() + 16);
+    zerossg::Bytes stored_hash_bytes(decoded_hash_str.begin() + 16, decoded_hash_str.end());
+    
+    if (salt_bytes.size() != 16 || stored_hash_bytes.size() != SHA256_DIGEST_LENGTH) {
+        return zerossg::make_result_error<bool>(zerossg::ERROR_INVALID_HASH_FORMAT);
+    }
     
     // Compute hash of password with salt
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
@@ -364,7 +356,7 @@ zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Pass
         return zerossg::make_result_error<bool>(zerossg::ERROR_HASH_INITIALIZATION_FAILED);
     }
     
-    if (EVP_DigestUpdate(mdctx, salt.data(), salt.size()) != 1 ||
+    if (EVP_DigestUpdate(mdctx, salt_bytes.data(), salt_bytes.size()) != 1 ||
         EVP_DigestUpdate(mdctx, password.data(), password.size()) != 1) {
         EVP_MD_CTX_free(mdctx);
         return zerossg::make_result_error<bool>(zerossg::ERROR_HASH_UPDATE_FAILED);
@@ -380,11 +372,11 @@ zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Pass
     EVP_MD_CTX_free(mdctx);
     
     // Compare hashes
-    if (stored_hash.size() != hash_len) {
+    if (stored_hash_bytes.size() != hash_len) {
         return zerossg::make_result_success(false);
     }
     
-    return zerossg::make_result_success(std::equal(stored_hash.begin(), stored_hash.end(),
+    return zerossg::make_result_success(std::equal(stored_hash_bytes.begin(), stored_hash_bytes.end(),
                                            computed_hash.begin(), computed_hash.end()));
 }
 
@@ -517,17 +509,19 @@ zerossg::RoleString role_to_string(zerossg::Role role) {
 
 zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
     try {
-        unsigned char* hmac = nullptr;
+        unsigned char hmac_buf[EVP_MAX_MD_SIZE];
         unsigned int hmac_len = 0;
         
-        HMAC(EVP_sha256(), 
+        unsigned char* result_ptr = HMAC(EVP_sha256(), 
               m_jwt_secret.data(), static_cast<int>(m_jwt_secret.size()),
               reinterpret_cast<const unsigned char*>(header_payload.c_str()), header_payload.length(),
-              hmac, &hmac_len);
+              hmac_buf, &hmac_len);
         
-        zerossg::String result = base64_encode(zerossg::String(reinterpret_cast<char*>(hmac), hmac_len));
-        OPENSSL_free(hmac);
-        return result;
+        if (result_ptr == nullptr) {
+            return "";
+        }
+        
+        return base64_encode(zerossg::String(reinterpret_cast<char*>(hmac_buf), hmac_len));
     } catch (...) {
         return "";
     }

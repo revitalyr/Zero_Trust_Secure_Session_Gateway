@@ -16,6 +16,7 @@ import zerossg.std;
 // Forward declarations
 export class zerossg::GatewayServer;
 export class zerossg::Connection;
+export class zerossg::ConfigManager;
 
 // Export GatewayServer class
 export class zerossg::GatewayServer {
@@ -23,7 +24,7 @@ public:
     GatewayServer() = default;
     ~GatewayServer();
 
-    zerossg::Result<void> initialize(const zerossg::String& config_file);
+    zerossg::Result<void> initialize(const zerossg::ConfigManager& config);
     zerossg::Result<void> start();
     zerossg::Result<void> stop();
 

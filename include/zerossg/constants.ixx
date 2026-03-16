@@ -58,6 +58,11 @@ export constexpr const char* ERROR_CONFIG_LOAD_FAILED = "Failed to load configur
 export constexpr const char* ERROR_CONFIG_SAVE_FAILED = "Failed to save configuration";
 export constexpr const char* ERROR_TLS_INITIALIZATION_FAILED = "TLS initialization failed";
 export constexpr const char* ERROR_CERTIFICATE_VERIFICATION_FAILED = "Certificate verification failed";
+export constexpr const char* ERROR_USERNAME_PASSWORD_REQUIRED = "Username and password required";
+export constexpr const char* ERROR_USER_NOT_FOUND_AFTER_AUTH = "User not found after successful authentication";
+export constexpr const char* ERROR_NOT_AUTHENTICATED = "Not authenticated";
+export constexpr const char* ERROR_TARGET_SERVICE_REQUIRED = "Target service required";
+export constexpr const char* ERROR_NO_ACTIVE_SESSION = "No active session";
 
 // Success messages
 export constexpr const char* SUCCESS_AUTHENTICATION = "Authentication successful";
@@ -65,6 +70,10 @@ export constexpr const char* SUCCESS_LOGOUT = "Logout successful";
 export constexpr const char* SUCCESS_SESSION_CREATED = "Session created";
 export constexpr const char* SUCCESS_CONFIG_SAVED = "Configuration saved";
 export constexpr const char* SUCCESS_TLS_INITIALIZED = "TLS initialized";
+export constexpr const char* MESSAGE_LOGIN_SUCCESSFUL = "Login successful";
+export constexpr const char* MESSAGE_SESSION_CREATED = "Session created";
+export constexpr const char* MESSAGE_PROXY_REQUEST_PROCESSED = "Proxy request processed";
+export constexpr const char* MESSAGE_LOGOUT_SUCCESSFUL = "Logout successful";
 
 // JWT claim keys
 export constexpr const char* JWT_CLAIM_ISSUER = "iss";
@@ -77,6 +86,28 @@ export constexpr const char* JWT_CLAIM_USERNAME = "username";
 export constexpr const char* JWT_CLAIM_ROLE = "role";
 export constexpr const char* JWT_CLAIM_CLIENT_IP = "client_ip";
 export constexpr const char* JWT_CLAIM_TARGET_SERVICE = "target_service";
+
+// JSON protocol constants
+export constexpr const char* JSON_KEY_TYPE = "type";
+export constexpr const char* JSON_KEY_STATUS = "status";
+export constexpr const char* JSON_KEY_MESSAGE = "message";
+export constexpr const char* JSON_KEY_DATA = "data";
+export constexpr const char* JSON_KEY_TIMESTAMP = "timestamp";
+export constexpr const char* JSON_KEY_USERNAME = "username";
+export constexpr const char* JSON_KEY_PASSWORD = "password";
+export constexpr const char* JSON_KEY_TOKEN = "token";
+export constexpr const char* JSON_KEY_USER = "user";
+export constexpr const char* JSON_KEY_ROLE = "role";
+export constexpr const char* JSON_KEY_TARGET_SERVICE = "target_service";
+export constexpr const char* JSON_KEY_SESSION_ID = "session_id";
+
+export constexpr const char* JSON_VALUE_LOGIN = "login";
+export constexpr const char* JSON_VALUE_SESSION = "session";
+export constexpr const char* JSON_VALUE_PROXY = "proxy";
+export constexpr const char* JSON_VALUE_LOGOUT = "logout";
+export constexpr const char* JSON_VALUE_SUCCESS = "success";
+export constexpr const char* JSON_VALUE_ERROR = "error";
+export constexpr const char* JSON_VALUE_PROXY_ACTIVE = "proxy_active";
 
 // HTTP status codes
 export constexpr int HTTP_STATUS_OK = 200;
@@ -109,6 +140,9 @@ export constexpr const char* MIME_TYPE_BINARY = "application/octet-stream";
 export constexpr const char* HTTP_VERSION_1_1 = "HTTP/1.1";
 export constexpr const char* TLS_VERSION_1_2 = "TLSv1.2";
 export constexpr const char* TLS_VERSION_1_3 = "TLSv1.3";
+
+// Network constants
+export constexpr const char* MESSAGE_DELIMITER = "\n\n";
 
 // Character encodings
 export constexpr const char* ENCODING_UTF8 = "UTF-8";

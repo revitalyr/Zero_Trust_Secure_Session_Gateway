@@ -381,34 +381,9 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
             return 1;
         }
         
-        // Create and initialize all components
+        // Create and initialize server
         m_server = std::make_unique<GatewayServer>();
-        
-        // Initialize TLS handler
-        auto tls_handler = std::make_unique<TlsHandler>();
-        auto tls_result = tls_handler->initialize(
-            config_manager->get_string("server.tls_cert_file", "certs/server.crt"),
-            config_manager->get_string("server.tls_key_file", "certs/server.key")
-        );
-        if (!tls_result.is_success()) {
-            print_error("Failed to initialize TLS: " + tls_result.error());
-            return 1;
-        }
-        
-        // Initialize authentication manager
-        auto auth_manager = std::make_unique<AuthenticationManager>();
-        
-        // Initialize authorization manager
-        auto authz_manager = std::make_unique<AuthorizationManager>();
-        
-        // Initialize session manager
-        auto session_manager = std::make_unique<SessionManager>();
-        
-        // Initialize security manager
-        auto security_manager = std::make_unique<SecurityManager>();
-        
-        // Initialize server with all components
-        auto init_result = m_server->initialize(config_file);
+        auto init_result = m_server->initialize(*config_manager);
         if (!init_result.is_success()) {
             print_error("Failed to initialize server: " + init_result.error());
             return 1;
