@@ -2,6 +2,7 @@
 #include <boost/ut.hpp>
 #include <string>
 #include <memory>
+#include <memory>
 import zerossg.auth.authenticator;
 import zerossg.types;
 import zerossg.interfaces;

@@ -10,13 +10,14 @@ import zerossg.logging.logger;
 import zerossg.std;
 import zerossg.third_party.openssl;
 
-// Export TlsHandler class
-export class zerossg::TlsHandler {
+export namespace zerossg {
+
+export class TlsHandler {
 public:
-    explicit TlsHandler(zerossg::IoContext& io_context);
+    explicit TlsHandler(IoContext& io_context);
     ~TlsHandler();
 
-    zerossg::Result<void> initialize(const zerossg::String& cert_file, const zerossg::String& key_file);
+    Result<void> initialize(const String& cert_file, const String& key_file);
     boost::asio::ssl::context& get_context() noexcept;
 
 private:
@@ -30,3 +31,5 @@ private:
     zerossg::Result<void> load_certificates();
     zerossg::Result<void> configure_ssl_context();
 };
+
+} // namespace zerossg

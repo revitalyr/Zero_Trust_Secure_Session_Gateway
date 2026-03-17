@@ -1,6 +1,8 @@
 module;
 
 #include <mutex>
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <unordered_map>
 #include <atomic>
 #include <vector>

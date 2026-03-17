@@ -40,6 +40,11 @@ public:
     Logger(const String& name, LogLevel level = LogLevel::INFO);
     ~Logger();
     
+    static std::shared_ptr<Logger> get(const String& name) {
+        // Simple factory for now, would typically use LoggerManager
+        return std::make_shared<Logger>(name);
+    }
+
     // Modern logging methods with semantic types
     void log_session_event(const SessionId& session_id, const String& event_type, const String& details);
     void log_security_event(const SecurityEvent& event);
@@ -94,6 +99,7 @@ public:
     void log_session_termination(const String& session_id, const String& reason);
     void log_access_denied(const String& username, const String& client_ip, const String& resource, const String& reason);
     void log_security_violation(const String& client_ip, const String& violation_type, const String& details);
+    void log_security_event(const String& event_type, const String& details);
     void log_performance_metric(const String& operation, double duration_ms, const String& unit);
     void log_connection_stats(size_t active_connections, size_t total_connections);
     void log_throughput(size_t bytes_transferred, const String& direction);
@@ -162,5 +168,20 @@ private:
     size_t m_max_file_size{10 * 1024 * 1024}; // 10MB
     size_t m_max_files{5};
 };
+
+// Convenience macros for logging
+// Updated macros to utilize std::source_location implicitly via new template methods
+#define LOG_TRACE(logger, ...) logger.trace(__VA_ARGS__)
+#define LOG_DEBUG(logger, ...) logger.debug(__VA_ARGS__)
+#define LOG_INFO(logger, ...) logger.info(__VA_ARGS__)
+#define LOG_WARN(logger, ...) logger.warn(__VA_ARGS__)
+#define LOG_ERROR(logger, ...) logger.error(__VA_ARGS__)
+#define LOG_CRITICAL(logger, ...) logger.critical(__VA_ARGS__)
+
+// Global logger access
+#define LOG_SESSION_EVENT(session_id, event_type, details) \
+    zerossg::LoggerManager::instance().get_logger("session")->log_session_event(session_id, event_type, details)
+#define LOG_SECURITY_EVENT(event) \
+    zerossg::LoggerManager::instance().get_logger("security")->log_security_event(event)
 
 } // namespace zerossg

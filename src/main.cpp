@@ -1,8 +1,6 @@
 // Zero Trust Secure Session Gateway - Main Entry Point
 // C++23 modules implementation
 
-module;
-
 // Add Boost includes to provide context for ADL in non-module code
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>

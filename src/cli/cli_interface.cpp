@@ -21,6 +21,61 @@ import zerossg.security.security_manager;
 
 namespace zerossg {
 
+// Local helper class for CLI utilities
+class CLIUtils {
+public:
+    static bool is_valid_username(const String& username);
+    static bool is_valid_email(const String& email);
+    static bool is_valid_role(const String& role);
+    static bool is_valid_port(const String& port);
+    static bool is_valid_file_path(const String& path);
+    
+    static String trim(const String& str);
+    static std::vector<String> split(const String& str, char delimiter);
+    static String to_lower(const String& str);
+    static String to_upper(const String& str);
+    
+    static String color_red(const String& text);
+    static String color_green(const String& text);
+    static String color_yellow(const String& text);
+    static String color_blue(const String& text);
+    static String color_reset();
+    
+    static bool supports_color();
+    static void show_progress(const String& message, int current, int total);
+    static void show_spinner(const String& message);
+    
+    static String get_password_input(const String& prompt);
+    static String get_hidden_input(const String& prompt);
+};
+
+// Interactive shell helper class
+class InteractiveShell {
+public:
+    explicit InteractiveShell(CLIInterface& cli);
+    void run();
+    
+private:
+    void process_command(const String& command);
+    void add_to_history(const String& command);
+    void clear_history();
+    std::vector<String> get_history();
+    std::vector<String> get_completions(const String& partial_command);
+    std::vector<String> get_command_names();
+    void enable_auto_completion(bool enable);
+    bool should_exit(const String& command);
+    void trim_history();
+    
+    CLIInterface& m_cli;
+    bool m_running{true};
+    bool m_auto_completion_enabled{true};
+    std::vector<String> m_command_history;
+    static constexpr size_t MAX_HISTORY_SIZE = 100;
+};
+
+const char* CLI_PROMPT = "zerossg> ";
+const char CLI_SPINNER_CHARS[] = "|/-\\";
+
 zerossg::CLIInterface::CLIInterface() {
     zerossg::CLIInterface::register_builtin_commands();
 }
@@ -84,7 +139,7 @@ void CLIInterface::show_sessions() {
         print_info("Active sessions:");
         std::cout << "No active sessions (server not running)" << std::endl;
     } catch (const std::exception& e) {
-        print_error("Failed to get active sessions: " + string(e.what()));
+        print_error("Failed to get active sessions: " + String(e.what()));
     }
 }
 
@@ -303,7 +358,7 @@ void CLIInterface::register_builtin_commands() {
                      [this](const zerossg::CommandLineArgs& args) { return test_connection(args); });
     
     register_command(zerossg::CMD_INTERACTIVE, "Enter interactive mode", "interactive",
-                     [this](const std::vector<string>& args) { 
+                     [this](const std::vector<String>& args) { 
                          run_interactive_mode(); 
                          return 0; 
                      });
@@ -373,7 +428,7 @@ void CLIInterface::show_command_help(const CLICommand& command) {
 
 int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
     try {
-        string config_file = m_config_file;
+        String config_file = m_config_file;
         if (!args.empty()) {
             config_file = args[0];
         }
@@ -405,7 +460,7 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
         }
         
         // Get server configuration for status display
-        string listen_addr = config_manager->get_string("server.listen_address", "0.0.0.0");
+        String listen_addr = config_manager->get_string("server.listen_address", "0.0.0.0");
         int listen_port = config_manager->get_int("server.listen_port", 8443);
         
         print_success("Server started successfully!");
@@ -422,7 +477,7 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to start server: " + string(e.what()));
+        print_error("Failed to start server: " + String(e.what()));
         return 1;
     }
 }
@@ -445,7 +500,7 @@ int CLIInterface::handle_stop_command(const zerossg::CommandLineArgs& args) {
         print_success("Server stopped successfully");
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to stop server: " + string(e.what()));
+        print_error("Failed to stop server: " + String(e.what()));
         return 1;
     }
 }
@@ -478,7 +533,7 @@ int CLIInterface::handle_status_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to get server status: " + string(e.what()));
+        print_error("Failed to get server status: " + String(e.what()));
         return 1;
     }
 }
@@ -498,7 +553,7 @@ int CLIInterface::handle_users_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to list users: " + string(e.what()));
+        print_error("Failed to list users: " + String(e.what()));
         return 1;
     }
 }
@@ -508,7 +563,7 @@ int CLIInterface::handle_sessions_command(const zerossg::CommandLineArgs& args) 
         show_sessions();
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to list sessions: " + string(e.what()));
+        print_error("Failed to list sessions: " + String(e.what()));
         return 1;
     }
 }
@@ -522,7 +577,7 @@ int CLIInterface::handle_security_command(const zerossg::CommandLineArgs& args) 
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to get security statistics: " + string(e.what()));
+        print_error("Failed to get security statistics: " + String(e.what()));
         return 1;
     }
 }
@@ -543,8 +598,8 @@ int CLIInterface::handle_user_add_command(const zerossg::CommandLineArgs& args) 
         return 1;
     }
     
-    string username = args[0];
-    string role = args[1];
+    String username = args[0];
+    String role = args[1];
     
     if (!CLIUtils::is_valid_username(username)) {
         print_error("Invalid username");
@@ -556,7 +611,7 @@ int CLIInterface::handle_user_add_command(const zerossg::CommandLineArgs& args) 
         return 1;
     }
     
-    string password;
+    String password;
     if (args.size() >= 3) {
         password = args[2];
     } else {
@@ -575,7 +630,7 @@ int CLIInterface::handle_user_remove_command(const zerossg::CommandLineArgs& arg
         return 1;
     }
     
-    string username = args[0];
+    String username = args[0];
     print_info("Removing user: " + username);
     print_success("User removed successfully");
     
@@ -599,20 +654,20 @@ int CLIInterface::handle_config_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to show configuration: " + string(e.what()));
+        print_error("Failed to show configuration: " + String(e.what()));
         return 1;
     }
 }
 
 int CLIInterface::handle_test_command(const zerossg::CommandLineArgs& args) {
     try {
-        string service_name = args.empty() ? "all" : args[0];
+        String service_name = args.empty() ? "all" : args[0];
         print_info("Testing connection to service: " + service_name);
         print_success("Connection test successful");
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Connection test failed: " + string(e.what()));
+        print_error("Connection test failed: " + String(e.what()));
         return 1;
     }
 }
@@ -631,7 +686,7 @@ void CLIInterface::disconnect_from_server() {
 }
 
 // CLIUtils implementation
-bool CLIUtils::is_valid_username(const string& username) {
+bool CLIUtils::is_valid_username(const String& username) {
     if (username.empty() || username.length() < 3 || username.length() > 32) {
         return false;
     }
@@ -646,22 +701,22 @@ bool CLIUtils::is_valid_username(const string& username) {
     return true;
 }
 
-bool CLIUtils::is_valid_email(const string& email) {
+bool CLIUtils::is_valid_email(const String& email) {
     // Simple email validation
     size_t at_pos = email.find('@');
-    if (at_pos == string::npos || at_pos == 0 || at_pos == email.length() - 1) {
+    if (at_pos == String::npos || at_pos == 0 || at_pos == email.length() - 1) {
         return false;
     }
     
     size_t dot_pos = email.find('.', at_pos);
-    return dot_pos != string::npos && dot_pos > at_pos + 1 && dot_pos < email.length() - 1;
+    return dot_pos != String::npos && dot_pos > at_pos + 1 && dot_pos < email.length() - 1;
 }
 
-bool CLIUtils::is_valid_role(const string& role) {
+bool CLIUtils::is_valid_role(const String& role) {
     return role == zerossg::ROLE_ADMIN || role == zerossg::ROLE_OPERATOR || role == zerossg::ROLE_VIEWER;
 }
 
-bool CLIUtils::is_valid_port(const string& port) {
+bool CLIUtils::is_valid_port(const String& port) {
     try {
         int port_num = std::stoi(port);
         return port_num > 0 && port_num <= 65535;
@@ -670,22 +725,22 @@ bool CLIUtils::is_valid_port(const string& port) {
     }
 }
 
-bool CLIUtils::is_valid_file_path(const string& path) {
+bool CLIUtils::is_valid_file_path(const String& path) {
     return !path.empty();
 }
 
-string CLIUtils::trim(const string& str) {
+String CLIUtils::trim(const String& str) {
     size_t start = str.find_first_not_of(" \t\n\r");
-    if (start == string::npos) return "";
+    if (start == String::npos) return "";
     
     size_t end = str.find_last_not_of(" \t\n\r");
     return str.substr(start, end - start + 1);
 }
 
-std::vector<string> CLIUtils::split(const string& str, char delimiter) {
-    std::vector<string> tokens;
+std::vector<String> CLIUtils::split(const String& str, char delimiter) {
+    std::vector<String> tokens;
     std::istringstream iss(str);
-    string token;
+    String token;
     
     while (std::getline(iss, token, delimiter)) {
         tokens.push_back(trim(token));
@@ -694,35 +749,35 @@ std::vector<string> CLIUtils::split(const string& str, char delimiter) {
     return tokens;
 }
 
-string CLIUtils::to_lower(const string& str) {
-    string result = str;
+String CLIUtils::to_lower(const String& str) {
+    String result = str;
     std::transform(result.begin(), result.end(), result.begin(), ::tolower);
     return result;
 }
 
-string CLIUtils::to_upper(const string& str) {
-    string result = str;
+String CLIUtils::to_upper(const String& str) {
+    String result = str;
     std::transform(result.begin(), result.end(), result.begin(), ::toupper);
     return result;
 }
 
-string CLIUtils::color_red(const string& text) {
+String CLIUtils::color_red(const String& text) {
     return supports_color() ? "\033[31m" + text + "\033[0m" : text;
 }
 
-string CLIUtils::color_green(const string& text) {
+String CLIUtils::color_green(const String& text) {
     return supports_color() ? "\033[32m" + text + "\033[0m" : text;
 }
 
-string CLIUtils::color_yellow(const string& text) {
+String CLIUtils::color_yellow(const String& text) {
     return supports_color() ? "\033[33m" + text + "\033[0m" : text;
 }
 
-string CLIUtils::color_blue(const string& text) {
+String CLIUtils::color_blue(const String& text) {
     return supports_color() ? "\033[34m" + text + "\033[0m" : text;
 }
 
-string CLIUtils::color_reset() {
+String CLIUtils::color_reset() {
     return supports_color() ? "\033[0m" : "";
 }
 
@@ -730,12 +785,12 @@ bool CLIUtils::supports_color() {
     return isatty(fileno(stdout));
 }
 
-void CLIUtils::show_progress(const string& message, int current, int total) {
+void CLIUtils::show_progress(const String& message, int current, int total) {
     int percentage = static_cast<int>((static_cast<double>(current) / total) * 100);
     std::cout << "\r" << message << ": " << percentage << "% (" << current << "/" << total << ")" << std::flush;
 }
 
-void CLIUtils::show_spinner(const string& message) {
+void CLIUtils::show_spinner(const String& message) {
     static const char spinner[] = zerossg::CLI_SPINNER_CHARS;
     static int spinner_index = 0;
     
@@ -743,15 +798,15 @@ void CLIUtils::show_spinner(const string& message) {
     spinner_index = (spinner_index + 1) % 4;
 }
 
-string CLIUtils::get_password_input(const string& prompt) {
+String CLIUtils::get_password_input(const String& prompt) {
     // In a real implementation, this would hide the input
     std::cout << prompt;
-    string password;
+    String password;
     std::cin >> password;
     return password;
 }
 
-string CLIUtils::get_hidden_input(const string& prompt) {
+String CLIUtils::get_hidden_input(const String& prompt) {
     return get_password_input(prompt);
 }
 
@@ -777,7 +832,7 @@ void InteractiveShell::run() {
             break;
         }
         
-        string input_str(input);
+        String input_str(input);
         free(input);
         
         if (input_str.empty()) {
@@ -797,7 +852,7 @@ void InteractiveShell::run() {
     }
 }
 
-void InteractiveShell::add_to_history(const string& command) {
+void InteractiveShell::add_to_history(const String& command) {
     if (!command.empty()) {
         add_history(command.c_str());
         m_command_history.push_back(command);
@@ -805,7 +860,7 @@ void InteractiveShell::add_to_history(const string& command) {
     }
 }
 
-std::vector<string> InteractiveShell::get_history() {
+std::vector<String> InteractiveShell::get_history() {
     return m_command_history;
 }
 
@@ -814,8 +869,8 @@ void InteractiveShell::clear_history() {
     clear_history();
 }
 
-std::vector<string> InteractiveShell::get_completions(const string& partial_command) {
-    std::vector<string> completions;
+std::vector<String> InteractiveShell::get_completions(const String& partial_command) {
+    std::vector<String> completions;
     
     if (m_auto_completion_enabled) {
         // Get command names
@@ -835,7 +890,7 @@ void InteractiveShell::enable_auto_completion(bool enable) {
     m_auto_completion_enabled = enable;
 }
 
-void InteractiveShell::process_command(const string& command) {
+void InteractiveShell::process_command(const String& command) {
     auto args = m_cli.parse_input(command);
     if (args.empty()) {
         return;
@@ -858,8 +913,8 @@ void InteractiveShell::process_command(const string& command) {
     }
 }
 
-bool InteractiveShell::should_exit(const string& command) {
-    string lower_cmd = CLIUtils::to_lower(CLIUtils::trim(command));
+bool InteractiveShell::should_exit(const String& command) {
+    String lower_cmd = CLIUtils::to_lower(CLIUtils::trim(command));
     return lower_cmd == zerossg::CMD_EXIT || lower_cmd == zerossg::CMD_QUIT;
 }
 
@@ -870,7 +925,7 @@ void InteractiveShell::trim_history() {
     }
 }
 
-std::vector<string> InteractiveShell::get_command_names() {
+std::vector<String> InteractiveShell::get_command_names() {
     // This would need access to the CLI's command list
     // For now, return common commands
     return {zerossg::CMD_START, zerossg::CMD_STOP, zerossg::CMD_STATUS, zerossg::CMD_USERS, zerossg::CMD_SESSIONS, zerossg::CMD_SECURITY, zerossg::CMD_LOGS, zerossg::CMD_HELP, zerossg::CMD_EXIT};

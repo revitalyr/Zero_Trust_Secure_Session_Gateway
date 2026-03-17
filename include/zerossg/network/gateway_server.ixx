@@ -1,5 +1,12 @@
 module;
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <optional>
+#include <thread>
+#include <atomic>
+
 export module zerossg.network.gateway_server;
 
 import zerossg.network;
@@ -14,13 +21,11 @@ import zerossg.logging.logger;
 import zerossg.third_party.nlohmann_json;
 import zerossg.std;
 
-// Forward declarations
-export class zerossg::GatewayServer;
-export class zerossg::Connection;
-export class zerossg::ConfigManager;
-
-// Export GatewayServer class
-export class zerossg::GatewayServer {
+export namespace zerossg {
+    class Connection;
+    class ConfigManager;
+    
+export class GatewayServer {
 public:
     GatewayServer() = default;
     ~GatewayServer();
@@ -28,6 +33,8 @@ public:
     zerossg::Result<void> initialize(const zerossg::ConfigManager& config);
     zerossg::Result<void> start();
     zerossg::Result<void> stop();
+    
+    bool is_running() const { return m_running; }
 
 private:
     zerossg::Result<void> setup_acceptor();
@@ -53,3 +60,5 @@ private:
     zerossg::String m_tls_cert_file{"server.crt"};
     zerossg::String m_tls_key_file{"server.key"};
 };
+
+}

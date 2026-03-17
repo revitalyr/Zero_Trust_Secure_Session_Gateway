@@ -50,6 +50,7 @@ private:
     bool file_exists(const FilePath& filename);
     FileExtension get_file_extension(const FilePath& filename);
     void set_default_config();
+    json get_default_config_json();
 
     mutable std::mutex m_config_mutex;
     json m_config_json;

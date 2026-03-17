@@ -202,6 +202,28 @@ export constexpr const char* FORMAT_JSON = "json";
 export constexpr const char* FORMAT_YAML = "yaml";
 export constexpr const char* FORMAT_YML = "yml";
 
+// Directory names
+export constexpr const char* DIRECTORY_LOGS = "logs";
+export constexpr const char* DIRECTORY_CONFIG = "config";
+export constexpr const char* DIRECTORY_CERTS = "certs";
+export constexpr const char* DIRECTORY_DATA = "data";
+export constexpr const char* DIRECTORY_TEMP = "temp";
+export constexpr const char* DIRECTORY_BACKUP = "backup";
+
+// Environment variable names
+export constexpr const char* ENV_VCPKG_ROOT = "VCPKG_ROOT";
+export constexpr const char* ENV_OPENSSL_ROOT_DIR = "OPENSSL_ROOT_DIR";
+export constexpr const char* ENV_CONFIG_FILE = "ZEROSSG_CONFIG_FILE";
+export constexpr const char* ENV_LOG_LEVEL = "ZEROSSG_LOG_LEVEL";
+export constexpr const char* ENV_DEBUG = "ZEROSSG_DEBUG";
+
+// Service names
+export constexpr const char* SERVICE_SSH = "ssh";
+export constexpr const char* SERVICE_WEB = "web";
+export constexpr const char* SERVICE_DATABASE = "database";
+export constexpr const char* SERVICE_API = "api";
+export constexpr const char* SERVICE_MONITORING = "monitoring";
+
 // Configuration Keys
 export constexpr const char* CONFIG_KEY_SERVER = "server";
 export constexpr const char* CONFIG_KEY_LISTEN_ADDRESS = "listen_address";
@@ -238,28 +260,6 @@ export constexpr const char* CONFIG_KEY_SSL_MODE = "ssl_mode";
 export constexpr const char* CONFIG_KEY_TARGET_SERVICES = "target_services";
 export constexpr const char* CONFIG_KEY_TLS_ENABLED = "tls_enabled";
 export constexpr const char* CONFIG_KEY_ALLOWED_ROLES = "allowed_roles";
-
-// Directory names
-export constexpr const char* DIRECTORY_LOGS = "logs";
-export constexpr const char* DIRECTORY_CONFIG = "config";
-export constexpr const char* DIRECTORY_CERTS = "certs";
-export constexpr const char* DIRECTORY_DATA = "data";
-export constexpr const char* DIRECTORY_TEMP = "temp";
-export constexpr const char* DIRECTORY_BACKUP = "backup";
-
-// Environment variable names
-export constexpr const char* ENV_VCPKG_ROOT = "VCPKG_ROOT";
-export constexpr const char* ENV_OPENSSL_ROOT_DIR = "OPENSSL_ROOT_DIR";
-export constexpr const char* ENV_CONFIG_FILE = "ZEROSSG_CONFIG_FILE";
-export constexpr const char* ENV_LOG_LEVEL = "ZEROSSG_LOG_LEVEL";
-export constexpr const char* ENV_DEBUG = "ZEROSSG_DEBUG";
-
-// Service names
-export constexpr const char* SERVICE_SSH = "ssh";
-export constexpr const char* SERVICE_WEB = "web";
-export constexpr const char* SERVICE_DATABASE = "database";
-export constexpr const char* SERVICE_API = "api";
-export constexpr const char* SERVICE_MONITORING = "monitoring";
 
 // Role names
 export constexpr const char* ROLE_ADMIN = "admin";

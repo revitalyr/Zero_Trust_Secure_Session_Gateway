@@ -1,6 +1,9 @@
 module;
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <fstream> // Required for std::ifstream/ofstream
+#include <yaml-cpp/yaml.h>
+#include <filesystem>
 module zerossg.config.config_manager;
 
 // C++23 module imports
@@ -20,24 +23,24 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
     LockGuard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
     
     try {
-        if (!file_exists(config_file)) {
-            return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_FILE_NOT_FOUND, config_file));
+        if (!this->file_exists(config_file)) {
+            return make_result_error<void>(std::format("{}{}", ERROR_CONFIG_FILE_NOT_FOUND, config_file));
         }
         
-        zerossg::FileExtension extension = get_file_extension(config_file);
+        zerossg::FileExtension extension = this->get_file_extension(config_file);
         
         if (extension == FORMAT_YAML || extension == FORMAT_YML) {
             auto result = load_yaml_config(config_file);
             if (!result.has_value()) {
-                return zerossg::make_result_error<void>(result.error());
+                return make_result_error<void>(result.error());
             }
         } else if (extension == FORMAT_JSON) {
             auto result = load_json_config(config_file);
             if (!result.has_value()) {
-                return zerossg::make_result_error<void>(result.error());
+                return make_result_error<void>(result.error());
             }
         } else {
-            return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_UNSUPPORTED_CONFIG_FORMAT, extension));
+            return make_result_error<void>(std::format("{}{}", ERROR_UNSUPPORTED_CONFIG_FORMAT, extension));
         }
         
         // Load environment variables (override config file)
@@ -46,12 +49,12 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         // Validate configuration
         auto validation_result = validate_config();
         if (!validation_result.has_value()) {
-            return zerossg::make_result_error<void>(validation_result.error());
+            return make_result_error<void>(validation_result.error());
         }
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
     }
 }
 
@@ -123,7 +126,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::get_target_service(const 
     
     auto it = m_target_services.find(service_name);
     if (it == m_target_services.end()) {
-        return zerossg::make_result_error<TargetService>(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX, service_name));
+        return make_result_error<TargetService>(std::format("{}{}", ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX, service_name));
     }
     
     return zerossg::make_result_success(it->second);
@@ -183,52 +186,52 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         json config;
         
         // Serialize configuration
-        config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_LISTEN_ADDRESS] = m_server_config.listen_address;
-        config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_LISTEN_PORT] = m_server_config.listen_port;
-        config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_TLS_CERT_FILE] = m_server_config.tls_cert_file;
-        config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_TLS_KEY_FILE] = m_server_config.tls_key_file;
-        config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_CA_CERT_FILE] = m_server_config.ca_cert_file;
+        config[CONFIG_KEY_SERVER][CONFIG_KEY_LISTEN_ADDRESS] = m_server_config.listen_address;
+        config[CONFIG_KEY_SERVER][CONFIG_KEY_LISTEN_PORT] = m_server_config.listen_port;
+        config[CONFIG_KEY_SERVER][CONFIG_KEY_TLS_CERT_FILE] = m_server_config.tls_cert_file;
+        config[CONFIG_KEY_SERVER][CONFIG_KEY_TLS_KEY_FILE] = m_server_config.tls_key_file;
+        config[CONFIG_KEY_SERVER][CONFIG_KEY_CA_CERT_FILE] = m_server_config.ca_cert_file;
         
-        config[zerossg::CONFIG_KEY_SECURITY][zerossg::CONFIG_KEY_JWT_SECRET] = m_security_config.jwt_secret;
-        config[zerossg::CONFIG_KEY_SECURITY][zerossg::CONFIG_KEY_TOKEN_EXPIRY_HOURS] = m_security_config.token_expiry_hours;
-        config[zerossg::CONFIG_KEY_SECURITY][zerossg::CONFIG_KEY_MAX_LOGIN_ATTEMPTS] = m_security_config.max_login_attempts;
-        config[zerossg::CONFIG_KEY_SECURITY][zerossg::CONFIG_KEY_LOCKOUT_DURATION_MINUTES] = m_security_config.lockout_duration_minutes;
+        config[CONFIG_KEY_SECURITY][CONFIG_KEY_JWT_SECRET] = m_security_config.jwt_secret;
+        config[CONFIG_KEY_SECURITY][CONFIG_KEY_TOKEN_EXPIRY_HOURS] = m_security_config.token_expiry_hours;
+        config[CONFIG_KEY_SECURITY][CONFIG_KEY_MAX_LOGIN_ATTEMPTS] = m_security_config.max_login_attempts;
+        config[CONFIG_KEY_SECURITY][CONFIG_KEY_LOCKOUT_DURATION_MINUTES] = m_security_config.lockout_duration_minutes;
         
-        config[zerossg::CONFIG_KEY_SESSION][zerossg::CONFIG_KEY_TIMEOUT_SECONDS] = m_session_config.timeout_seconds;
-        config[zerossg::CONFIG_KEY_SESSION][zerossg::CONFIG_KEY_MAX_CONCURRENT_SESSIONS] = m_session_config.max_concurrent_sessions;
+        config[CONFIG_KEY_SESSION][CONFIG_KEY_TIMEOUT_SECONDS] = m_session_config.timeout_seconds;
+        config[CONFIG_KEY_SESSION][CONFIG_KEY_MAX_CONCURRENT_SESSIONS] = m_session_config.max_concurrent_sessions;
         
-        config[zerossg::CONFIG_KEY_LOGGING][zerossg::CONFIG_KEY_LEVEL] = m_logging_config.level;
-        config[zerossg::CONFIG_KEY_LOGGING][zerossg::CONFIG_KEY_FILE_PATH] = m_logging_config.file_path;
-        config[zerossg::CONFIG_KEY_LOGGING][zerossg::CONFIG_KEY_MAX_FILE_SIZE_MB] = m_logging_config.max_file_size_mb;
-        config[zerossg::CONFIG_KEY_LOGGING][zerossg::CONFIG_KEY_MAX_FILES] = m_logging_config.max_files;
+        config[CONFIG_KEY_LOGGING][CONFIG_KEY_LEVEL] = m_logging_config.level;
+        config[CONFIG_KEY_LOGGING][CONFIG_KEY_FILE_PATH] = m_logging_config.file_path;
+        config[CONFIG_KEY_LOGGING][CONFIG_KEY_MAX_FILE_SIZE_MB] = m_logging_config.max_file_size_mb;
+        config[CONFIG_KEY_LOGGING][CONFIG_KEY_MAX_FILES] = m_logging_config.max_files;
         
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_HOST] = m_database_config.host;
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_PORT] = m_database_config.port;
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_NAME] = m_database_config.name;
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_USERNAME] = m_database_config.username;
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_PASSWORD] = m_database_config.password;
-        config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_SSL_MODE] = m_database_config.ssl_mode;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_HOST] = m_database_config.host;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_PORT] = m_database_config.port;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_NAME] = m_database_config.name;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_USERNAME] = m_database_config.username;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_PASSWORD] = m_database_config.password;
+        config[CONFIG_KEY_DATABASE][CONFIG_KEY_SSL_MODE] = m_database_config.ssl_mode;
         
         // Save target services
-        config[zerossg::CONFIG_KEY_TARGET_SERVICES] = json::array();
+        config[CONFIG_KEY_TARGET_SERVICES] = json::array();
         for (const auto& pair : m_target_services) {
             const auto& service = pair.second;
             json service_json;
-            service_json[zerossg::CONFIG_KEY_NAME] = service.name();
-            service_json[zerossg::CONFIG_KEY_HOST] = service.host();
-            service_json[zerossg::CONFIG_KEY_PORT] = service.port();
-            service_json[zerossg::CONFIG_KEY_TLS_ENABLED] = service.is_tls_enabled();
-            service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES] = json::array();
+            service_json[CONFIG_KEY_NAME] = service.name();
+            service_json[CONFIG_KEY_HOST] = service.host();
+            service_json[CONFIG_KEY_PORT] = service.port();
+            service_json[CONFIG_KEY_TLS_ENABLED] = service.is_tls_enabled();
+            service_json[CONFIG_KEY_ALLOWED_ROLES] = json::array();
             for (const auto& role : service.allowed_roles()) {
-                service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES].push_back(role_to_string(role));
+                service_json[CONFIG_KEY_ALLOWED_ROLES].push_back(role_to_string(role));
             }
-            config[zerossg::CONFIG_KEY_TARGET_SERVICES].push_back(service_json);
+            config[CONFIG_KEY_TARGET_SERVICES].push_back(service_json);
         }
         
         std::string json_str = config.dump(4);
         std::ofstream file(config_file);
         if (!file.is_open()) {
-            return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_WRITE_OPEN_FAILED_PREFIX, config_file));
+            return make_result_error<void>(std::format("{}{}", ERROR_CONFIG_WRITE_OPEN_FAILED_PREFIX, config_file));
         }
         
         file << json_str;
@@ -236,7 +239,7 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what()));
     }
 }
 
@@ -266,9 +269,9 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const YAML::Exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_YAML_PARSE_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_YAML_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_YAML_LOAD_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_YAML_LOAD_PREFIX, e.what()));
     }
 }
 
@@ -276,7 +279,7 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
-            return make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_OPEN_FAILED_PREFIX, config_file));
+            return make_result_error<void>(std::format("{}{}", ERROR_CONFIG_OPEN_FAILED_PREFIX, config_file));
         }
         
         file >> m_config_json;
@@ -290,9 +293,9 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const json::exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_PARSE_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_LOAD_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
 
@@ -397,23 +400,23 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
         }
         
         if (service.host().empty() || service.port() == 0) {
-            return make_result_error<TargetService>(std::string(zerossg::ERROR_TARGET_SERVICE_HOST_PORT_MISSING));
+            return make_result_error<TargetService>(std::string(ERROR_TARGET_SERVICE_HOST_PORT_MISSING));
         }
         
         return zerossg::make_result_success(service);
     } catch (const std::exception& e) {
-        return make_result_error<TargetService>(std::format("{}{}", zerossg::ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what()));
+        return make_result_error<TargetService>(std::format("{}{}", ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what()));
     }
 }
 
 zerossg::Result<void> ConfigManager::validate_server_config() {
     if (!ConfigUtils::is_valid_ip_address(m_server_config.listen_address) && 
         m_server_config.listen_address != "0.0.0.0") {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_INVALID_LISTEN_ADDRESS, m_server_config.listen_address));
+        return make_result_error<void>(std::format("{}{}", ERROR_INVALID_LISTEN_ADDRESS, m_server_config.listen_address));
     }
     
     if (m_server_config.listen_port < 1 || m_server_config.listen_port > 65535) {
-        return make_result_error<void>(zerossg::ERROR_INVALID_SERVER_PORT);
+        return make_result_error<void>(ERROR_INVALID_SERVER_PORT);
     }
     
     return zerossg::make_result_success();
@@ -421,11 +424,11 @@ zerossg::Result<void> ConfigManager::validate_server_config() {
 
 zerossg::Result<void> ConfigManager::validate_security_config() {
     if (m_security_config.jwt_secret.length() < 16) {
-        return make_result_error<void>(std::string(zerossg::ERROR_JWT_SECRET_TOO_SHORT));
+        return make_result_error<void>(std::string(ERROR_JWT_SECRET_TOO_SHORT));
     }
     
     if (m_security_config.token_expiry_hours < 1 || m_security_config.token_expiry_hours > 168) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_TOKEN_EXPIRY));
+        return make_result_error<void>(std::string(ERROR_INVALID_TOKEN_EXPIRY));
     }
     
     return zerossg::make_result_success();
@@ -433,11 +436,11 @@ zerossg::Result<void> ConfigManager::validate_security_config() {
 
 zerossg::Result<void> ConfigManager::validate_session_config() {
     if (m_session_config.timeout_seconds < 60 || m_session_config.timeout_seconds > 86400) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_SESSION_TIMEOUT));
+        return make_result_error<void>(std::string(ERROR_INVALID_SESSION_TIMEOUT));
     }
     
     if (m_session_config.max_concurrent_sessions < 1 || m_session_config.max_concurrent_sessions > 1000) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_MAX_SESSIONS));
+        return make_result_error<void>(std::string(ERROR_INVALID_MAX_SESSIONS));
     }
     
     return zerossg::make_result_success();
@@ -447,15 +450,15 @@ zerossg::Result<void> ConfigManager::validate_logging_config() {
     if (m_logging_config.level != "trace" && m_logging_config.level != "debug" && 
         m_logging_config.level != "info" && m_logging_config.level != "warn" && 
         m_logging_config.level != "error" && m_logging_config.level != "critical") {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_INVALID_LOG_LEVEL, m_logging_config.level));
+        return make_result_error<void>(std::format("{}{}", ERROR_INVALID_LOG_LEVEL, m_logging_config.level));
     }
     
     if (m_logging_config.max_file_size_mb < 1 || m_logging_config.max_file_size_mb > 1000) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_LOG_MAX_SIZE));
+        return make_result_error<void>(std::string(ERROR_INVALID_LOG_MAX_SIZE));
     }
     
     if (m_logging_config.max_files < 1 || m_logging_config.max_files > 100) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_LOG_MAX_FILES));
+        return make_result_error<void>(std::string(ERROR_INVALID_LOG_MAX_FILES));
     }
     
     return zerossg::make_result_success();
@@ -463,15 +466,15 @@ zerossg::Result<void> ConfigManager::validate_logging_config() {
 
 zerossg::Result<void> ConfigManager::validate_database_config() {
     if (m_database_config.host.empty()) {
-        return make_result_error<void>(std::string(zerossg::ERROR_DB_HOST_EMPTY));
+        return make_result_error<void>(std::string(ERROR_DB_HOST_EMPTY));
     }
     
     if (m_database_config.port < 1 || m_database_config.port > 65535) {
-        return make_result_error<void>(std::string(zerossg::ERROR_INVALID_DB_PORT));
+        return make_result_error<void>(std::string(ERROR_INVALID_DB_PORT));
     }
     
     if (m_database_config.name.empty()) {
-        return make_result_error<void>(std::string(zerossg::ERROR_DB_NAME_EMPTY));
+        return make_result_error<void>(std::string(ERROR_DB_NAME_EMPTY));
     }
     
     return zerossg::make_result_success();
@@ -483,19 +486,19 @@ zerossg::Result<void> ConfigManager::validate_target_services() {
         const auto& name = service.name();
         
         if (service.name().empty()) {
-            return make_result_error<void>(std::string(zerossg::ERROR_TARGET_SERVICE_NAME_EMPTY));
+            return make_result_error<void>(std::string(ERROR_TARGET_SERVICE_NAME_EMPTY));
         }
         
         if (service.host().empty()) {
-            return make_result_error<void>(std::format("{}'{}' host cannot be empty", zerossg::ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' host cannot be empty", ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX, name));
         }
         
         if (service.port() < 1 || service.port() > 65535) {
-            return make_result_error<void>(std::format("{}'{}' port must be between 1 and 65535", zerossg::ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' port must be between 1 and 65535", ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX, name));
         }
         
         if (service.allowed_roles().empty()) {
-            return make_result_error<void>(std::format("{}'{}' must have at least one allowed role", zerossg::ERROR_TARGET_SERVICE_NO_ROLES_PREFIX, name));
+            return make_result_error<void>(std::format("{}'{}' must have at least one allowed role", ERROR_TARGET_SERVICE_NO_ROLES_PREFIX, name));
         }
     }
     
@@ -555,6 +558,28 @@ zerossg::FileExtension ConfigManager::get_file_extension(const zerossg::FilePath
     return "";
 }
 
+json ConfigManager::get_default_config_json() {
+    json config;
+    config[CONFIG_KEY_SERVER] = {
+        {CONFIG_KEY_LISTEN_ADDRESS, "127.0.0.1"},
+        {CONFIG_KEY_LISTEN_PORT, 8080},
+        {CONFIG_KEY_THREAD_COUNT, 4}
+    };
+    config[CONFIG_KEY_SECURITY] = {
+        {CONFIG_KEY_TOKEN_EXPIRY_HOURS, 1},
+        {CONFIG_KEY_MAX_LOGIN_ATTEMPTS, 5}
+    };
+    config[CONFIG_KEY_SESSION] = {
+        {CONFIG_KEY_TIMEOUT_SECONDS, 3600},
+        {CONFIG_KEY_MAX_CONCURRENT_SESSIONS, 5}
+    };
+    config[CONFIG_KEY_LOGGING] = {
+        {CONFIG_KEY_LEVEL, "info"}
+    };
+    config[CONFIG_KEY_TARGET_SERVICES] = json::array();
+    return config;
+}
+
 void ConfigManager::set_default_config() {
     m_config_json = get_default_config_json();
     
@@ -611,7 +636,7 @@ bool is_valid_ip_address(const zerossg::IpAddress& ip) {
 zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        return make_result_error<FileContent>(std::format("{}{}", zerossg::ERROR_FILE_OPEN_FAILED_PREFIX, filename));
+        return make_result_error<FileContent>(std::format("{}{}", ERROR_FILE_OPEN_FAILED_PREFIX, filename));
     }
     
     try {
@@ -619,14 +644,14 @@ zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filenam
         file.close();
         return zerossg::make_result_success(content);
     } catch (const std::exception& e) {
-        return make_result_error<FileContent>(std::format("{}{}", zerossg::ERROR_FILE_READ_FAILED_PREFIX, e.what()));
+        return make_result_error<FileContent>(std::format("{}{}", ERROR_FILE_READ_FAILED_PREFIX, e.what()));
     }
 }
 
 zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zerossg::FileContent& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_FILE_WRITE_OPEN_FAILED_PREFIX, filename));
+        return make_result_error<void>(std::format("{}{}", ERROR_FILE_WRITE_OPEN_FAILED_PREFIX, filename));
     }
     
     try {
@@ -634,12 +659,12 @@ zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zeross
         file.close();
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_FILE_WRITE_FAILED_PREFIX, e.what()));
+        return make_result_error<void>(std::format("{}{}", ERROR_FILE_WRITE_FAILED_PREFIX, e.what()));
     }
 }
 
 bool create_directory(const zerossg::DirectoryPath& path) {
-    return std::filesystem::create_directories(path);
+    return std::filesystem::create_directories(std::filesystem::path(path));
 }
 
 } // namespace ConfigUtils

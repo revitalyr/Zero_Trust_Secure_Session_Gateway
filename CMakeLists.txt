@@ -63,6 +63,7 @@ target_sources(zerossg_lib
         "include/zerossg/cli/cli_interface.ixx"
         "include/zerossg/third_party/nlohmann_json.ixx"
         "include/zerossg/third_party/yaml_cpp.ixx"
+        "include/zerossg/third_party/openssl.ixx"
 )
 
 # Добавление файлов реализации (.cpp)

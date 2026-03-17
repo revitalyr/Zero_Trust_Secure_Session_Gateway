@@ -7,6 +7,7 @@ module;
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <chrono>
 #include <iomanip>
@@ -23,7 +24,7 @@ namespace zerossg {
 
 Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks();
-    m_logger->set_name(name);
+    // m_logger->set_name(name); // spdlog::logger does not have set_name
     set_level(level);
 }
 
@@ -61,7 +62,7 @@ spdlog::level::level_enum Logger::convert_log_level(LogLevel level) {
     }
 }
 
-void Logger::log_session_event(const String& event_type, const String& details) {
+void Logger::log_security_event(const String& event_type, const String& details) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
     String formatted_event = format_fields({
@@ -125,7 +126,7 @@ void zerossg::Logger::add_file_sink(const zerossg::String& filename, size_t max_
 void zerossg::Logger::add_daily_file_sink(const zerossg::String& filename, int hour, int minute) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
-    auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filename, hour, minute);
+    auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filename, hour, minute, false, static_cast<uint16_t>(5));
     m_logger->sinks().push_back(daily_sink);
 }
 
