@@ -70,7 +70,7 @@ target_sources(zerossg_lib
 target_sources(zerossg_lib
     PRIVATE
         "src/config/config_manager.cpp"
-        "src/cli/cli_interface.cpp"
+        # "src/cli/cli_interface.cpp"  # Commented out due to m_server dependency issues
         "src/logging/logger.cpp"
         # Добавьте остальные .cpp файлы проекта здесь
 )
@@ -151,3 +151,11 @@ target_link_libraries(zerossg_tests
 target_include_directories(zerossg_tests PRIVATE ${ut_SOURCE_DIR}/include)
 
 add_test(NAME AllTests COMMAND zerossg_tests)
+
+# Simple CLI executable for testing (without complex dependencies)
+add_executable(zerossg_simple src/simple_main.cpp)
+target_link_libraries(zerossg_simple PRIVATE zerossg_lib)
+target_sources(zerossg_simple PRIVATE 
+    src/config/config_manager.cpp
+    src/logging/logger.cpp
+)

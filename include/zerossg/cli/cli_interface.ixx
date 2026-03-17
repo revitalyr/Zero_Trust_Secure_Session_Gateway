@@ -3,12 +3,20 @@ module;
 #include <memory>
 #include <vector>
 #include <functional>
+#include <expected>
+#include <string>
 
 export module zerossg.cli.cli_interface;
 
-export import zerossg.common;
-export import zerossg.types;
+import zerossg.common;
+import zerossg.types;
+
 export namespace zerossg {
+
+// Type aliases for CLI
+using String = std::string;
+template<typename T, typename E = std::string>
+using Result = std::expected<T, E>;
 
 struct CLICommand {
     CommandName name;
@@ -81,7 +89,8 @@ private:
     
     Vector<CLICommand> m_commands;
     String m_config_file = "config.json";
-    std::unique_ptr<class GatewayServer> m_server;
+    // Note: GatewayServer forward declaration - full definition in network module
+    // std::unique_ptr<class GatewayServer> m_server; // Commented out for simple CLI
 };
 
 } // namespace zerossg
