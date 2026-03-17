@@ -11,6 +11,7 @@ module;
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <chrono>
 #include <iomanip>
+#include <format>
 
 #undef ERROR // Fix collision with Windows ERROR macro
 module zerossg.logging.logger;
@@ -82,20 +83,23 @@ void Logger::log_session_event(const String& session_id, const String& event_typ
 
 void Logger::log_error(const String& component, const String& error, const std::source_location& loc) {
     // Redirect legacy calls to new implementation
-    log_impl(LogLevel::ERROR, loc, std::format("[{}]: {}", component, error));
+    log_impl(LogLevel::ERROR, loc, "[{}]: {}", std::make_format_args(component, error));
 }
 
 void Logger::log_info(const String& component, const String& message, const std::source_location& loc) {
-    log_impl(LogLevel::INFO, loc, std::format("[{}]: {}", component, message));
+    log_impl(LogLevel::INFO, loc, "[{}]: {}", std::make_format_args(component, message));
 }
 
 void Logger::log_debug(const String& component, const String& message, const std::source_location& loc) {
-    log_impl(LogLevel::DEBUG, loc, std::format("[{}]: {}", component, message));
+    log_impl(LogLevel::DEBUG, loc, "[{}]: {}", std::make_format_args(component, message));
 }
 
-void Logger::log_impl(LogLevel level, const std::source_location& loc, const String& message) {
+void Logger::log_impl(LogLevel level, const std::source_location& loc, std::string_view fmt, std::format_args args) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
+    // Format the message using vformat
+    String message = std::vformat(fmt, args);
+
     // Extract filename from path
     std::filesystem::path path(loc.file_name());
     String filename = path.filename().string();

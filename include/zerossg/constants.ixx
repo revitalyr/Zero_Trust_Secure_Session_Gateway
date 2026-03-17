@@ -68,6 +68,14 @@ export constexpr const char* ERROR_TARGET_SERVICE_REQUIRED = "Target service req
 export constexpr const char* ERROR_NO_ACTIVE_SESSION = "No active session";
 
 // Detailed Error Messages and Prefixes
+export constexpr const char* ERROR_JWT_SECRET_GENERATION_FAILED = "JWT secret generation failed";
+export constexpr const char* ERROR_ACCOUNT_LOCKED = "Account locked";
+export constexpr const char* ERROR_ACCOUNT_BLOCKED = "Account blocked";
+export constexpr const char* ERROR_USER_INACTIVE = "User inactive";
+export constexpr const char* ERROR_AUTHENTICATION_FAILED_PREFIX = "Authentication failed: ";
+export constexpr const char* ERROR_INVALID_TOKEN_PAYLOAD_PREFIX = "Invalid token payload: ";
+export constexpr const char* ERROR_SALT_GENERATION_FAILED = "Failed to generate salt";
+export constexpr const char* ERROR_HASH_CONTEXT_CREATION_FAILED = "Failed to create hash context";
 export constexpr const char* ERROR_CONFIG_FILE_NOT_FOUND = "Configuration file not found: ";
 export constexpr const char* ERROR_UNSUPPORTED_CONFIG_FORMAT = "Unsupported configuration format: ";
 export constexpr const char* ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX = "Target service not found: ";
@@ -90,6 +98,7 @@ export constexpr const char* ERROR_INVALID_LOG_LEVEL = "Invalid log level: ";
 export constexpr const char* ERROR_INVALID_LOG_MAX_SIZE = "Invalid max log file size";
 export constexpr const char* ERROR_INVALID_LOG_MAX_FILES = "Invalid max log files";
 export constexpr const char* ERROR_DB_HOST_EMPTY = "Database host is empty";
+export constexpr const char* ERROR_HASH_TOO_SHORT = "Hash too short";
 export constexpr const char* ERROR_INVALID_DB_PORT = "Invalid database port";
 export constexpr const char* ERROR_DB_NAME_EMPTY = "Database name is empty";
 export constexpr const char* ERROR_TARGET_SERVICE_NAME_EMPTY = "Target service name is empty";
@@ -99,6 +108,10 @@ export constexpr const char* ERROR_TARGET_SERVICE_NO_ROLES_PREFIX = "Target serv
 export constexpr const char* ERROR_FILE_OPEN_FAILED_PREFIX = "Failed to open file: ";
 export constexpr const char* ERROR_FILE_READ_FAILED_PREFIX = "Failed to read file: ";
 export constexpr const char* ERROR_FILE_WRITE_OPEN_FAILED_PREFIX = "Failed to open file for writing: ";
+export constexpr const char* ERROR_HASH_INITIALIZATION_FAILED = "Hash initialization failed";
+export constexpr const char* ERROR_HASH_UPDATE_FAILED = "Hash update failed";
+export constexpr const char* ERROR_HASH_FINALIZATION_FAILED = "Hash finalization failed";
+
 export constexpr const char* ERROR_FILE_WRITE_FAILED_PREFIX = "Failed to write file: ";
 
 // Success messages
@@ -111,6 +124,8 @@ export constexpr const char* MESSAGE_LOGIN_SUCCESSFUL = "Login successful";
 export constexpr const char* MESSAGE_SESSION_CREATED = "Session created";
 export constexpr const char* MESSAGE_PROXY_REQUEST_PROCESSED = "Proxy request processed";
 export constexpr const char* MESSAGE_LOGOUT_SUCCESSFUL = "Logout successful";
+export constexpr const char* LOG_MSG_FAILED_ATTEMPT_PREFIX = "Failed attempt at ";
+
 
 // JWT claim keys
 export constexpr const char* JWT_CLAIM_ISSUER = "iss";
@@ -123,6 +138,14 @@ export constexpr const char* JWT_CLAIM_USERNAME = "username";
 export constexpr const char* JWT_CLAIM_ROLE = "role";
 export constexpr const char* JWT_CLAIM_CLIENT_IP = "client_ip";
 export constexpr const char* JWT_CLAIM_TARGET_SERVICE = "target_service";
+
+// JWT header and algorithms
+export constexpr const char* JWT_HEADER_ALG = "alg";
+export constexpr const char* JWT_HEADER_TYP = "typ";
+export constexpr const char* JWT_ALGORITHM_HS256 = "HS256";
+export constexpr const char* JWT_TYPE = "JWT";
+export constexpr const char* JWT_PAYLOAD_IAT = "iat";
+export constexpr const char* JWT_PAYLOAD_EXP = "exp";
 
 // JSON protocol constants
 export constexpr const char* JSON_KEY_TYPE = "type";
@@ -281,6 +304,18 @@ export constexpr const char* EVENT_SESSION_TERMINATION = "session_termination";
 export constexpr const char* EVENT_AUTHENTICATION_ERROR = "authentication_error";
 export constexpr const char* EVENT_ACCESS_VIOLATION = "access_violation";
 export constexpr const char* EVENT_RATE_LIMIT_EXCEEDED = "rate_limit_exceeded";
+
+// Permission constants
+export enum class Permission {
+    USER_CREATE, USER_READ, USER_UPDATE, USER_DELETE,
+    SERVICE_CREATE, SERVICE_READ, SERVICE_UPDATE, SERVICE_DELETE,
+    SESSION_CREATE, SESSION_READ, SESSION_DELETE,
+    CONFIG_READ, CONFIG_UPDATE,
+    LOGS_READ, LOGS_EXPORT,
+    SYSTEM_ADMIN
+};
+
+
 export constexpr const char* EVENT_BRUTE_FORCE_DETECTED = "brute_force_detected";
 
 // Permission names
@@ -366,6 +401,12 @@ export constexpr Count DEFAULT_THREAD_COUNT = 0; // Auto-detect
 export constexpr size_t DEFAULT_CACHE_SIZE = 1000;
 export constexpr size_t MAX_CACHE_SIZE = 10000;
 
+// Other constants
+export constexpr int SHA256_DIGEST_LENGTH = 32;
+export constexpr int PortNoMin = 1;
+export constexpr int PortNoMax = 65535;
+export constexpr int SESSION_ID_SIZE = 32;
+export constexpr int MAX_SESSIONS_PER_USER = 5;
 // Retry configuration
 export constexpr Count MAX_RETRY_ATTEMPTS = 3;
 export constexpr std::chrono::milliseconds RETRY_DELAY_BASE{1000}; // 1 second
@@ -374,5 +415,20 @@ export constexpr std::chrono::milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
 // Health check intervals
 export constexpr std::chrono::seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
 export constexpr std::chrono::seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
+
+} // namespace zerossg
+
+namespace zerossg {
+
+export constexpr Permission PERMISSION_USER_CREATE = Permission::USER_CREATE;
+export constexpr Permission PERMISSION_USER_READ = Permission::USER_READ;
+export constexpr Permission PERMISSION_USER_UPDATE = Permission::USER_UPDATE;
+export constexpr Permission PERMISSION_USER_DELETE = Permission::USER_DELETE;
+export constexpr Permission PERMISSION_SERVICE_READ = Permission::SERVICE_READ;
+export constexpr Permission PERMISSION_SERVICE_UPDATE = Permission::SERVICE_UPDATE;
+export constexpr Permission PERMISSION_SESSION_CREATE = Permission::SESSION_CREATE;
+export constexpr Permission PERMISSION_SESSION_READ = Permission::SESSION_READ;
+export constexpr Permission PERMISSION_CONFIG_READ = Permission::CONFIG_READ;
+export constexpr Permission PERMISSION_LOGS_READ = Permission::LOGS_READ;
 
 } // namespace zerossg

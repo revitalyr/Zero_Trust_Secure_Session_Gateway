@@ -33,7 +33,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 find_package(Readline QUIET)
 
 # Поиск остальных зависимостей
-find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(Boost REQUIRED COMPONENTS system thread date_time container)
 find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
@@ -111,8 +111,17 @@ if(Readline_FOUND)
 endif()
 
 # 7. ИСПОЛНЯЕМЫЙ ФАЙЛ
-add_executable(zerossg_app "src/main.cpp")
-target_link_libraries(zerossg_app PRIVATE zerossg_lib)
+add_executable(zerossg_app 
+    "src/main.cpp"
+    "src/network/gateway_server.cpp"
+    "src/tls/tls_handler.cpp"
+)
+target_link_libraries(zerossg_app 
+    PRIVATE zerossg_lib
+    Boost::date_time
+    Boost::container
+    yaml-cpp
+)
 
 # 8. ТЕСТЫ (UT)
 enable_testing()
@@ -129,8 +138,16 @@ add_executable(zerossg_tests
     "tests/test_authentication.cpp"
     "tests/test_authorization.cpp"
     "tests/test_session_manager.cpp"
+    src/auth/authenticator.cpp
+    src/rbac/authorizer.cpp
+    src/session/session_manager.cpp
 )
-target_link_libraries(zerossg_tests PRIVATE zerossg_lib)
+target_link_libraries(zerossg_tests 
+    PRIVATE zerossg_lib
+    Boost::date_time
+    Boost::container
+    yaml-cpp
+)
 target_include_directories(zerossg_tests PRIVATE ${ut_SOURCE_DIR}/include)
 
 add_test(NAME AllTests COMMAND zerossg_tests)

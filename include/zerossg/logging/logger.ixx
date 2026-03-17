@@ -22,6 +22,17 @@ import zerossg.std;
 
 export namespace zerossg {
 
+export struct LogFormat {
+    std::string_view fmt;
+    std::source_location loc;
+
+    // Конструктор помечен consteval, чтобы захват происходил в момент компиляции в месте вызова
+    template <typename T>
+    requires std::convertible_to<T, std::string_view>
+    consteval LogFormat(const T& s, std::source_location l = std::source_location::current())
+        : fmt(s), loc(l) {}
+};
+
 export enum class LogLevel {
     TRACE = 0,
     DEBUG = 1,
@@ -53,39 +64,40 @@ public:
     template<typename... Args>
     void log(LogLevel level, const std::source_location& loc, std::format_string<Args...> fmt, Args&&... args) {
         if (level < m_level) return;
-        log_impl(level, loc, std::format(fmt, std::forward<Args>(args)...));
+        log_impl(level, loc, fmt.get(), std::make_format_args(args...));
     }
 
     // Helper methods for specific levels using source_location
     template<typename... Args>
-    void trace(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::TRACE, loc, fmt, std::forward<Args>(args)...);
+    void trace(LogFormat target, Args&&... args) {
+        log_impl(LogLevel::TRACE, target.loc, target.fmt, std::make_format_args(args...));
     }
 
     template<typename... Args>
-    void debug(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::DEBUG, loc, fmt, std::forward<Args>(args)...);
+    void debug(LogFormat target, Args&&... args) {
+        log_impl(LogLevel::DEBUG, target.loc, target.fmt, std::make_format_args(args...));
     }
 
     template<typename... Args>
-    void info(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::INFO, loc, fmt, std::forward<Args>(args)...);
+    void info(LogFormat target, Args&&... args) {
+       log_impl(LogLevel::INFO, target.loc, target.fmt, std::make_format_args(args...));
     }
 
     template<typename... Args>
-    void warn(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::WARN, loc, fmt, std::forward<Args>(args)...);
+    void warn(LogFormat target, Args&&... args) {
+        log_impl(LogLevel::WARN, target.loc, target.fmt, std::make_format_args(args...));
     }
 
     template<typename... Args>
-    void error(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::ERROR, loc, fmt, std::forward<Args>(args)...);
+    void error(LogFormat target, Args&&... args) {
+        log_impl(LogLevel::ERROR, target.loc, target.fmt, std::make_format_args(args...));
     }
 
     template<typename... Args>
-    void critical(std::format_string<Args...> fmt, Args&&... args, const std::source_location& loc = std::source_location::current()) {
-        log(LogLevel::CRITICAL, loc, fmt, std::forward<Args>(args)...);
+    void critical(LogFormat target, Args&&... args) {
+       log_impl(LogLevel::CRITICAL, target.loc, target.fmt, std::make_format_args(args...));
     }
+
 
     // Legacy support (to be deprecated or refactored)
     void log_error(const String& component, const ErrorMessage& error, const std::source_location& loc = std::source_location::current());
@@ -123,7 +135,7 @@ public:
     void set_pattern(const String& pattern);
 
 private:
-    void log_impl(LogLevel level, const std::source_location& loc, const String& message);
+    void log_impl(LogLevel level, const std::source_location& loc, std::string_view fmt, std::format_args args);
     void initialize_default_sinks();
 
     String m_name;
@@ -151,7 +163,7 @@ public:
     void set_max_files(size_t count);
     
     // Flush all loggers
-    void flush_all();
+        void flush_all();
     
     // Statistics
     UserCount get_logger_count() const noexcept;

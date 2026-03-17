@@ -333,7 +333,7 @@ void CLIInterface::register_builtin_commands() {
                      [this](const zerossg::CommandLineArgs& args) { return handle_test_command(args); });
     
     register_command(zerossg::CMD_INTERACTIVE, "Enter interactive mode", "interactive",
-                     [this](const std::vector<String>& args) { 
+                     [this](const std::vector<String>& /*args*/) { 
                          run_interactive_mode(); 
                          return 0; 
                      });

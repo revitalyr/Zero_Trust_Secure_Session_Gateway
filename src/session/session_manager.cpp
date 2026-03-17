@@ -20,7 +20,7 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     
     // Check if user has reached session limit
     if (is_user_at_session_limit(user.user_name())) {
-        return make_result_error<SessionId>(std::format("{}{}", zerossg::ERROR_MAXIMUM_SESSION_LIMIT, user.user_name()));
+        return make_result_error<SessionId>(ERROR_MAX_CONCURRENT_SESSIONS + user.user_name());
     }
     
     // Generate unique session ID
@@ -31,8 +31,8 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
         session_id = generate_session_id();
     }
     
-    // Create session
-    auto expires_at = std::chrono::system_clock::now() + zerossg::DEFAULT_SESSION_TIMEOUT;
+  // Create session
+    auto expires_at = std::chrono::system_clock::now() + DEFAULT_SESSION_TIMEOUT;
     zerossg::Session session(session_id, user.user_name(), user.role(), client_ip, target_service, expires_at);
     
     // Store session
@@ -47,14 +47,14 @@ zerossg::Result<zerossg::Session> SessionManager::get_session(const zerossg::Ses
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<Session>(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     const zerossg::Session& session = it->second;
     
     // Check if session has expired
     if (session.is_expired()) {
-        // Remove expired session
+      // Remove expired session
         m_sessions.erase(it);
         return make_result_error<Session>(std::format("{}{}", zerossg::ERROR_SESSION_EXPIRED_PREFIX, session_id));
     }
@@ -67,7 +67,7 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<void>(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     m_sessions[session_id] = session;
@@ -78,7 +78,7 @@ zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId
     LockGuard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<void>(ERROR_SESSION_NOT_FOUND_PREFIX + session_id);
     }
     
     return make_result_success();
@@ -138,7 +138,7 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
     
     // Check if session is still active
     if (!session.is_active() || session.is_expired()) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
+        return make_result_error<void>(std::format("{}{}", ERROR_SESSION_EXPIRED, session_id));
     }
     
     // Extend session
@@ -201,7 +201,10 @@ zerossg::Result<zerossg::Sessions> SessionManager::get_sessions_by_ip(const zero
 }
 
 zerossg::SessionId SessionManager::generate_session_id() {
-    std::uniform_int_distribution<> dis(0, 255);
+    std::random_device rd;
+
+
+    static std::mt19937 gen(rd());
     
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
@@ -223,7 +226,7 @@ bool SessionManager::is_user_at_session_limit(const zerossg::UserName& username)
             now <= pair.second.expires_at()) {
             user_session_count++;
             
-            if (user_session_count >= zerossg::MAX_SESSIONS_PER_USER) {
+            if (user_session_count >= MAX_SESSIONS_PER_USER) {
                 return true;
             }
         }
@@ -244,7 +247,6 @@ void SessionManager::cleanup_expired_sessions_internal() {
         }
     }
 }
-
 zerossg::DurationString SessionManager::format_session_duration(const std::chrono::system_clock::time_point& start, 
                                                                 const std::chrono::system_clock::time_point& end) {
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);

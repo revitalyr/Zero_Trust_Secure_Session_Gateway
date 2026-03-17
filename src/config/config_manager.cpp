@@ -59,7 +59,6 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        std::ostringstream oss;
         logger->error("Exception in load_config: {}", e.what());
         return make_result_error<void>(ERROR_FAILED_TO_LOAD_CONFIG + zerossg::String(e.what()));
     }
@@ -78,6 +77,7 @@ int ConfigManager::get_int(const zerossg::ConfigKey& key, int default_value) {
         zerossg::ConfigValue value = get_config_value(key, std::to_string(default_value));
         return std::stoi(value);
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->warn("YAML exception: {}", e.what());
         return default_value;
     }
 }
@@ -108,6 +108,7 @@ zerossg::StringArray ConfigManager::get_string_array(const zerossg::ConfigKey& k
         
         for (const auto& k : keys) {
             if (!json_value.contains(k)) {
+                zerossg::Logger::get("ConfigManager")->warn("get_string_array() key not found: {}", key);
                 return {};
             }
             json_value = json_value[k];
@@ -123,7 +124,7 @@ zerossg::StringArray ConfigManager::get_string_array(const zerossg::ConfigKey& k
             return result;
         }
     } catch (const std::exception&) {
-        // Return empty array on error
+        zerossg::Logger::get("ConfigManager")->warn("get_string_array() key not found: {}", key);
     }
     
     return {};
@@ -247,6 +248,7 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_CONFIG_SAVE_FAILED_PREFIX, e.what()));
     }
 }
@@ -277,11 +279,11 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const YAML::Exception& e) {
-        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what());
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_YAML_PARSE_PREFIX, e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_YAML_PARSE_PREFIX, e.what()));
 
     } catch (const std::exception& e) {
-        zerossg::Logger::get("ConfigManager")->error("YAML exception: {}", e.what());
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_YAML_LOAD_PREFIX, e.what());
        return make_result_error<void>(std::format("{}{}", ERROR_YAML_LOAD_PREFIX, e.what()));
     }
 }
@@ -305,14 +307,10 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const json::exception& e) {
-       std::ostringstream oss;
-       oss << "JSON exception: " << e.what();
-       logger->error(oss.str());
-
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_JSON_PARSE_PREFIX, e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
-        logger->error(std::format("Std exception: {}", e.what()));
-        zerossg::Logger::get("ConfigManager")->error("YAML exception: {}", e.what());
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_JSON_LOAD_PREFIX, e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
@@ -401,7 +399,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
         if (std::in_range<zerossg::PortNo>(port_val)) {
             service.m_port = static_cast<zerossg::PortNo>(port_val);
         } else {
-            logger->error("Invalid port value: {}", port_val);
+            zerossg::Logger::get("ConfigManager")->error("Invalid port value: {}", port_val);
         }
         
         // Parse allowed roles
@@ -415,6 +413,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
                             zerossg::Role role = string_to_role(role_str);
                             service.m_allowed_roles.push_back(role);
                         } catch (const std::exception&) {
+                            zerossg::Logger::get("ConfigManager")->warn("Unknown role '{}' for service '{}'", role_str, service.name());
                             // Invalid role, skip
                         }
                     }
@@ -428,6 +427,7 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
         
         return zerossg::make_result_success(service);
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what());
         return make_result_error<TargetService>(std::format("{}{}", ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX, e.what()));
     }
 }
@@ -561,7 +561,9 @@ zerossg::ConfigValue ConfigManager::get_config_value(const zerossg::ConfigKey& k
         } else if (json_value.is_number() || json_value.is_boolean()) {
             return json_value.dump();
         }
-    } catch (const std::exception&) {
+    } catch (const std::exception&e) {
+        zerossg::Logger::get("ConfigManager")->error("get_config_value({}) error: {}", key, e.what());
+
         // Return default value on error
     }
     
@@ -674,6 +676,7 @@ zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filenam
         file.close();
         return zerossg::make_result_success(content);
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_FILE_READ_FAILED_PREFIX, e.what());
         return make_result_error<FileContent>(std::format("{}{}", ERROR_FILE_READ_FAILED_PREFIX, e.what()));
     }
 }
@@ -689,6 +692,7 @@ zerossg::Result<void> write_file(const zerossg::FilePath& filename, const zeross
         file.close();
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->error("{}{}", ERROR_FILE_WRITE_FAILED_PREFIX, e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_FILE_WRITE_FAILED_PREFIX, e.what()));
     }
 }

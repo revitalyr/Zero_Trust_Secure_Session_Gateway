@@ -1,7 +1,6 @@
 module;
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
-module zerossg.auth.authenticator;
 
 // Global module fragment for standard library headers
 #include <random> // For std::random_device, std::uniform_int_distribution
@@ -10,16 +9,21 @@ module zerossg.auth.authenticator;
 #include <format> // For std::format
 #include <algorithm> // For std::ranges::count_if, std::equal
 
+module zerossg.auth.authenticator;
+
 // C++23 module imports
 import zerossg.constants;
 import zerossg.types;
 import zerossg.common; // For Result, make_result_success, make_result_error, String, StringView, LockGuard
 import zerossg.third_party.nlohmann_json;
+
 import zerossg.third_party.openssl;
+import zerossg.logging.logger;
 
 namespace zerossg {
 
 // Helper function to generate secure random bytes
+
 zerossg::Result<zerossg::Bytes> generate_secure_random_bytes(size_t size) {
     zerossg::Bytes bytes(size);
     if (RAND_bytes(bytes.data(), bytes.size()) != 1) {
@@ -34,7 +38,7 @@ AuthenticationManager::AuthenticationManager() {
     m_secret_rotation_time = std::system_clock::now();
     
     // Generate JWT secret key with better randomness
-    const auto secret_result = generate_secure_random_bytes(zerossg::JWT_SECRET_SIZE);
+    const auto secret_result = generate_secure_random_bytes(JWT_SECRET_SIZE);
     if (!secret_result.has_value()) {
         throw std::runtime_error(zerossg::ERROR_JWT_SECRET_GENERATION_FAILED);
     }
@@ -42,40 +46,39 @@ AuthenticationManager::AuthenticationManager() {
     
     // Add default admin user with stronger password
     auto admin_hash_result = hash_password(zerossg::DEFAULT_ADMIN_PASSWORD);
-    auto logger = Logger::get("AuthenticationManager");
     if (admin_hash_result.has_value()) {
         zerossg::User admin_user("admin", admin_hash_result.value(), zerossg::Role::ADMIN);
         add_user(std::move(admin_user));
     }
 }
-
+ 
 AuthenticationManager::~AuthenticationManager() = default;
 
 zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const zerossg::UserName& username, const zerossg::Password& password) {
     auto logger = Logger::get("AuthenticationManager");
-    // Modern input validation
+   // Modern input validation
     if (!is_valid_username(username)) {
         return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_INVALID_USERNAME_FORMAT);
     }
-    
+   
     if (!is_valid_password_format(password)) {
         return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_PASSWORD_POLICY_VIOLATION);
     }
-    
+   
     // Check rate limiting first
     {
-        SharedLock lock(m_rate_limits_mutex);
+    std::shared_lock lock(m_rate_limits_mutex);
         auto& rate_info = m_rate_limits[std::string(username)];
         
         if (rate_info.should_block()) {
             return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_ACCOUNT_LOCKED);
         }
-        
-        // Record attempt
+      
+       // Record attempt
         rate_info.m_attempts++;
         rate_info.m_window_start = std::system_clock::now();
     }
-    
+   
     // Check if user is blocked
     {
         SharedLock lock(m_blocked_users_mutex);
@@ -83,37 +86,37 @@ zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const 
             return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_ACCOUNT_BLOCKED);
         }
     }
-    
+   
     // Find user with modern concurrency
     SharedLock lock(m_users_mutex);
     const auto user_it = m_users.find(std::string(username));
     if (user_it == m_users.end()) {
         return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_USER_NOT_FOUND);
     }
-    
+   
     const zerossg::User& user = user_it->second;
     if (!user.is_active()) {
         return zerossg::make_result_error<TokenString>(std::string(zerossg::ERROR_USER_INACTIVE));
     }
-    
+   
     // Modern password verification with timing-safe comparison
     const auto verify_result = verify_password(password, user.password_hash());
     if (!verify_result.has_value()) {
         // Record failed attempt for security monitoring
         detect_suspicious_activity(username, "");
-        return zerossg::make_result_error<TokenString>(std::format("{}{}", zerossg::ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
+      return zerossg::make_result_error<TokenString>(std::format("{}{}", ERROR_AUTHENTICATION_FAILED_PREFIX, verify_result.error()));
     }
-    
+   
     if (!verify_result.value()) {
         return zerossg::make_result_error<TokenString>(std::string(zerossg::ERROR_INVALID_CREDENTIALS));
     }
-    
+   
     // Generate JWT token with enhanced security
     // Generate simple JWT token for now
     auto now = std::system_clock::now();
     auto iat = std::chrono::duration_cast<zerossg::Seconds>(now.time_since_epoch()).count();
     auto exp = std::chrono::duration_cast<zerossg::Seconds>((now + zerossg::Seconds(3600)).time_since_epoch()).count();
-    
+   
     json payload = {
         {zerossg::JWT_PAYLOAD_USERNAME, user.user_name()},
         {zerossg::JWT_PAYLOAD_ROLE, role_to_string(user.role())},
@@ -245,7 +248,7 @@ zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user)
     return zerossg::make_result_success();
 }
 
-zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName& username, const zerossg::User& user) {
+Result<void> AuthenticationManager::update_user(const zerossg::UserName& username, const zerossg::User& user) {
     auto logger = Logger::get("AuthenticationManager");
     LockGuard<std::mutex> lock(m_users_mutex);
     
@@ -257,7 +260,7 @@ zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName
     return zerossg::make_result_success();
 }
 
-zerossg::Result<void> AuthenticationManager::delete_user(const zerossg::UserName& username) {
+Result<void> AuthenticationManager::delete_user(const zerossg::UserName& username) {
     auto logger = Logger::get("AuthenticationManager");
     LockGuard<std::mutex> lock(m_users_mutex);
     
@@ -334,9 +337,10 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
     return zerossg::make_result_success(base64_encode(result));
 }
 
+
 zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Password& password, const zerossg::PasswordHash& hash) {
     auto logger = Logger::get("AuthenticationManager");
-    // Decode base64 hash back to bytes
+   // Decode base64 hash back to bytes
     zerossg::String decoded_hash_str = base64_decode(hash);
     
     // Check minimum size: 16 bytes for salt + SHA256_DIGEST_LENGTH for hash
@@ -397,17 +401,21 @@ zerossg::JwtPayloadString AuthenticationManager::create_jwt_payload(const zeross
     return payload.dump();
 }
 
-zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const zerossg::TokenString& token) {
+Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const zerossg::TokenString& token) {
     size_t first_dot = token.find('.');
-    size_t second_dot = token.find('.', first_dot + 1);
+    if (first_dot == String::npos)
+    { 
+        return zerossg::make_result_error<zerossg::User>(zerossg::ERROR_INVALID_TOKEN_FORMAT);
+    }
+    size_t second_dot = token.find('.', first_dot + 1); 
     
     if (first_dot == zerossg::String::npos || second_dot == zerossg::String::npos) {
         return zerossg::make_result_error<zerossg::User>(zerossg::ERROR_INVALID_TOKEN_FORMAT);
-    }
+    }    
     
     std::string payload_b64 = token.substr(first_dot + 1, second_dot - first_dot - 1);
     std::string payload_str = base64_decode(payload_b64);
-    
+
     try {
         json payload = json::parse(payload_str);
         
@@ -418,13 +426,13 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
         }
         
         // Get user
-        std::string username = payload["username"];
-        auto user_result = get_user(username);
-        if (!user_result.has_value()) {
+        std::string username = payload["username"];        
+        auto user_result = this->get_user(username);
+        std::optional<zerossg::User> user_opt;
+        if (user_result.has_value() == false) {
             return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
         
-        auto user_opt = user_result.value();
         if (!user_opt.has_value()) {
             return zerossg::make_result_error<zerossg::User>(std::format("{}{}", zerossg::ERROR_USER_NOT_FOUND_PREFIX, username));
         }
@@ -435,6 +443,7 @@ zerossg::Result<zerossg::User> AuthenticationManager::parse_jwt_payload(const ze
     }
 }
 
+
 bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload& header_payload, const zerossg::JwtSignature& signature) {
     try {
         std::string computed_signature = generate_jwt_signature(header_payload);
@@ -444,6 +453,8 @@ bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload
     }
 }
 
+
+zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
 zerossg::TokenString AuthenticationManager::generate_secure_token() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -455,7 +466,6 @@ zerossg::TokenString AuthenticationManager::generate_secure_token() {
     }
     
     return base64_encode(std::string(reinterpret_cast<char*>(token_data.data()), token_data.size()));
-}
 
 void AuthenticationManager::cleanup_expired_tokens() {
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -505,6 +515,7 @@ zerossg::Strings AuthenticationManager::get_recent_failed_attempts(std::string_v
 }
 
 // Helper functions for JWT operations
+
 zerossg::RoleString role_to_string(zerossg::Role role) {
     switch (role) {
         case zerossg::Role::ADMIN: return "admin";
@@ -514,14 +525,13 @@ zerossg::RoleString role_to_string(zerossg::Role role) {
     }
 }
 
-zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
     try {
         unsigned char hmac_buf[EVP_MAX_MD_SIZE];
         unsigned int hmac_len = 0;
         
         unsigned char* result_ptr = HMAC(EVP_sha256(), 
               m_jwt_secret.data(), static_cast<int>(m_jwt_secret.size()),
-              reinterpret_cast<const unsigned char*>(header_payload.c_str()), header_payload.length(),
+            (const unsigned char*)header_payload.c_str(), header_payload.length(),
               hmac_buf, &hmac_len);
         
         if (result_ptr == nullptr) {
@@ -543,6 +553,7 @@ bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload
     }
 }
 
+
 namespace auth_utils {
     bool is_valid_jwt_structure(const zerossg::TokenString& token) {
         // Basic JWT structure validation: header.payload.signature
@@ -563,5 +574,6 @@ zerossg::SessionId AuthenticationManager::generate_session_id() const noexcept {
     
     return std::to_string(dis(gen()));
 }
+
 
 } // namespace zerossg

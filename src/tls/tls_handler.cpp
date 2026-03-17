@@ -19,13 +19,15 @@ module zerossg.tls.tls_handler;
 import zerossg.interfaces;
 import zerossg.logging.logger;
 import zerossg.common; // For Result, make_result_success, make_result_error
+ 
 import zerossg.std;
 import zerossg.third_party.openssl;
+import zerossg.constants;
 
 namespace zerossg {
 
 TlsHandler::TlsHandler(IoContext& io_context)
-    : m_ssl_context(boost::asio::ssl::context::tlsv12_server)
+ : m_ssl_context(boost::asio::ssl::context::tlsv12_server)
     , m_io_context(io_context)
     , m_verify_depth(9)
     , m_cipher_list(zerossg::DEFAULT_CIPHER_LIST) {
@@ -36,7 +38,7 @@ TlsHandler::TlsHandler(IoContext& io_context)
         boost::asio::ssl::context::no_sslv2 |
         boost::asio::ssl::context::no_sslv3 |
         boost::asio::ssl::context::single_dh_use
-    );
+ );
     
     // Set verification mode to none by default (can be overridden)
     m_ssl_context.set_verify_mode(boost::asio::ssl::verify_none);
@@ -74,10 +76,6 @@ zerossg::Result<void> TlsHandler::initialize(const zerossg::FilePath& cert_file,
     }
 }
 
-zerossg::SslContext& TlsHandler::get_context() {
-    return m_ssl_context;
-}
-
 zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateData& cert_data) {
     try {
         // Create a memory BIO for the certificate data
@@ -104,7 +102,7 @@ zerossg::Result<bool> TlsHandler::verify_certificate(const zerossg::CertificateD
     }
 }
 
-zerossg::Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath& cert_file) {
+Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath& cert_file) {
     auto validation_result = validate_certificate_file(cert_file);
     if (!validation_result.has_value()) {
         return validation_result;
@@ -118,7 +116,7 @@ zerossg::Result<void> TlsHandler::load_certificate_chain(const zerossg::FilePath
     }
 }
 
-zerossg::Result<void> TlsHandler::load_private_key(const zerossg::FilePath& key_file) {
+Result<void> TlsHandler::load_private_key(const zerossg::FilePath& key_file) {
     auto validation_result = validate_key_file(key_file);
     if (!validation_result.has_value()) {
         return validation_result;
@@ -212,10 +210,12 @@ zerossg::Result<void> TlsHandler::validate_key_file(const zerossg::FilePath& key
     return make_result_success();
 }
 
-zerossg::ErrorString TlsHandler::get_ssl_error_string(unsigned long err_code) {
+String TlsHandler::get_ssl_error_string_local(unsigned long err_code) const{
     char buffer[256];
     ERR_error_string_n(err_code, buffer, sizeof(buffer));
     return std::string(buffer);
 }
 
-} // namespace zerossg
+}
+}
+}
