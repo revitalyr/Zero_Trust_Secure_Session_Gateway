@@ -16,6 +16,7 @@ import zerossg.constants;
 import zerossg.types;
 import zerossg.common; // For Result, make_result_success, make_result_error, String, StringView, LockGuard
 import zerossg.third_party.nlohmann_json;
+import zerossg.utils.base64; // For base64_encode, base64_decode
 
 import zerossg.third_party.openssl;
 import zerossg.logging.logger;

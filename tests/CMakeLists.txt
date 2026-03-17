@@ -21,7 +21,7 @@ add_executable(zerossg_tests ${TEST_SOURCES})
 target_link_libraries(zerossg_tests
     PRIVATE
     ut
-    zerossg_lib)
+)
 
 # Include directories
 target_include_directories(zerossg_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)

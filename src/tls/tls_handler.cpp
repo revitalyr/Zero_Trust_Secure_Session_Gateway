@@ -185,32 +185,31 @@ bool TlsHandler::verify_certificate_callback(bool preverified, zerossg::SslVerif
 zerossg::Result<void> TlsHandler::validate_certificate_file(const zerossg::FilePath& cert_file) {
     std::ifstream file(cert_file);
     if (!file.is_open()) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_CERT_FILE_NOT_FOUND_PREFIX, cert_file));
+        return make_result_error_void(zerossg::ERROR_TLS_CERT_FILE_NOT_FOUND_PREFIX + cert_file);
     }
     
     // Check if file contains certificate data
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     if (content.find(zerossg::PEM_CERTIFICATE_HEADER) == std::string::npos) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_INVALID_CERT_FORMAT_PREFIX, cert_file));
+        return make_result_error_void(zerossg::ERROR_TLS_INVALID_CERT_FORMAT_PREFIX + cert_file);
     }
     
-    return make_result_success();
+    return make_result_success_void();
 }
 
 zerossg::Result<void> TlsHandler::validate_key_file(const zerossg::FilePath& key_file) {
     std::ifstream file(key_file);
     if (!file.is_open()) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_KEY_FILE_NOT_FOUND_PREFIX, key_file));
+        return make_result_error_void(zerossg::ERROR_TLS_KEY_FILE_NOT_FOUND_PREFIX + key_file);
     }
     
     // Check if file contains private key data
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    if (content.find(zerossg::PEM_BEGIN_HEADER) == std::string::npos || 
-        content.find(zerossg::PEM_PRIVATE_KEY_FOOTER_PART) == std::string::npos) {
-        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_TLS_INVALID_KEY_FORMAT_PREFIX, key_file));
+    if (content.find(zerossg::PEM_PRIVATE_KEY_HEADER) == std::string::npos) {
+        return make_result_error_void(zerossg::ERROR_TLS_INVALID_KEY_FORMAT_PREFIX + key_file);
     }
     
-    return make_result_success();
+    return make_result_success_void();
 }
 
 String TlsHandler::get_ssl_error_string_local(unsigned long err_code) const{
@@ -219,6 +218,4 @@ String TlsHandler::get_ssl_error_string_local(unsigned long err_code) const{
     return std::string(buffer);
 }
 
-}
-}
-}
+} // namespace zerossg

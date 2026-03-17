@@ -29,6 +29,14 @@ export inline constexpr std::chrono::seconds SECRET_ROTATION_INTERVAL{86400}; //
 export constexpr size_t MAX_FAILED_ATTEMPTS = 5;
 export inline constexpr std::chrono::seconds FAILED_ATTEMPT_WINDOW{900}; // 15 minutes
 
+// JWT payload constants
+export constexpr const char* JWT_PAYLOAD_USERNAME = "username";
+export constexpr const char* JWT_PAYLOAD_ROLE = "role";
+
+// Authentication error messages
+export constexpr const char* ERROR_INVALID_HASH_FORMAT = "Invalid password hash format";
+export constexpr const char* ERROR_INVALID_TOKEN_FORMAT = "Invalid token format";
+
 // Database constants
 export constexpr Count DEFAULT_CONNECTION_POOL_SIZE = 10;
 export inline constexpr std::chrono::seconds DEFAULT_CONNECTION_TIMEOUT{30};
