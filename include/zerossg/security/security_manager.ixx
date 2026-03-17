@@ -1,3 +1,11 @@
+module;
+
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <optional>
+#include <unordered_map>
+
 export module zerossg.security.security_manager;
 
 export import zerossg.interfaces;
@@ -38,7 +46,7 @@ private:
         bool detected = false;
     };
 
-    struct SecurityEvent {
+    struct InternalSecurityEvent {
         String event_type;
         String details;
         TimePoint timestamp = SystemClock::now();
@@ -60,7 +68,7 @@ private:
     std::unordered_map<String, RateLimitInfo> m_rate_limits;
     std::unordered_map<String, BruteForceInfo> m_brute_force_data;
     std::unordered_map<String, TimePoint> m_blocked_ips;
-    std::queue<SecurityEvent> m_security_events;
+    std::queue<InternalSecurityEvent> m_security_events;
 
     std::atomic<size_t> m_total_failed_attempts{0};
     std::atomic<size_t> m_total_successful_logins{0};

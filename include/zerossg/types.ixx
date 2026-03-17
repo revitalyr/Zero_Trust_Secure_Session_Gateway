@@ -9,6 +9,9 @@ module;
 #include <utility>
 #include <algorithm>
 #include <format>
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/system/error_code.hpp>
 
 export module zerossg.types;
 
@@ -134,12 +137,12 @@ export struct Session {
         return SystemClock::now() > m_expires_at;
     }
     
-    [[nodiscard]] TimeoutDuration time_until_expiry() const noexcept {
+    [[nodiscard]] Seconds time_until_expiry() const noexcept {
         const auto now = SystemClock::now();
         if (now >= m_expires_at) {
-            return TimeoutDuration{0};
+            return Seconds{0};
         }
-        return std::chrono::duration_cast<TimeoutDuration>(m_expires_at - now);
+        return std::chrono::duration_cast<Seconds>(m_expires_at - now);
     }
 };
 
@@ -324,5 +327,44 @@ export using TableHeaders = Vector<String>;
 export using SuccessString = String;
 export using InfoString = String;
 export using WarningString = String;
+
+// Config Structs
+export struct ServerConfig {
+    String listen_address = "127.0.0.1";
+    PortNo listen_port = 8080;
+    String tls_cert_file;
+    String tls_key_file;
+    String ca_cert_file;
+};
+
+export struct SecurityConfig {
+    String jwt_secret;
+    int token_expiry_hours = 1;
+    int max_login_attempts = 5;
+    int lockout_duration_minutes = 15;
+};
+
+export struct SessionConfig {
+    int timeout_seconds = 3600;
+    int max_concurrent_sessions = 5;
+};
+
+export struct LoggingConfig {
+    String level = "info";
+    String file_path = "zerossg.log";
+    int max_file_size_mb = 10;
+    int max_files = 5;
+};
+
+export struct DatabaseConfig {
+    String host;
+    PortNo port = 5432;
+    String name;
+    String username;
+    String password;
+    String ssl_mode = "require";
+};
+
+export using TargetServiceMap = UnorderedMap<String, TargetService>;
 
 } // namespace zerossg

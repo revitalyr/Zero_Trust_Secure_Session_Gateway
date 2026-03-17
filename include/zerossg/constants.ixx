@@ -56,6 +56,7 @@ export constexpr const char* ERROR_SESSION_NOT_FOUND = "Session not found";
 export constexpr const char* ERROR_SESSION_EXPIRED = "Session has expired";
 export constexpr const char* ERROR_CONFIG_LOAD_FAILED = "Failed to load configuration";
 export constexpr const char* ERROR_CONFIG_SAVE_FAILED = "Failed to save configuration";
+export constexpr const char* ERROR_FAILED_TO_LOAD_CONFIG = "Failed to load configuration";
 export constexpr const char* ERROR_TLS_INITIALIZATION_FAILED = "TLS initialization failed";
 export constexpr const char* ERROR_CERTIFICATE_VERIFICATION_FAILED = "Certificate verification failed";
 export constexpr const char* ERROR_USERNAME_PASSWORD_REQUIRED = "Username and password required";
@@ -63,6 +64,40 @@ export constexpr const char* ERROR_USER_NOT_FOUND_AFTER_AUTH = "User not found a
 export constexpr const char* ERROR_NOT_AUTHENTICATED = "Not authenticated";
 export constexpr const char* ERROR_TARGET_SERVICE_REQUIRED = "Target service required";
 export constexpr const char* ERROR_NO_ACTIVE_SESSION = "No active session";
+
+// Detailed Error Messages and Prefixes
+export constexpr const char* ERROR_CONFIG_FILE_NOT_FOUND = "Configuration file not found: ";
+export constexpr const char* ERROR_UNSUPPORTED_CONFIG_FORMAT = "Unsupported configuration format: ";
+export constexpr const char* ERROR_TARGET_SERVICE_NOT_FOUND_PREFIX = "Target service not found: ";
+export constexpr const char* ERROR_CONFIG_WRITE_OPEN_FAILED_PREFIX = "Failed to open config file for writing: ";
+export constexpr const char* ERROR_CONFIG_SAVE_FAILED_PREFIX = "Failed to save config: ";
+export constexpr const char* ERROR_YAML_PARSE_PREFIX = "YAML parse error: ";
+export constexpr const char* ERROR_YAML_LOAD_PREFIX = "Failed to load YAML config: ";
+export constexpr const char* ERROR_CONFIG_OPEN_FAILED_PREFIX = "Failed to open config file: ";
+export constexpr const char* ERROR_JSON_PARSE_PREFIX = "JSON parse error: ";
+export constexpr const char* ERROR_JSON_LOAD_PREFIX = "Failed to load JSON config: ";
+export constexpr const char* ERROR_TARGET_SERVICE_HOST_PORT_MISSING = "Target service host or port missing";
+export constexpr const char* ERROR_TARGET_SERVICE_PARSE_FAILED_PREFIX = "Failed to parse target service: ";
+export constexpr const char* ERROR_INVALID_LISTEN_ADDRESS = "Invalid listen address: ";
+export constexpr const char* ERROR_INVALID_SERVER_PORT = "Invalid server port";
+export constexpr const char* ERROR_JWT_SECRET_TOO_SHORT = "JWT secret is too short";
+export constexpr const char* ERROR_INVALID_TOKEN_EXPIRY = "Invalid token expiry";
+export constexpr const char* ERROR_INVALID_SESSION_TIMEOUT = "Invalid session timeout";
+export constexpr const char* ERROR_INVALID_MAX_SESSIONS = "Invalid max sessions";
+export constexpr const char* ERROR_INVALID_LOG_LEVEL = "Invalid log level: ";
+export constexpr const char* ERROR_INVALID_LOG_MAX_SIZE = "Invalid max log file size";
+export constexpr const char* ERROR_INVALID_LOG_MAX_FILES = "Invalid max log files";
+export constexpr const char* ERROR_DB_HOST_EMPTY = "Database host is empty";
+export constexpr const char* ERROR_INVALID_DB_PORT = "Invalid database port";
+export constexpr const char* ERROR_DB_NAME_EMPTY = "Database name is empty";
+export constexpr const char* ERROR_TARGET_SERVICE_NAME_EMPTY = "Target service name is empty";
+export constexpr const char* ERROR_TARGET_SERVICE_HOST_EMPTY_PREFIX = "Target service host empty: ";
+export constexpr const char* ERROR_INVALID_TARGET_SERVICE_PORT_PREFIX = "Invalid target service port: ";
+export constexpr const char* ERROR_TARGET_SERVICE_NO_ROLES_PREFIX = "Target service has no allowed roles: ";
+export constexpr const char* ERROR_FILE_OPEN_FAILED_PREFIX = "Failed to open file: ";
+export constexpr const char* ERROR_FILE_READ_FAILED_PREFIX = "Failed to read file: ";
+export constexpr const char* ERROR_FILE_WRITE_OPEN_FAILED_PREFIX = "Failed to open file for writing: ";
+export constexpr const char* ERROR_FILE_WRITE_FAILED_PREFIX = "Failed to write file: ";
 
 // Success messages
 export constexpr const char* SUCCESS_AUTHENTICATION = "Authentication successful";
@@ -161,6 +196,48 @@ export constexpr const char* FILE_EXTENSION_YML = ".yml";
 export constexpr const char* FILE_EXTENSION_CRT = ".crt";
 export constexpr const char* FILE_EXTENSION_KEY = ".key";
 export constexpr const char* FILE_EXTENSION_LOG = ".log";
+
+// Format constants
+export constexpr const char* FORMAT_JSON = "json";
+export constexpr const char* FORMAT_YAML = "yaml";
+export constexpr const char* FORMAT_YML = "yml";
+
+// Configuration Keys
+export constexpr const char* CONFIG_KEY_SERVER = "server";
+export constexpr const char* CONFIG_KEY_LISTEN_ADDRESS = "listen_address";
+export constexpr const char* CONFIG_KEY_LISTEN_PORT = "listen_port";
+export constexpr const char* CONFIG_KEY_TLS_CERT_FILE = "tls_cert_file";
+export constexpr const char* CONFIG_KEY_TLS_KEY_FILE = "tls_key_file";
+export constexpr const char* CONFIG_KEY_CA_CERT_FILE = "ca_cert_file";
+export constexpr const char* CONFIG_KEY_THREAD_COUNT = "thread_count";
+
+export constexpr const char* CONFIG_KEY_SECURITY = "security";
+export constexpr const char* CONFIG_KEY_JWT_SECRET = "jwt_secret";
+export constexpr const char* CONFIG_KEY_TOKEN_EXPIRY_HOURS = "token_expiry_hours";
+export constexpr const char* CONFIG_KEY_MAX_LOGIN_ATTEMPTS = "max_login_attempts";
+export constexpr const char* CONFIG_KEY_LOCKOUT_DURATION_MINUTES = "lockout_duration_minutes";
+
+export constexpr const char* CONFIG_KEY_SESSION = "session";
+export constexpr const char* CONFIG_KEY_TIMEOUT_SECONDS = "timeout_seconds";
+export constexpr const char* CONFIG_KEY_MAX_CONCURRENT_SESSIONS = "max_concurrent_sessions";
+
+export constexpr const char* CONFIG_KEY_LOGGING = "logging";
+export constexpr const char* CONFIG_KEY_LEVEL = "level";
+export constexpr const char* CONFIG_KEY_FILE_PATH = "file_path";
+export constexpr const char* CONFIG_KEY_MAX_FILE_SIZE_MB = "max_file_size_mb";
+export constexpr const char* CONFIG_KEY_MAX_FILES = "max_files";
+
+export constexpr const char* CONFIG_KEY_DATABASE = "database";
+export constexpr const char* CONFIG_KEY_HOST = "host";
+export constexpr const char* CONFIG_KEY_PORT = "port";
+export constexpr const char* CONFIG_KEY_NAME = "name";
+export constexpr const char* CONFIG_KEY_USERNAME = "username";
+export constexpr const char* CONFIG_KEY_PASSWORD = "password";
+export constexpr const char* CONFIG_KEY_SSL_MODE = "ssl_mode";
+
+export constexpr const char* CONFIG_KEY_TARGET_SERVICES = "target_services";
+export constexpr const char* CONFIG_KEY_TLS_ENABLED = "tls_enabled";
+export constexpr const char* CONFIG_KEY_ALLOWED_ROLES = "allowed_roles";
 
 // Directory names
 export constexpr const char* DIRECTORY_LOGS = "logs";

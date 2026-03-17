@@ -1,4 +1,6 @@
 module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <format>;
 module zerossg.rbac.authorizer;
 

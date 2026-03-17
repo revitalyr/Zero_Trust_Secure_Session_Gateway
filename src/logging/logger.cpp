@@ -1,5 +1,6 @@
 module;
 
+#include <filesystem>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 
@@ -10,6 +11,7 @@ module;
 #include <chrono>
 #include <iomanip>
 
+#undef ERROR // Fix collision with Windows ERROR macro
 module zerossg.logging.logger;
 
 import zerossg.interfaces;
@@ -34,14 +36,6 @@ void Logger::initialize_default_sinks() {
     m_logger = std::make_shared<spdlog::logger>("zerossg", file_sink);
     m_logger->set_level(spdlog::level::info);
     m_logger->flush_on(spdlog::level::info);
-}
-
-String Logger::format_timestamp() {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    return ss.str();
 }
 
 String Logger::format_fields(const std::vector<std::pair<String, String>>& fields) {
@@ -85,19 +79,30 @@ void Logger::log_session_event(const String& session_id, const String& event_typ
                    session_id, event_type, details);
 }
 
-void Logger::log_error(const String& component, const String& error) {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_logger->info("ERROR [{}]: {}", component, error);
+void Logger::log_error(const String& component, const String& error, const std::source_location& loc) {
+    // Redirect legacy calls to new implementation
+    log_impl(LogLevel::ERROR, loc, std::format("[{}]: {}", component, error));
 }
 
-void Logger::log_info(const String& component, const String& message) {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_logger->info("INFO [{}]: {}", component, message);
+void Logger::log_info(const String& component, const String& message, const std::source_location& loc) {
+    log_impl(LogLevel::INFO, loc, std::format("[{}]: {}", component, message));
 }
 
-void Logger::log_debug(const String& component, const String& message) {
+void Logger::log_debug(const String& component, const String& message, const std::source_location& loc) {
+    log_impl(LogLevel::DEBUG, loc, std::format("[{}]: {}", component, message));
+}
+
+void Logger::log_impl(LogLevel level, const std::source_location& loc, const String& message) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_logger->debug("DEBUG [{}]: {}", component, message);
+    
+    // Extract filename from path
+    std::filesystem::path path(loc.file_name());
+    String filename = path.filename().string();
+    
+    // Format with source location info
+    String detailed_msg = std::format("[{}:{}] {}", filename, loc.line(), message);
+
+    m_logger->log(convert_log_level(level), "{}", detailed_msg);
 }
 
 void zerossg::Logger::set_level(zerossg::LogLevel level) {
@@ -182,8 +187,7 @@ void zerossg::Logger::log_session_creation(const zerossg::String& session_id, co
         {"session_id", session_id},
         {"username", username},
         {"client_ip", client_ip},
-        {"target_service", target_service},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"target_service", target_service}
     };
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);
@@ -195,8 +199,7 @@ void zerossg::Logger::log_session_termination(const zerossg::String& session_id,
     
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"session_id", session_id},
-        {"reason", reason},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"reason", reason}
     };
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);
@@ -210,8 +213,7 @@ void zerossg::Logger::log_access_denied(const zerossg::String& username, const z
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"username", username},
         {"client_ip", client_ip},
-        {"resource", resource},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"resource", resource}
     };
     
     if (!reason.empty()) {
@@ -227,8 +229,7 @@ void zerossg::Logger::log_security_violation(const zerossg::String& client_ip, c
     
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"client_ip", client_ip},
-        {"violation_type", violation_type},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"violation_type", violation_type}
     };
     
     if (!details.empty()) {
@@ -244,8 +245,7 @@ void zerossg::Logger::log_performance_metric(const zerossg::String& operation, d
     
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"operation", operation},
-        {"duration", std::to_string(duration_ms) + " " + unit},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"duration", std::to_string(duration_ms) + " " + unit}
     };
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);
@@ -257,8 +257,7 @@ void zerossg::Logger::log_connection_stats(size_t active_connections, size_t tot
     
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"active_connections", std::to_string(active_connections)},
-        {"total_connections", std::to_string(total_connections)},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"total_connections", std::to_string(total_connections)}
     };
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);
@@ -270,8 +269,7 @@ void zerossg::Logger::log_throughput(size_t bytes_transferred, const zerossg::St
     
     std::vector<std::pair<zerossg::String, zerossg::String>> fields = {
         {"bytes_transferred", std::to_string(bytes_transferred)},
-        {"direction", direction},
-        {"timestamp", zerossg::Logger::format_timestamp()}
+        {"direction", direction}
     };
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);

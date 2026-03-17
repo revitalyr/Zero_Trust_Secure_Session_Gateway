@@ -1,11 +1,15 @@
+module;
+
+#include <memory>
+#include <shared_mutex>
+#include <unordered_map>
+#include <chrono>
+
 export module zerossg.auth.authenticator;
 
 // C++23 module imports
 export import zerossg.types;
 import zerossg.interfaces;
-export import <memory>;
-export import <shared_mutex>;
-export import <unordered_map>;
 
 export namespace zerossg {
 
@@ -70,11 +74,11 @@ private:
     
     UnorderedMap<UserName, User> m_users;
     UnorderedMap<TokenString, String> m_revoked_tokens;
-    UnorderedMap<UserName, system_clock::time_point> m_blocked_users;
+    UnorderedMap<UserName, TimePoint> m_blocked_users;
     
     // Enhanced JWT secret with rotation support
     SecretKey m_jwt_secret;
-    system_clock::time_point m_secret_rotation_time;
+    TimePoint m_secret_rotation_time;
     
     // Modern configuration with constexpr
     static constexpr size_t JWT_SECRET_SIZE = 32;

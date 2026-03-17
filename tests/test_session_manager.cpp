@@ -2,12 +2,13 @@
 #define BOOST_UT_DISABLE_MODULE
 #include <chrono> // For std::chrono::system_clock operators
 #include <boost/ut.hpp>
+#include <memory>
+#include <string>
 
 // C++23 module imports
 import zerossg.session.session_manager;
 import zerossg.types;
 import zerossg.interfaces;
-import zerossg.result;
 
 // Корректные алиасы типов для тестов
 using User = zerossg::User;
@@ -139,7 +140,3 @@ boost::ut::suite SessionManagerSuite = [] {
         }
     };
 };
-
-int main() {
-    return 0;
-}

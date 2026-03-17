@@ -17,6 +17,7 @@ using SslStream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 using TcpSocket = boost::asio::ip::tcp::socket;
 using TcpAcceptor = boost::asio::ip::tcp::acceptor;
 using IoContext = boost::asio::io_context;
+using StreamBuffer = boost::asio::streambuf;
 using ExecutorWorkGuard = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
 // SSL verification type aliases

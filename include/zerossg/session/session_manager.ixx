@@ -1,15 +1,17 @@
+module;
+
+#include <atomic>
+#include <chrono>
+#include <mutex>
+#include <random>
+#include <string>
+
 export module zerossg.session.session_manager;
 
 // C++23 module imports
 import zerossg.interfaces;
 import zerossg.types;
-
-// Standard library imports
-import <atomic>;
-import <chrono>;
-import <mutex>;
-import <random>;
-import <string>;
+import zerossg.constants;
 
 namespace zerossg {
 
@@ -19,7 +21,7 @@ using zerossg::SessionId;
 using zerossg::ClientIp;
 using zerossg::ServiceName;
 
-class SessionManager : public ISessionManager {
+export class SessionManager : public ISessionManager {
 public:
     SessionManager();
     ~SessionManager() override = default;
@@ -37,7 +39,7 @@ public:
     size_t get_total_session_count() const;
     
     // Session lifecycle management
-    Result<void> extend_session(const SessionId& session_id, TimeoutDuration additional_time);
+    Result<void> extend_session(const SessionId& session_id, Seconds additional_time);
     Result<bool> is_session_valid(const SessionId& session_id);
     
     // Session filtering
@@ -62,7 +64,7 @@ private:
     void cleanup_expired_sessions_internal();
     
     // Configuration
-    static constexpr seconds DEFAULT_SESSION_TIMEOUT{3600}; // 1 hour
+    static constexpr Seconds DEFAULT_SESSION_TIMEOUT{3600}; // 1 hour
     static constexpr size_t SESSION_ID_SIZE = 32;
     static constexpr size_t MAX_SESSIONS_PER_USER = 5;
     

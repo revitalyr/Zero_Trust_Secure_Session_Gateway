@@ -1,17 +1,12 @@
+module;
+
+#include <memory>
+
 export module zerossg.interfaces;
 
 // C++23 module imports
 export import zerossg.types;
-export import <memory>;
-
 export namespace zerossg {
-
-// Forward declarations
-export class AuthenticationManager;
-export class AuthorizationManager;
-export class SessionManager;
-export class SecurityManager;
-export class Logger;
 
 // Interface for authentication
 export class IAuthenticator {

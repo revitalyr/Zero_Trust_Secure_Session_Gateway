@@ -1,3 +1,6 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 module zerossg.config.config_manager;
 
 // C++23 module imports
@@ -17,7 +20,7 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
     LockGuard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
     
     try {
-        if (!zerossg::file_exists(config_file)) {
+        if (!file_exists(config_file)) {
             return zerossg::make_result_error<void>(std::format("{}{}", zerossg::ERROR_CONFIG_FILE_NOT_FOUND, config_file));
         }
         
@@ -177,7 +180,7 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
     LockGuard<std::mutex> lock(m_config_mutex);
     
     try {
-        nlohmann::json config;
+        json config;
         
         // Serialize configuration
         config[zerossg::CONFIG_KEY_SERVER][zerossg::CONFIG_KEY_LISTEN_ADDRESS] = m_server_config.listen_address;
@@ -207,15 +210,15 @@ zerossg::Result<void> ConfigManager::save_config(const zerossg::ConfigFileName& 
         config[zerossg::CONFIG_KEY_DATABASE][zerossg::CONFIG_KEY_SSL_MODE] = m_database_config.ssl_mode;
         
         // Save target services
-        config[zerossg::CONFIG_KEY_TARGET_SERVICES] = nlohmann::json::array();
+        config[zerossg::CONFIG_KEY_TARGET_SERVICES] = json::array();
         for (const auto& pair : m_target_services) {
             const auto& service = pair.second;
-            nlohmann::json service_json;
+            json service_json;
             service_json[zerossg::CONFIG_KEY_NAME] = service.name();
             service_json[zerossg::CONFIG_KEY_HOST] = service.host();
             service_json[zerossg::CONFIG_KEY_PORT] = service.port();
             service_json[zerossg::CONFIG_KEY_TLS_ENABLED] = service.is_tls_enabled();
-            service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES] = nlohmann::json::array();
+            service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES] = json::array();
             for (const auto& role : service.allowed_roles()) {
                 service_json[zerossg::CONFIG_KEY_ALLOWED_ROLES].push_back(role_to_string(role));
             }
@@ -252,7 +255,7 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         // Convert YAML to JSON for easier processing
         // This is a simplified approach - in production would use proper YAML parsing
         std::string json_str = YAML::Dump(config);
-        m_config_json = nlohmann::json::parse(json_str);
+        m_config_json = json::parse(json_str);
         
         parse_server_config(m_config_json);
         parse_security_config(m_config_json);
@@ -286,14 +289,14 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         parse_target_services(m_config_json);
         
         return zerossg::make_result_success();
-    } catch (const nlohmann::json::exception& e) {
+    } catch (const json::exception& e) {
         return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
         return make_result_error<void>(std::format("{}{}", zerossg::ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
 
-void ConfigManager::parse_server_config(const nlohmann::json& config) {
+void ConfigManager::parse_server_config(const json& config) {
     if (config.contains("server")) {
         const auto& server = config["server"];
         
@@ -305,7 +308,7 @@ void ConfigManager::parse_server_config(const nlohmann::json& config) {
     }
 }
 
-void ConfigManager::parse_security_config(const nlohmann::json& config) {
+void ConfigManager::parse_security_config(const json& config) {
     if (config.contains("security")) {
         const auto& security = config["security"];
         
@@ -316,7 +319,7 @@ void ConfigManager::parse_security_config(const nlohmann::json& config) {
     }
 }
 
-void ConfigManager::parse_session_config(const nlohmann::json& config) {
+void ConfigManager::parse_session_config(const json& config) {
     if (config.contains("session")) {
         const auto& session = config["session"];
         
@@ -325,7 +328,7 @@ void ConfigManager::parse_session_config(const nlohmann::json& config) {
     }
 }
 
-void ConfigManager::parse_logging_config(const nlohmann::json& config) {
+void ConfigManager::parse_logging_config(const json& config) {
     if (config.contains("logging")) {
         const auto& logging = config["logging"];
         
@@ -336,7 +339,7 @@ void ConfigManager::parse_logging_config(const nlohmann::json& config) {
     }
 }
 
-void ConfigManager::parse_database_config(const nlohmann::json& config) {
+void ConfigManager::parse_database_config(const json& config) {
     if (config.contains("database")) {
         const auto& database = config["database"];
         
@@ -349,7 +352,7 @@ void ConfigManager::parse_database_config(const nlohmann::json& config) {
     }
 }
 
-void ConfigManager::parse_target_services(const nlohmann::json& config) {
+void ConfigManager::parse_target_services(const json& config) {
     m_target_services.clear();
     
     if (config.contains("target_services")) {
@@ -366,7 +369,7 @@ void ConfigManager::parse_target_services(const nlohmann::json& config) {
     }
 }
 
-zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(const nlohmann::json& service_json) {
+zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(const json& service_json) {
     try {
         zerossg::TargetService service;
         

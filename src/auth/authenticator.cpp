@@ -1,3 +1,6 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 module zerossg.auth.authenticator;
 
 // Global module fragment for standard library headers

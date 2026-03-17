@@ -1,5 +1,7 @@
 module;
 
+#include <boost/asio/ssl.hpp>
+
 export module zerossg.tls.tls_handler;
 
 // Import required modules

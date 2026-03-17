@@ -13,14 +13,14 @@ export namespace zerossg {
 export class CLIInterface {
 public:
     virtual ~CLIInterface() = default;
-    virtual Result<int> run(int argc, char* argv[]) = 0;
-    virtual void register_builtin_commands() = 0;
-    virtual void show_help() = 0;
-    virtual void show_status() = 0;
-    virtual void show_sessions() = 0;
-    virtual void show_users() = 0;
-    virtual void show_version() = 0;
-    virtual void export_audit_logs(const String& output_file) = 0;
+    Result<int> run(int argc, char* argv[]);
+    void register_builtin_commands();
+    void show_help();
+    void show_status();
+    void show_sessions();
+    void show_users();
+    void show_version();
+    void export_audit_logs(const String& output_file);
 };
 
 } // namespace zerossg

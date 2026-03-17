@@ -1,8 +1,11 @@
+module;
+#include <mutex>
 export module zerossg.config.config_manager;
 
 export import zerossg.interfaces;
 export import zerossg.std;
-export import zerossg.result;
+export import zerossg.common;
+export import zerossg.types;
 export import zerossg.third_party.nlohmann_json;
 export import zerossg.third_party.yaml_cpp;
 
@@ -27,13 +30,13 @@ public:
 private:
     Result<void> load_yaml_config(const ConfigFileName& config_file);
     Result<void> load_json_config(const ConfigFileName& config_file);
-    void parse_server_config(const nlohmann::json& config);
-    void parse_security_config(const nlohmann::json& config);
-    void parse_session_config(const nlohmann::json& config);
-    void parse_logging_config(const nlohmann::json& config);
-    void parse_database_config(const nlohmann::json& config);
-    void parse_target_services(const nlohmann::json& config);
-    Result<TargetService> parse_target_service(const nlohmann::json& service_json);
+    void parse_server_config(const json& config);
+    void parse_security_config(const json& config);
+    void parse_session_config(const json& config);
+    void parse_logging_config(const json& config);
+    void parse_database_config(const json& config);
+    void parse_target_services(const json& config);
+    Result<TargetService> parse_target_service(const json& service_json);
 
     Result<void> validate_server_config();
     Result<void> validate_security_config();
@@ -49,7 +52,7 @@ private:
     void set_default_config();
 
     mutable std::mutex m_config_mutex;
-    nlohmann::json m_config_json;
+    json m_config_json;
     ServerConfig m_server_config;
     SecurityConfig m_security_config;
     SessionConfig m_session_config;

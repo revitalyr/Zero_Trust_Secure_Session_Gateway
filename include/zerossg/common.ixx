@@ -81,7 +81,6 @@ using AttemptCount = size_t;
 using Count = size_t;
 
 // Time duration aliases
-using TimeoutDuration = std::chrono::seconds;
 using Milliseconds = std::chrono::milliseconds;
 using Seconds = std::chrono::seconds;
 using Hours = std::chrono::hours;

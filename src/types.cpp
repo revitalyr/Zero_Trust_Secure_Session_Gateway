@@ -1,3 +1,7 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
 module zerossg.types;
 
 import zerossg.std;
