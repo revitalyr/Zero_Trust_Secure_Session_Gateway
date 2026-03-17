@@ -51,10 +51,14 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
         m_authz_manager = std::make_unique<AuthorizationManager>();
         m_session_manager = std::make_unique<SessionManager>();
         m_security_manager = std::make_unique<SecurityManager>();
+        m_proxy_manager = std::make_unique<ProxyManager>(m_io_context, m_tls_handler->get_context());
         
         // Initialize logger (simplified for now)
         m_logger = Logger::get("GatewayServer");
         
+        // Prevent io_context::run() from returning when there is no more work
+        m_work_guard.emplace(m_io_context.get_executor());
+
         // Setup networking
         auto setup_result = setup_acceptor();
         if (!setup_result.has_value()) {
@@ -103,6 +107,9 @@ Result<void> GatewayServer::stop() {
             m_acceptor->close();
         }
         
+        // Allow io_context::run() to exit
+        m_work_guard.reset();
+
         // Stop I/O context
         m_io_context.stop();
         
@@ -119,10 +126,10 @@ Result<void> GatewayServer::stop() {
 
 Result<void> GatewayServer::setup_acceptor() {
     try {
-        boost::asio::ip::tcp::endpoint endpoint(
+        zerossg::TcpEndpoint endpoint(
             boost::asio::ip::make_address(m_listen_address), m_listen_port);
         
-        m_acceptor = std::make_unique<boost::asio::ip::tcp::acceptor>(m_io_context);
+        m_acceptor = std::make_unique<zerossg::TcpAcceptor>(m_io_context);
         m_acceptor->open(endpoint.protocol());
         m_acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
         m_acceptor->bind(endpoint);
@@ -142,13 +149,13 @@ void GatewayServer::start_accept() {
     
     m_acceptor->async_accept(
         connection->m_socket.lowest_layer(),
-        [this, connection](const boost::system::error_code& error) {
+        [this, connection](const zerossg::ErrorCode& error) {
             handle_accept(connection, error);
         }
     );
 }
 
-void GatewayServer::handle_accept(const ConnectionPtr& connection, const boost::system::error_code& error) {
+void GatewayServer::handle_accept(const ConnectionPtr& connection, const zerossg::ErrorCode& error) {
     if (!error) {
         register_connection(connection);
         connection->start();
@@ -163,13 +170,7 @@ void GatewayServer::handle_accept(const ConnectionPtr& connection, const boost::
 void GatewayServer::start_io_threads() {
     for (size_t i = 0; i < m_thread_count; ++i) {
         m_io_threads.emplace_back([this]() {
-            while (m_running.load()) {
-                try {
-                    m_io_context.run_for(std::chrono::milliseconds(100));
-                } catch (const std::exception& e) {
-                    m_logger->error(std::format("I/O thread error: {}", e.what()));
-                }
-            }
+            m_io_context.run();
         });
     }
 }

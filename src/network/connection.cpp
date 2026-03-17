@@ -42,7 +42,7 @@ void Connection::stop() {
 void Connection::do_handshake() {
     m_socket.async_handshake(
         boost::asio::ssl::stream_base::server,
-        [self = shared_from_this()](const boost::system::error_code& error) {
+        [self = shared_from_this()](const zerossg::ErrorCode& error) {
             if (!error) {
                 self->do_read();
             } else {
@@ -55,13 +55,13 @@ void Connection::do_handshake() {
 void Connection::do_read() {
     boost::asio::async_read_until(
         m_socket, m_buffer, zerossg::MESSAGE_DELIMITER,
-        [self = shared_from_this()](const boost::system::error_code& error, size_t bytes_transferred) {
+        [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
             self->handle_read(error, bytes_transferred);
         }
     );
 }
 
-void Connection::handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
+void Connection::handle_read(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         if (error != boost::asio::error::eof) {
             m_server.m_logger->error(std::format("Read error: {}", error.message()));
@@ -213,7 +213,7 @@ ResponseString Connection::process_logout_request(const RequestString& request) 
 void Connection::do_write(const ResponseString& response) {
     boost::asio::async_write(
         m_socket, boost::asio::buffer(response),
-        [self = shared_from_this()](const boost::system::error_code& error, size_t) {
+        [self = shared_from_this()](const zerossg::ErrorCode& error, size_t) {
             if (error) {
                 self->m_server.m_logger->error(std::format("Write error: {}", error.message()));
             }

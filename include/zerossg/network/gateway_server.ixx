@@ -32,15 +32,16 @@ public:
 private:
     zerossg::Result<void> setup_acceptor();
     void start_accept();
-    void handle_accept(std::shared_ptr<zerossg::Connection> connection, const boost::system::error_code& error);
+    void handle_accept(std::shared_ptr<zerossg::Connection> connection, const zerossg::ErrorCode& error);
     void start_io_threads();
     void stop_io_threads();
     void register_connection(std::shared_ptr<zerossg::Connection> connection);
 
     zerossg::String m_listen_address{"127.0.0.1"};
     uint16_t m_listen_port{8080};
-    std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
+    std::unique_ptr<zerossg::TcpAcceptor> m_acceptor;
     zerossg::IoContext m_io_context;
+    std::optional<zerossg::ExecutorWorkGuard> m_work_guard;
     std::vector<std::thread> m_io_threads;
     std::atomic<bool> m_running{false};
     size_t m_thread_count{4};

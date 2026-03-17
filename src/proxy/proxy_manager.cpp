@@ -13,8 +13,9 @@ import zerossg.std;
 namespace zerossg {
 
 // ProxyManager implementation
-ProxyManager::ProxyManager(boost::asio::io_context& io_context)
-    : m_io_context(io_context) {
+ProxyManager::ProxyManager(IoContext& io_context, SslContext& ssl_context)
+    : m_io_context(io_context)
+    , m_ssl_context(ssl_context) {
 }
 
 ProxyManager::~ProxyManager() {
@@ -34,7 +35,7 @@ Result<void> ProxyManager::start_proxy(const string& session_id, const Connectio
     
     try {
         // Create new proxy connection
-        auto proxy = std::make_shared<ProxyConnection>(*this, session_id, client_conn, target);
+        auto proxy = std::make_shared<ProxyConnection>(*this, session_id, client_conn, target, m_ssl_context, m_ssl_context);
         m_proxies[session_id] = proxy;
         
         // Start the proxy
@@ -127,13 +128,16 @@ void ProxyManager::update_statistics(uint64_t bytes_transferred) {
 
 // ProxyConnection implementation
 ProxyConnection::ProxyConnection(ProxyManager& manager, const string& session_id,
-                               const ConnectionInfo& client_conn, const TargetService& target)
+                               const ConnectionInfo& client_conn, const TargetService& target,
+                               SslContext& client_ssl_context, SslContext& target_ssl_context)
     : m_manager(manager)
     , m_session_id(session_id)
     , m_client_conn(client_conn)
     , m_target_service(target)
     , m_client_socket(manager.m_io_context)
-    , m_target_socket(manager.m_io_context) {
+    , m_target_socket(manager.m_io_context)
+    , m_client_ssl_socket(target_ssl_context) // Initialize with a dummy context for now
+    , m_target_ssl_socket(target_ssl_context) { // Initialize with a dummy context for now
 }
 
 ProxyConnection::~ProxyConnection() {
@@ -194,7 +198,7 @@ void ProxyConnection::connect_to_target() {
         );
         
         get_target_socket().async_connect(target_endpoint,
-            [self = shared_from_this()](const boost::system::error_code& error) {
+            [self = shared_from_this()](const zerossg::ErrorCode& error) {
                 self->handle_target_connect(error);
             }
         );
@@ -203,7 +207,7 @@ void ProxyConnection::connect_to_target() {
     }
 }
 
-void ProxyConnection::handle_target_connect(const boost::system::error_code& error) {
+void ProxyConnection::handle_target_connect(const zerossg::ErrorCode& error) {
     if (error) {
         handle_error("handle_target_connect", error);
         return;
@@ -228,20 +232,25 @@ void ProxyConnection::read_from_client() {
         return;
     }
     
-    boost::asio::async_read_until(get_client_socket(), m_client_to_target_buffer, '\n',
-        [self = shared_from_this()](const boost::system::error_code& error, size_t bytes_transferred) {
-            self->handle_client_read(error, bytes_transferred);
-        }
-    );
+    auto handler = [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
+        self->handle_client_read(error, bytes_transferred);
+    };
+
+    if (m_client_ssl_socket) {
+        m_client_ssl_socket->async_read_some(m_client_to_target_buffer.prepare(8192), handler);
+    } else {
+        m_client_socket.async_read_some(m_client_to_target_buffer.prepare(8192), handler);
+    }
 }
 
-void ProxyConnection::handle_client_read(const boost::system::error_code& error, size_t bytes_transferred) {
+void ProxyConnection::handle_client_read(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         handle_error("handle_client_read", error);
         return;
     }
     
     m_bytes_received += bytes_transferred;
+    m_client_to_target_buffer.commit(bytes_transferred);
     write_to_target(bytes_transferred);
 }
 
@@ -250,16 +259,18 @@ void ProxyConnection::write_to_target(size_t bytes_to_write) {
         return;
     }
     
-    boost::asio::async_write(get_target_socket(), 
-        m_client_to_target_buffer.data(),
-        boost::asio::transfer_exactly(bytes_to_write),
-        [self = shared_from_this()](const boost::system::error_code& error, size_t bytes_transferred) {
-            self->handle_target_write(error, bytes_transferred);
-        }
-    );
+    auto handler = [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
+        self->handle_target_write(error, bytes_transferred);
+    };
+
+    if (m_target_ssl_socket) {
+        boost::asio::async_write(*m_target_ssl_socket, m_client_to_target_buffer.data(), handler);
+    } else {
+        boost::asio::async_write(m_target_socket, m_client_to_target_buffer.data(), handler);
+    }
 }
 
-void ProxyConnection::handle_target_write(const boost::system::error_code& error, size_t bytes_transferred) {
+void ProxyConnection::handle_target_write(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         handle_error("handle_target_write", error);
         return;
@@ -276,20 +287,25 @@ void ProxyConnection::read_from_target() {
         return;
     }
     
-    boost::asio::async_read_until(get_target_socket(), m_target_to_client_buffer, '\n',
-        [self = shared_from_this()](const boost::system::error_code& error, size_t bytes_transferred) {
-            self->handle_target_read(error, bytes_transferred);
-        }
-    );
+    auto handler = [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
+        self->handle_target_read(error, bytes_transferred);
+    };
+
+    if (m_target_ssl_socket) {
+        m_target_ssl_socket->async_read_some(m_target_to_client_buffer.prepare(8192), handler);
+    } else {
+        m_target_socket.async_read_some(m_target_to_client_buffer.prepare(8192), handler);
+    }
 }
 
-void ProxyConnection::handle_target_read(const boost::system::error_code& error, size_t bytes_transferred) {
+void ProxyConnection::handle_target_read(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         handle_error("handle_target_read", error);
         return;
     }
     
     m_bytes_received += bytes_transferred;
+    m_target_to_client_buffer.commit(bytes_transferred);
     write_to_client(bytes_transferred);
 }
 
@@ -298,16 +314,18 @@ void ProxyConnection::write_to_client(size_t bytes_to_write) {
         return;
     }
     
-    boost::asio::async_write(get_client_socket(),
-        m_target_to_client_buffer.data(),
-        boost::asio::transfer_exactly(bytes_to_write),
-        [self = shared_from_this()](const boost::system::error_code& error, size_t bytes_transferred) {
-            self->handle_client_write(error, bytes_transferred);
-        }
-    );
+    auto handler = [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
+        self->handle_client_write(error, bytes_transferred);
+    };
+
+    if (m_client_ssl_socket) {
+        boost::asio::async_write(*m_client_ssl_socket, m_target_to_client_buffer.data(), handler);
+    } else {
+        boost::asio::async_write(m_client_socket, m_target_to_client_buffer.data(), handler);
+    }
 }
 
-void ProxyConnection::handle_client_write(const boost::system::error_code& error, size_t bytes_transferred) {
+void ProxyConnection::handle_client_write(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         handle_error("handle_client_write", error);
         return;
@@ -320,7 +338,7 @@ void ProxyConnection::handle_client_write(const boost::system::error_code& error
     read_from_target();
 }
 
-void ProxyConnection::handle_error(const string& operation, const boost::system::error_code& error) {
+void ProxyConnection::handle_error(const string& operation, const zerossg::ErrorCode& error) {
     if (!m_active.load()) {
         return; // Already shutting down
     }

@@ -3,6 +3,10 @@
 
 module;
 
+// Add Boost includes to provide context for ADL in non-module code
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
 // Standard library includes for signal handling
 #include <csignal>
 #include <cstdlib>
@@ -32,7 +36,7 @@ void signal_handler(int signal) {
     
     if (g_server && g_server->is_running()) {
         auto stop_result = g_server->stop();
-        if (!stop_result.is_success()) {
+        if (!stop_result.has_value()) {
             std::cerr << "Error stopping server: " << stop_result.error() << std::endl;
         }
     }
@@ -67,7 +71,7 @@ int main(int argc, char* argv[]) {
         // Parse and execute command
         auto result = zerossg::g_cli->run(argc, argv);
         
-        if (!result.is_success()) {
+        if (!result.has_value()) {
             std::cerr << "CLI execution failed: " << result.error() << std::endl;
             return 1;
         }

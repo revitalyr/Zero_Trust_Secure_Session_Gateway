@@ -25,16 +25,16 @@ public:
 private:
     struct RateLimitInfo {
         size_t request_count = 0;
-        TimePoint window_start = SystemClock::now();
-        TimePoint block_until = TimePoint::max();
+        TimePoint window_start{SystemClock::now()};
+        std::optional<TimePoint> block_until;
         bool blocked = false;
     };
 
     struct BruteForceInfo {
         size_t failed_attempts = 0;
-        TimePoint first_attempt = SystemClock::now();
-        TimePoint last_attempt = SystemClock::now();
-        TimePoint detection_time = TimePoint::max();
+        TimePoint first_attempt{SystemClock::now()};
+        TimePoint last_attempt{SystemClock::now()};
+        std::optional<TimePoint> detection_time;
         bool detected = false;
     };
 
@@ -51,9 +51,6 @@ private:
     void cleanup_blocked_ips();
     void cleanup_security_events();
     void record_security_event(const String& event_type, const String& details);
-
-    bool is_rate_limited(const String& client_ip, RateLimitInfo& info);
-    bool is_brute_force_detected(const String& client_ip, BruteForceInfo& info);
 
     mutable std::mutex m_rate_limits_mutex;
     mutable std::mutex m_brute_force_mutex;

@@ -1,13 +1,19 @@
 module;
-
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/asio/ssl/verify_context.hpp>
 #include <expected>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <memory>
+#include <optional>
+#include <unordered_map>
+#include <chrono>
+#include <cstdint>
+#include <cstddef>
+#include <utility>
+#include <mutex>
+#include <shared_mutex>
 
 export module zerossg.common;
-
-import zerossg.std;
 
 export namespace zerossg {
 
@@ -89,18 +95,6 @@ using Roles = std::vector<T>;
 // Smart pointer aliases
 template<typename T>
 using SessionManagerPtr = std::unique_ptr<T>;
-
-// Network type aliases
-using TcpEndpoint = boost::asio::ip::tcp::endpoint;
-using SslContext = boost::asio::ssl::context;
-using SslStream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
-using TcpSocket = boost::asio::ip::tcp::socket;
-using TcpAcceptor = boost::asio::ip::tcp::acceptor;
-using IoContext = boost::asio::io_context;
-
-// SSL verification type aliases
-using SslVerifyMode = boost::asio::ssl::verify_mode;
-using SslVerifyContext = boost::asio::ssl::verify_context;
 
 // Synchronization aliases
 template<typename Mutex>

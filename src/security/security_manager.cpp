@@ -1,3 +1,7 @@
+module;
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
 module zerossg.security.security_manager;
 
 // Project headers
@@ -27,7 +31,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
     auto& info = m_rate_limits[client_ip];
     
     // Check if IP is currently blocked
-    if (info.blocked && now < info.block_until) {
+    if (info.blocked && info.block_until.has_value() && now < info.block_until.value()) {
         record_security_event("rate_limit_blocked", std::format("IP {} blocked for exceeding rate limit", client_ip));
         return make_result_error<bool>("IP is currently blocked due to rate limiting");
     }
@@ -37,6 +41,7 @@ Result<bool> SecurityManager::check_rate_limit(const string& client_ip) {
         info.request_count = 0;
         info.window_start = now;
         info.blocked = false;
+        info.block_until.reset();
     }
     
     // Check rate limit
@@ -215,10 +220,11 @@ void SecurityManager::cleanup_rate_limits() {
         auto& info = it->second;
         
         // Remove expired blocks
-        if (info.blocked && now >= info.block_until) {
+        if (info.blocked && info.block_until.has_value() && now >= info.block_until.value()) {
             info.blocked = false;
             info.request_count = 0;
             info.window_start = now;
+            info.block_until.reset();
         }
         
         // Remove entries that haven't been used recently
@@ -278,51 +284,6 @@ void SecurityManager::record_security_event(const string& event_type, const stri
     m_security_events.emplace(event_type, details);
     
     m_logger->warn(std::format("[SECURITY] {}: {}", event_type, details));
-}
-
-bool SecurityManager::is_rate_limited(const string& client_ip, RateLimitInfo& info) {
-    auto now = SystemClock::now();
-    
-    // Check if currently blocked
-    if (info.blocked && now < info.block_until) {
-        return true;
-    }
-    
-    // Reset window if needed
-    if (now - info.window_start >= m_rate_limit_window) {
-        info.request_count = 0;
-        info.window_start = now;
-        info.blocked = false;
-    }
-    
-    // Check rate limit
-    if (info.request_count >= m_rate_limit_max_requests) {
-        info.blocked = true;
-        info.block_until = now + m_default_block_duration;
-        return true;
-    }
-    
-    info.request_count++;
-    return false;
-}
-
-bool SecurityManager::is_brute_force_detected(const string& client_ip, BruteForceInfo& info) {
-    auto now = SystemClock::now();
-    
-    // Clean old attempts outside the window
-    if (now - info.first_attempt > m_brute_force_window) {
-        info.failed_attempts = 0;
-        info.first_attempt = now;
-    }
-    
-    // Check if threshold is exceeded
-    if (info.failed_attempts >= m_brute_force_threshold) {
-        info.detected = true;
-        info.detection_time = now;
-        return true;
-    }
-    
-    return false;
 }
 
 } // namespace zerossg

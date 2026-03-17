@@ -1,5 +1,8 @@
 module;
 
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

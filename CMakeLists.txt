@@ -27,80 +27,34 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VER
     add_compile_options(-fmodules-ts)
 endif()
 
-# Compiler flags for security and performance
-if(MSVC)
-    add_compile_options(/W4 /WX /utf-8)
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-    add_compile_options(-fstack-protector-strong)
-    add_compile_options(-D_FORTIFY_SOURCE=2)
+# Find required packages using modern CMake.
+# With the vcpkg toolchain file, these will be found automatically.
+find_package(Boost CONFIG REQUIRED COMPONENTS system thread) 
+
+if(Boost_FOUND)
+    message(STATUS "Boost found: ${Boost_VERSION}")
 endif()
 
-# Find required packages with modern CMake
-find_package(Boost 1.75 REQUIRED COMPONENTS system)
+find_package(spdlog REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
-# Find readline for the CLI
-find_package(Readline QUIET)
-if(NOT Readline_FOUND)
+find_package(OpenSSL REQUIRED)
+
+find_package(Readline) # Not required, can be optional
+
+if(Readline_FOUND)
+    message(STATUS "Readline found, enabling interactive mode features.")
+    # This definition will be used to conditionally compile readline-dependent code.
+    target_compile_definitions(zerossg_lib PUBLIC HAVE_READLINE)
+else()
     message(STATUS "Readline not found, interactive CLI may have limited features.")
-else()
-    set(READLINE_INCLUDE_DIR ${Readline_INCLUDE_DIRS})
-    set(READLINE_LIBRARIES ${Readline_LIBRARIES})
-endif()
-
-# Use system packages with fallback
-find_package(spdlog QUIET)
-if(NOT spdlog_FOUND)
-    message(STATUS "Using vcpkg for spdlog...")
-    set(SPDLOG_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
-    set(SPDLOG_LIBRARIES spdlog)
-else()
-    set(SPDLOG_INCLUDE_DIR ${spdlog_INCLUDE_DIRS})
-    set(SPDLOG_LIBRARIES ${spdlog_LIBRARIES})
-endif()
-
-find_package(nlohmann_json QUIET)
-if(NOT nlohmann_json_FOUND)
-    message(STATUS "Using vcpkg for nlohmann_json...")
-    set(NLOHMANN_JSON_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
-    set(NLOHMANN_JSON_LIBRARIES nlohmann_json)
-else()
-    set(NLOHMANN_JSON_INCLUDE_DIR ${nlohmann_json_INCLUDE_DIRS})
-    set(NLOHMANN_JSON_LIBRARIES ${nlohmann_json_LIBRARIES})
-endif()
-
-find_package(yaml-cpp QUIET)
-if(NOT yaml-cpp_FOUND)
-    message(STATUS "Using vcpkg for yaml-cpp...")
-    set(YAML_CPP_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
-    set(YAML_CPP_LIBRARIES yaml-cpp)
-else()
-    set(YAML_CPP_INCLUDE_DIR ${yaml-cpp_INCLUDE_DIRS})
-    set(YAML_CPP_LIBRARIES ${yaml-cpp_LIBRARIES})
-endif()
-
-find_package(OpenSSL QUIET)
-if(NOT OpenSSL_FOUND)
-    message(STATUS "Using vcpkg for OpenSSL...")
-    set(OPENSSL_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/x64-windows/include)
-    set(OPENSSL_LIBRARIES ssl crypto)
-else()
-    set(OPENSSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
-    set(OPENSSL_LIBRARIES ${OPENSSL_LIBRARIES})
-endif()
-
-# Include directories
-include_directories(include)
-include_directories(${Boost_INCLUDE_DIRS})
-
-# Add vcpkg include directories if using vcpkg
-if(DEFINED ENV{VCPKG_ROOT})
-    include_directories($ENV{VCPKG_ROOT}/installed/x64-windows/include)
 endif()
 
 # For C++20 modules, implementation files (.cpp) must be separated from
 # module interface files (.ixx).
+# Note: When using modules, implementation units can also be part of the module
+# but for now we compile them as regular sources that likely 'import' the modules.
 set(ZEROSSG_IMPL_SOURCES
     "src/auth/authenticator.cpp"
     "src/cli/cli_interface.cpp"
@@ -151,20 +105,34 @@ target_sources(zerossg_lib PUBLIC
 # will inherit these properties.
 target_compile_features(zerossg_lib PUBLIC cxx_std_23)
 
-target_include_directories(zerossg_lib PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+# Modern way to set compiler-specific flags using generator expressions
+target_compile_options(zerossg_lib PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX /utf-8>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror -fstack-protector-strong>
 )
+target_compile_definitions(zerossg_lib PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:_FORTIFY_SOURCE=2>
+)
+
+# Include directories are handled by find_package and target_link_libraries
+target_include_directories(zerossg_lib PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Link all external dependencies to the main library.
 # These will be propagated to the final executable and test targets.
 target_link_libraries(zerossg_lib PUBLIC
     Boost::system
-    ${SPDLOG_LIBRARIES}
-    ${NLOHMANN_JSON_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    ${READLINE_LIBRARIES}
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    yaml-cpp::yaml-cpp
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
+if(Readline_FOUND)
+    # Link Readline if it was found
+    target_link_libraries(zerossg_lib PUBLIC Readline::Readline)
+endif()
 
 # Add subdirectories
 add_subdirectory(src)

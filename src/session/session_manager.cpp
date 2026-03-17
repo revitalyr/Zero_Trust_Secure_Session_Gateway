@@ -12,7 +12,7 @@ import zerossg.std;
 
 namespace zerossg {
 
-SessionManager::SessionManager() : m_random_generator(m_random_device()) {
+SessionManager::SessionManager() : m_random_device(), m_random_generator(m_random_device()) {
 }
 
 zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg::User& user, const zerossg::ClientIp& client_ip, const zerossg::ServiceName& target_service) {
@@ -32,8 +32,8 @@ zerossg::Result<zerossg::SessionId> SessionManager::create_session(const zerossg
     }
     
     // Create session
-    zerossg::Session session(session_id, user.user_name(), user.role(), client_ip, target_service);
-    session.m_expires_at = std::chrono::system_clock::now() + zerossg::DEFAULT_SESSION_TIMEOUT;
+    auto expires_at = std::chrono::system_clock::now() + zerossg::DEFAULT_SESSION_TIMEOUT;
+    zerossg::Session session(session_id, user.user_name(), user.role(), client_ip, target_service, expires_at);
     
     // Store session
     m_sessions[session_id] = session;
@@ -67,7 +67,7 @@ zerossg::Result<void> SessionManager::update_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     m_sessions[session_id] = session;
@@ -78,7 +78,7 @@ zerossg::Result<void> SessionManager::terminate_session(const zerossg::SessionId
     LockGuard<std::mutex> lock(m_sessions_mutex);
     
     if (m_sessions.erase(session_id) == 0) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     return make_result_success();
@@ -131,14 +131,14 @@ zerossg::Result<void> SessionManager::extend_session(const zerossg::SessionId& s
     
     auto it = m_sessions.find(session_id);
     if (it == m_sessions.end()) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_FOUND_PREFIX, session_id));
     }
     
     zerossg::Session& session = it->second;
     
     // Check if session is still active
     if (!session.is_active() || session.is_expired()) {
-        return make_result_error(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
+        return make_result_error<void>(std::format("{}{}", zerossg::ERROR_SESSION_NOT_ACTIVE_PREFIX, session_id));
     }
     
     // Extend session

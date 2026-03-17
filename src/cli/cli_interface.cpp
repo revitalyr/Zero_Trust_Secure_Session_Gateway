@@ -6,8 +6,10 @@ module;
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
+#ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 
 import zerossg.cli.cli_interface;
 import zerossg.network.gateway_server;
@@ -156,8 +158,12 @@ int CLIInterface::test_connection(const zerossg::CommandLineArgs& args) {
 }
 
 void CLIInterface::run_interactive_mode() {
+#ifdef HAVE_READLINE
     InteractiveShell shell(*this);
     shell.run();
+#else
+    print_error("Interactive mode is not supported in this build (readline library not found).");
+#endif
 }
 
 void CLIInterface::show_prompt() {
@@ -749,6 +755,7 @@ string CLIUtils::get_hidden_input(const string& prompt) {
     return get_password_input(prompt);
 }
 
+#ifdef HAVE_READLINE
 // InteractiveShell implementation
 InteractiveShell::InteractiveShell(CLIInterface& cli) : m_cli(cli) {
     // Initialize readline
@@ -868,5 +875,6 @@ std::vector<string> InteractiveShell::get_command_names() {
     // For now, return common commands
     return {zerossg::CMD_START, zerossg::CMD_STOP, zerossg::CMD_STATUS, zerossg::CMD_USERS, zerossg::CMD_SESSIONS, zerossg::CMD_SECURITY, zerossg::CMD_LOGS, zerossg::CMD_HELP, zerossg::CMD_EXIT};
 }
+#endif // HAVE_READLINE
 
 } // namespace zerossg

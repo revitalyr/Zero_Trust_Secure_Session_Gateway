@@ -14,6 +14,7 @@ export module zerossg.types;
 
 export import zerossg.common;
 export import zerossg.std;
+export import zerossg.network;
 
 export namespace zerossg {
 
@@ -102,8 +103,9 @@ export struct Session {
         : m_role(Role::VIEWER)
         , m_active(false) {}
     
-    Session(SessionId session_id, UserName username, Role role, 
-                   ClientIp client_ip, ServiceName target_service) noexcept
+    Session(SessionId session_id, UserName username, Role role,
+                   ClientIp client_ip, ServiceName target_service,
+                   TimePoint expires_at) noexcept
         : m_session_id(std::move(session_id))
         , m_user_name(std::move(username))
         , m_role(role)
@@ -111,7 +113,7 @@ export struct Session {
         , m_target_service(std::move(target_service))
         , m_active(true)
         , m_created_at(SystemClock::now())
-        , m_expires_at(SystemClock::now() + Minutes(30)) {}
+        , m_expires_at(expires_at) {}
     
     // Accessor methods with semantic return types
     [[nodiscard]] constexpr const SessionId& session_id() const noexcept { return m_session_id; }
@@ -208,14 +210,14 @@ export struct ConnectionInfo {
         , m_client_port(remote.port()) {}
     
     // Accessors
-    [[nodiscard]] constexpr const TcpEndpoint& remote_endpoint() const noexcept { 
+    [[nodiscard]] const TcpEndpoint& remote_endpoint() const noexcept { 
         return m_remote_endpoint; 
     }
-    [[nodiscard]] constexpr const TcpEndpoint& local_endpoint() const noexcept { 
+    [[nodiscard]] const TcpEndpoint& local_endpoint() const noexcept { 
         return m_local_endpoint; 
     }
-    [[nodiscard]] constexpr const ClientIp& client_ip() const noexcept { return m_client_ip; }
-    [[nodiscard]] constexpr PortNo client_port() const noexcept { return m_client_port; }
+    [[nodiscard]] const ClientIp& client_ip() const noexcept { return m_client_ip; }
+    [[nodiscard]] PortNo client_port() const noexcept { return m_client_port; }
 };
 
 // Modern TargetService with better encapsulation and validation
