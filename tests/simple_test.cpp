@@ -1,13 +1,22 @@
-#define BOOST_UT_DISABLE_MODULE
-#include <boost/ut.hpp>
+#include <iostream>
+#include <string>
 
 int main() {
-    using namespace boost::ut;
+    std::cout << "Simple test - checking basic functionality\n";
     
-    "simple_test"_test = [] {
-        expect(2 + 2 == 4_i);
-        expect(true);
-    };
+    // Test basic string operations
+    std::string test = "Hello, ZeroTrust!";
+    std::cout << "Test string: " << test << std::endl;
     
-    return 0;
+    // Test basic math
+    int result = 2 + 2;
+    std::cout << "2 + 2 = " << result << std::endl;
+    
+    if (result == 4) {
+        std::cout << "✅ Basic test passed!\n";
+        return 0;
+    } else {
+        std::cout << "❌ Basic test failed!\n";
+        return 1;
+    }
 }

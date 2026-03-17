@@ -454,8 +454,6 @@ bool AuthenticationManager::verify_jwt_signature(const zerossg::JwtHeaderPayload
     }
 }
 
-
-zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
 zerossg::TokenString AuthenticationManager::generate_secure_token() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -463,12 +461,13 @@ zerossg::TokenString AuthenticationManager::generate_secure_token() {
     
     zerossg::SecretKey token_data(32);
     for (auto& byte : token_data) {
-        byte = static_cast<unsigned char>(dis(gen()));
+        byte = static_cast<unsigned char>(dis(gen));
     }
     
     return base64_encode(std::string(reinterpret_cast<char*>(token_data.data()), token_data.size()));
+}
 
-void AuthenticationManager::cleanup_expired_tokens() {
+Result<void> AuthenticationManager::cleanup_expired_tokens() noexcept {
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     
     LockGuard<std::mutex> lock(m_tokens_mutex);
@@ -484,6 +483,30 @@ void AuthenticationManager::cleanup_expired_tokens() {
         } catch (...) {
             it = m_revoked_tokens.erase(it);
         }
+    }
+    
+    return make_result_success_void();
+}
+
+zerossg::JwtSignature AuthenticationManager::generate_jwt_signature(const zerossg::JwtHeaderPayload& header_payload) const noexcept {
+    try {
+        // Simple HMAC-SHA256 implementation for demonstration
+        std::vector<unsigned char> data(header_payload.begin(), header_payload.end());
+        auto signature = HMAC(EVP_sha256(), m_jwt_secret.data(), m_jwt_secret.size(),
+                           data.data(), data.size(), nullptr, nullptr);
+        
+        if (!signature) {
+            return "";
+        }
+        
+        unsigned char* sig_data = nullptr;
+        unsigned int sig_len = 0;
+        HMAC(EVP_sha256(), m_jwt_secret.data(), m_jwt_secret.size(),
+              data.data(), data.size(), sig_data, &sig_len);
+        
+        return base64_encode(std::vector<unsigned char>(sig_data, sig_data + sig_len));
+    } catch (...) {
+        return "";
     }
 }
 
@@ -573,7 +596,7 @@ zerossg::SessionId AuthenticationManager::generate_session_id() const noexcept {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint64_t> dis(1, std::numeric_limits<uint64_t>::max());
     
-    return std::to_string(dis(gen()));
+    return std::to_string(dis(gen));
 }
 
 
