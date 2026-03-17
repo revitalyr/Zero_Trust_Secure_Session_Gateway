@@ -4,6 +4,9 @@ module;
 #include <fstream> // Required for std::ifstream/ofstream
 #include <yaml-cpp/yaml.h>
 #include <filesystem>
+#include <ranges>
+#include <algorithm>
+#include <cctype>
 module zerossg.config.config_manager;
 
 // C++23 module imports
@@ -21,6 +24,7 @@ zerossg::ConfigManager::ConfigManager() {
 
 zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigFileName& config_file) {
     LockGuard<std::mutex> lock(zerossg::ConfigManager::m_config_mutex);
+    auto logger = Logger::get("ConfigManager");
     
     try {
         if (!this->file_exists(config_file)) {
@@ -54,6 +58,8 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
+        logger->error(std::format("Exception in load_config: {}", e.what()));
+        logger->error(std::format("Exception in load_config: {}", e.what()));
         return make_result_error<void>(std::format("{}{}", ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
     }
 }
@@ -78,7 +84,7 @@ bool ConfigManager::get_bool(const zerossg::ConfigKey& key, bool default_value) 
     LockGuard<std::mutex> lock(m_config_mutex);
     
     zerossg::ConfigValue value = get_config_value(key, default_value ? "true" : "false");
-    std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+    std::ranges::transform(value, value.begin(), [](unsigned char c) { return std::tolower(c); });
     
     return value == "true" || value == "1" || value == "yes" || value == "on";
 }
@@ -269,13 +275,16 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const YAML::Exception& e) {
+        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
         return make_result_error<void>(std::format("{}{}", ERROR_YAML_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
+        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
         return make_result_error<void>(std::format("{}{}", ERROR_YAML_LOAD_PREFIX, e.what()));
     }
 }
 
 zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileName& config_file) {
+    auto logger = Logger::get("ConfigManager");
     try {
         std::ifstream file(config_file);
         if (!file.is_open()) {
@@ -293,8 +302,11 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const json::exception& e) {
+        logger->error(std::format("JSON exception: {}", e.what()));
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
+        logger->error(std::format("Std exception: {}", e.what()));
+        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
@@ -546,14 +558,18 @@ zerossg::ConfigValue ConfigManager::get_config_value(const zerossg::ConfigKey& k
 }
 
 bool ConfigManager::file_exists(const zerossg::FilePath& filename) {
-    std::ifstream file(filename);
-    return file.good();
+    std::error_code ec;
+    return std::filesystem::exists(filename, ec) && std::filesystem::is_regular_file(filename, ec);
 }
 
 zerossg::FileExtension ConfigManager::get_file_extension(const zerossg::FilePath& filename) {
-    size_t pos = filename.find_last_of('.');
-    if (pos != std::string::npos && pos != filename.length() - 1) {
-        return filename.substr(pos + 1);
+    std::filesystem::path p(filename);
+    if (p.has_extension()) {
+        std::string ext = p.extension().string();
+        if (ext.starts_with('.')) {
+            return ext.substr(1);
+        }
+        return ext;
     }
     return "";
 }
@@ -634,13 +650,16 @@ bool is_valid_ip_address(const zerossg::IpAddress& ip) {
 }
 
 zerossg::Result<zerossg::FileContent> read_file(const zerossg::FilePath& filename) {
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         return make_result_error<FileContent>(std::format("{}{}", ERROR_FILE_OPEN_FAILED_PREFIX, filename));
     }
     
     try {
-        zerossg::FileContent content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        auto file_size = std::filesystem::file_size(filename);
+        zerossg::FileContent content;
+        content.resize(file_size);
+        file.read(content.data(), file_size);
         file.close();
         return zerossg::make_result_success(content);
     } catch (const std::exception& e) {

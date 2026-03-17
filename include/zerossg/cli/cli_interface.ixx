@@ -32,6 +32,11 @@ public:
     void show_users();
     void show_version();
     void export_audit_logs(const String& output_file);
+
+    // Server management
+    bool is_server_running();
+    Result<void> connect_to_server();
+    void disconnect_from_server();
     
     // Parsing helper
     CommandLineArgs parse_input(const RawInputString& input);

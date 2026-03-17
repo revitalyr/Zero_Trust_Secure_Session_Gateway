@@ -35,6 +35,9 @@ public:
     zerossg::Result<void> stop();
     
     bool is_running() const { return m_running; }
+    
+    size_t get_active_connection_count() const { return m_active_connections.load(); }
+    size_t get_total_connection_count() const { return m_total_connections.load(); }
 
 private:
     zerossg::Result<void> setup_acceptor();
@@ -59,6 +62,9 @@ private:
     std::unique_ptr<zerossg::SecurityManager> m_security_manager;
     zerossg::String m_tls_cert_file{"server.crt"};
     zerossg::String m_tls_key_file{"server.key"};
+    std::atomic<size_t> m_active_connections{0};
+    std::atomic<size_t> m_total_connections{0};
+    std::unique_ptr<zerossg::ProxyManager> m_proxy_manager;
 };
 
 }

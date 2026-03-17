@@ -12,6 +12,8 @@ import zerossg.types;
 
 using json = nlohmann::json;
 
+using boost::asio::awaitable;
+
 namespace zerossg {
 
 Connection::Connection(GatewayServer& server, IoContext& io_context, SslContext& ssl_context)
@@ -42,6 +44,7 @@ void Connection::stop() {
 void Connection::do_handshake() {
     m_socket.async_handshake(
         boost::asio::ssl::stream_base::server,
+         std::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context()),
         [self = shared_from_this()](const zerossg::ErrorCode& error) {
             if (!error) {
                 self->do_read();
@@ -52,21 +55,35 @@ void Connection::do_handshake() {
     );
 }
 
-void Connection::do_read() {
-    boost::asio::async_read_until(
-        m_socket, m_buffer, zerossg::MESSAGE_DELIMITER,
-        [self = shared_from_this()](const zerossg::ErrorCode& error, size_t bytes_transferred) {
-            self->handle_read(error, bytes_transferred);
-        }
-    );
+awaitable<void> Connection::do_read() {
+    auto logger = m_server.m_logger;
+    try {
+        size_t bytes_transferred = co_await boost::asio::async_read_until(
+            m_socket, m_buffer, zerossg::MESSAGE_DELIMITER, boost::asio::use_awaitable);
+
+        // Корректное извлечение всего сообщения из буфера до разделителя
+        const auto data = m_buffer.data();
+        std::string message(boost::asio::buffers_begin(data), boost::asio::buffers_begin(data) + bytes_transferred - std::string(zerossg::MESSAGE_DELIMITER).length());
+        m_buffer.consume(bytes_transferred);
+
+        // Обработка полного сообщения
+        handle_request(message);
+
+        // Continue reading
+        co_return;
+    } catch (const std::exception& e) {
+        logger->error(std::format("Read error: {}", e.what()));
+        stop();
+        co_return;
+    }
 }
 
 void Connection::handle_read(const zerossg::ErrorCode& error, size_t bytes_transferred) {
     if (error) {
         if (error != boost::asio::error::eof) {
             m_server.m_logger->error(std::format("Read error: {}", error.message()));
-        }
-        return;
+    }
+    return;
     }
     
     // Корректное извлечение всего сообщения из буфера до разделителя
@@ -75,7 +92,7 @@ void Connection::handle_read(const zerossg::ErrorCode& error, size_t bytes_trans
     m_buffer.consume(bytes_transferred);
     
     // Обработка полного сообщения
-    handle_request(message);
+   handle_request(message);
     
     do_read();
 }
@@ -210,13 +227,14 @@ ResponseString Connection::process_logout_request(const RequestString& request) 
     return create_response(zerossg::JSON_VALUE_SUCCESS, zerossg::MESSAGE_LOGOUT_SUCCESSFUL);
 }
 
-void Connection::do_write(const ResponseString& response) {
-    boost::asio::async_write(
-        m_socket, boost::asio::buffer(response),
-        [self = shared_from_this()](const zerossg::ErrorCode& error, size_t) {
-            if (error) {
-                self->m_server.m_logger->error(std::format("Write error: {}", error.message()));
-            }
+awaitable<void> Connection::do_write(const ResponseString& response) {
+    auto logger = m_server.m_logger;
+    try {
+        co_await boost::asio::async_write(m_socket, boost::asio::buffer(response), boost::asio::use_awaitable);
+    } catch (const std::exception& e) {
+        m_server.m_logger->error(std::format("Write error: {}", e.what()));
+        stop();
+        co_return;
         }
     );
 }
@@ -243,5 +261,15 @@ ResponseString Connection::create_error_response(const ErrorString& error) {
 void Connection::log_connection_event(const EventTypeString& event_type, const LogDetails& details) {
     m_server.m_logger->info(std::format("[{}] {}: {}", event_type, m_client_ip, details));
 }
+
+awaitable<void> Connection::process_connection() {
+    auto logger = m_server.m_logger;
+    try {
+        co_await do_read();
+    } catch (const std::exception& e) {
+        m_server.m_logger->error(std::format("Connection processing error: {}", e.what()));
+    }
+}
+
 
 } // namespace zerossg

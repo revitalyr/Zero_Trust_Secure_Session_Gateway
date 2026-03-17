@@ -6,6 +6,8 @@ module;
 
 export module zerossg.constants;
 
+namespace zerossg {
+
 // Type aliases for time and size
 export using Seconds = std::chrono::seconds;
 export using Milliseconds = std::chrono::milliseconds;
@@ -310,6 +312,17 @@ export constexpr const char* CMD_RELOAD = "reload";
 export constexpr const char* CMD_EXPORT_LOGS = "export-logs";
 export constexpr const char* CMD_HELP = "help";
 export constexpr const char* CMD_VERSION = "version";
+export constexpr const char* CMD_USERS = "users";
+export constexpr const char* CMD_SESSIONS = "sessions";
+export constexpr const char* CMD_SECURITY = "security";
+export constexpr const char* CMD_LOGS = "logs";
+export constexpr const char* CMD_ADD_USER = "add-user";
+export constexpr const char* CMD_REMOVE_USER = "remove-user";
+export constexpr const char* CMD_CONFIG = "config";
+export constexpr const char* CMD_TEST = "test";
+export constexpr const char* CMD_INTERACTIVE = "interactive";
+export constexpr const char* CMD_EXIT = "exit";
+export constexpr const char* CMD_QUIT = "quit";
 
 // Exit codes
 export constexpr int EXIT_SUCCESS = 0;
@@ -361,3 +374,5 @@ export constexpr std::chrono::milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
 // Health check intervals
 export constexpr std::chrono::seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
 export constexpr std::chrono::seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
+
+} // namespace zerossg

@@ -109,8 +109,13 @@ boost::ut::suite SessionManagerSuite = [] {
         User user1("user1", "hash", Role::OPERATOR);
         User user2("user2", "hash", Role::VIEWER);
 
-        fixture.session_manager->create_session(user1, "192.168.1.104", "ssh");
-        fixture.session_manager->create_session(user2, "192.168.1.105", "web-admin");
+        auto session_result = fixture.session_manager->create_session(user1, "192.168.1.104", "ssh");
+        expect(session_result.has_value());
+        String session_id1 = session_result.value();
+
+        session_result = fixture.session_manager->create_session(user2, "192.168.1.105", "web-admin");
+        expect(session_result.has_value());
+        String session_id2 = session_result.value();
 
         auto active_result = fixture.session_manager->get_active_sessions();
         expect(active_result.has_value());
@@ -129,7 +134,8 @@ boost::ut::suite SessionManagerSuite = [] {
         auto get_result = fixture.session_manager->get_session(session_id);
         Session session = get_result.value();
         session.set_expires_at(std::chrono::system_clock::now() - std::chrono::seconds(10));
-        fixture.session_manager->update_session(session_id, session);
+        auto update_result = fixture.session_manager->update_session(session_id, session);
+        expect(update_result.has_value());
 
         // Очистка
         auto cleanup_result = fixture.session_manager->cleanup_expired_sessions();

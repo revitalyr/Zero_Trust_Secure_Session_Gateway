@@ -30,6 +30,7 @@ zerossg::Result<zerossg::Bytes> generate_secure_random_bytes(size_t size) {
 
 AuthenticationManager::AuthenticationManager() {
     // Initialize with modern C++26 features
+    auto logger = Logger::get("AuthenticationManager");
     m_secret_rotation_time = std::system_clock::now();
     
     // Generate JWT secret key with better randomness
@@ -41,6 +42,7 @@ AuthenticationManager::AuthenticationManager() {
     
     // Add default admin user with stronger password
     auto admin_hash_result = hash_password(zerossg::DEFAULT_ADMIN_PASSWORD);
+    auto logger = Logger::get("AuthenticationManager");
     if (admin_hash_result.has_value()) {
         zerossg::User admin_user("admin", admin_hash_result.value(), zerossg::Role::ADMIN);
         add_user(std::move(admin_user));
@@ -50,6 +52,7 @@ AuthenticationManager::AuthenticationManager() {
 AuthenticationManager::~AuthenticationManager() = default;
 
 zerossg::Result<zerossg::TokenString> AuthenticationManager::authenticate(const zerossg::UserName& username, const zerossg::Password& password) {
+    auto logger = Logger::get("AuthenticationManager");
     // Modern input validation
     if (!is_valid_username(username)) {
         return zerossg::make_result_error<zerossg::TokenString>(zerossg::ERROR_INVALID_USERNAME_FORMAT);
@@ -231,6 +234,7 @@ zerossg::Result<void> AuthenticationManager::revoke_token(const zerossg::TokenSt
 }
 
 zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user) {
+    auto logger = Logger::get("AuthenticationManager");
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(user.user_name()) != m_users.end()) {
@@ -242,6 +246,7 @@ zerossg::Result<void> AuthenticationManager::add_user(const zerossg::User& user)
 }
 
 zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName& username, const zerossg::User& user) {
+    auto logger = Logger::get("AuthenticationManager");
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.find(username) == m_users.end()) {
@@ -253,6 +258,7 @@ zerossg::Result<void> AuthenticationManager::update_user(const zerossg::UserName
 }
 
 zerossg::Result<void> AuthenticationManager::delete_user(const zerossg::UserName& username) {
+    auto logger = Logger::get("AuthenticationManager");
     LockGuard<std::mutex> lock(m_users_mutex);
     
     if (m_users.erase(username) == 0) {
@@ -287,6 +293,7 @@ zerossg::Result<zerossg::Users> AuthenticationManager::list_users() {
 }
 
 zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(const zerossg::Password& password) {
+    auto logger = Logger::get("AuthenticationManager");
     // For production, use bcrypt or argon2. This is a simplified implementation using SHA-256 with salt
     zerossg::SecretKey salt(16);
     if (RAND_bytes(salt.data(), salt.size()) != 1) {
@@ -328,6 +335,7 @@ zerossg::Result<zerossg::PasswordHash> AuthenticationManager::hash_password(cons
 }
 
 zerossg::Result<bool> AuthenticationManager::verify_password(const zerossg::Password& password, const zerossg::PasswordHash& hash) {
+    auto logger = Logger::get("AuthenticationManager");
     // Decode base64 hash back to bytes
     zerossg::String decoded_hash_str = base64_decode(hash);
     

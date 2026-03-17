@@ -1,6 +1,11 @@
 module;
 #include <boost/asio.hpp> // Include boost asio header in global module fragment
+#include <boost/asio/signal_set.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/use_awaitable.hpp>
 module zerossg.network.gateway_server;
 
 // Project headers
@@ -51,7 +56,7 @@ Result<void> GatewayServer::initialize(const zerossg::ConfigManager& config) {
         m_authz_manager = std::make_unique<AuthorizationManager>();
         m_session_manager = std::make_unique<SessionManager>();
         m_security_manager = std::make_unique<SecurityManager>();
-        m_proxy_manager = std::make_unique<ProxyManager>(m_io_context, m_tls_handler->get_context());
+        // m_proxy_manager = std::make_unique<ProxyManager>(m_io_context, m_tls_handler->get_context());
         
         // Initialize logger (simplified for now)
         m_logger = Logger::get("GatewayServer");
@@ -81,6 +86,7 @@ Result<void> GatewayServer::start() {
         
         // Start I/O threads
         start_io_threads();
+        register_signal_handlers();
         
         // Start accepting connections
         start_accept();
@@ -107,6 +113,9 @@ Result<void> GatewayServer::stop() {
             m_acceptor->close();
         }
         
+        // Stop accepting new connections
+        m_acceptor->cancel();
+
         // Allow io_context::run() to exit
         m_work_guard.reset();
 
@@ -114,6 +123,9 @@ Result<void> GatewayServer::stop() {
         m_io_context.stop();
         
         // Wait for threads to finish
+        if (m_signals) {
+            m_signals->cancel();
+        }
         stop_io_threads();
         
         m_logger->info("Server stopped");
@@ -145,26 +157,28 @@ void GatewayServer::start_accept() {
     if (!m_running.load()) {
         return;
     }
-    auto connection = std::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context());
     
-    m_acceptor->async_accept(
-        connection->m_socket.lowest_layer(),
-        [this, connection](const zerossg::ErrorCode& error) {
-            handle_accept(connection, error);
-        }
-    );
+    boost::asio::co_spawn(m_acceptor->get_executor(),
+        [this]() -> boost::asio::awaitable<void> {
+            while (m_running.load()) {
+                auto connection = std::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context());
+                try {
+                    co_await m_acceptor->async_accept(
+                        connection->m_socket.lowest_layer(),
+                        boost::asio::use_awaitable);
+
+                    register_connection(connection);
+                    connection->start();
+                } catch (const std::exception& e) {
+                    m_logger->error(std::format("Accept error: {}", e.what()));
+                }
+            }
+        },
+        boost::asio::detached);
 }
 
-void GatewayServer::handle_accept(const ConnectionPtr& connection, const zerossg::ErrorCode& error) {
-    if (!error) {
-        register_connection(connection);
-        connection->start();
-    } else {
-        m_logger->error(std::format("Accept error: {}", error.message()));
-    }
-    
-    // Continue accepting new connections
-    start_accept();
+void GatewayServer::handle_accept(const ConnectionPtr& /*connection*/, const zerossg::ErrorCode& /*error*/) {
+    // Deprecated: Logic moved to start_accept coroutine
 }
 
 void GatewayServer::start_io_threads() {
@@ -191,6 +205,29 @@ void GatewayServer::register_connection(const ConnectionPtr& connection) {
 
 void GatewayServer::unregister_connection(const ConnectionPtr& connection) {
     m_active_connections.fetch_sub(1);
+}
+
+void GatewayServer::register_signal_handlers() {
+    m_signals = std::make_unique<boost::asio::signal_set>(m_io_context, SIGINT, SIGTERM);
+#ifdef SIGQUIT
+    m_signals->add(SIGQUIT);
+#endif
+
+    m_signals->async_wait([this](const boost::system::error_code& error, int signal_number) {
+        if (!error) {
+            m_logger->info(std::format("Received signal {}. Initiating graceful shutdown.", signal_number));
+            stop();
+        } else {
+            m_logger->error(std::format("Error waiting for signals: {}", error.message()));
+        }
+    });
+}
+
+
+void GatewayServer::handle_signal(const boost::system::error_code& error, int signal_number) {
+    if (!error) {
+
+    }
 }
 
 } // namespace zerossg
