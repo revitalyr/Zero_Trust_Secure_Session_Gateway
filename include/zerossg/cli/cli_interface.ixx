@@ -1,6 +1,5 @@
 module;
 
-#include <memory>
 #include <expected>
 #include <string>
 #include <iostream>
@@ -17,7 +16,7 @@ using Result = std::expected<T, E>;
 // Minimal CLI interface class
 export class CLIInterface {
 public:
-    CLIInterface();
+    CLIInterface() = default;
     virtual ~CLIInterface() = default;
     
     Result<int> run(int argc, char* argv[]);
@@ -28,9 +27,6 @@ public:
 protected:
     void print_info(const String& message);
     void print_error(const String& message);
-    
-private:
-    String m_config_file = "config.json";
 };
 
 } // namespace zerossg

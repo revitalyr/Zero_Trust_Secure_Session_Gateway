@@ -7,11 +7,6 @@ module zerossg.cli.cli_interface;
 
 namespace zerossg {
 
-// Constructor implementation
-CLIInterface::CLIInterface() {
-    std::cout << "Zero Trust Secure Session Gateway CLI\n";
-}
-
 // Main CLI logic
 Result<int> CLIInterface::run(int argc, char* argv[]) {
     if (argc < 2) {
