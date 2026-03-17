@@ -61,6 +61,7 @@ target_sources(zerossg_lib
         "include/zerossg/tls/tls_handler.ixx"
         "include/zerossg/network/gateway_server.ixx"
         "include/zerossg/cli/cli_interface.ixx"
+        "include/zerossg/web/web_server.ixx"
         "include/zerossg/third_party/nlohmann_json.ixx"
         "include/zerossg/third_party/yaml_cpp.ixx"
         "include/zerossg/third_party/openssl.ixx"
@@ -157,4 +158,11 @@ add_executable(zerossg_simple src/simple_main.cpp)
 target_link_libraries(zerossg_simple PRIVATE zerossg_lib)
 target_sources(zerossg_simple PRIVATE 
     src/cli/cli_interface_simple.cpp
+)
+
+# Web interface executable
+add_executable(zerossg_web src/web_main.cpp)
+target_link_libraries(zerossg_web PRIVATE zerossg_lib)
+target_sources(zerossg_web PRIVATE 
+    src/web/web_server_simple.cpp
 )
