@@ -23,15 +23,15 @@ export constexpr const char* DEFAULT_DB_PASSWORD = "";
 
 // JWT constants
 export constexpr size_t JWT_SECRET_SIZE = 32;
-export constexpr std::chrono::seconds TOKEN_EXPIRY_TIME{3600}; // 1 hour
+export inline constexpr std::chrono::seconds TOKEN_EXPIRY_TIME{3600}; // 1 hour
 export constexpr std::size_t BCRYPT_ROUNDS = 12;
-export constexpr std::chrono::seconds SECRET_ROTATION_INTERVAL{86400}; // 24 hours
+export inline constexpr std::chrono::seconds SECRET_ROTATION_INTERVAL{86400}; // 24 hours
 export constexpr size_t MAX_FAILED_ATTEMPTS = 5;
-export constexpr std::chrono::seconds FAILED_ATTEMPT_WINDOW{900}; // 15 minutes
+export inline constexpr std::chrono::seconds FAILED_ATTEMPT_WINDOW{900}; // 15 minutes
 
 // Database constants
 export constexpr Count DEFAULT_CONNECTION_POOL_SIZE = 10;
-export constexpr std::chrono::seconds DEFAULT_CONNECTION_TIMEOUT{30};
+export inline constexpr std::chrono::seconds DEFAULT_CONNECTION_TIMEOUT{30};
 
 // Logging constants
 export constexpr Count DEFAULT_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -379,12 +379,37 @@ export constexpr size_t MAX_HEADER_SIZE = 8192;
 export constexpr size_t MAX_REQUEST_SIZE = 1024 * 1024; // 1MB
 export constexpr size_t MAX_RESPONSE_SIZE = 1024 * 1024; // 1MB
 
+// TLS constants
+export constexpr const char* DEFAULT_CIPHER_LIST = "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256";
+export constexpr const char* PEM_CERTIFICATE_HEADER = "-----BEGIN CERTIFICATE-----";
+export constexpr const char* PEM_CERTIFICATE_FOOTER = "-----END CERTIFICATE-----";
+export constexpr const char* PEM_PRIVATE_KEY_HEADER = "-----BEGIN PRIVATE KEY-----";
+export constexpr const char* PEM_PRIVATE_KEY_FOOTER = "-----END PRIVATE KEY-----";
+export constexpr const char* PEM_BEGIN_HEADER = "-----BEGIN";
+export constexpr const char* PEM_PRIVATE_KEY_FOOTER_PART = "-----END PRIVATE KEY-----";
+
+// Error messages
+export constexpr const char* ERROR_TLS_CERT_LOAD_FAILED_PREFIX = "TLS certificate load failed: ";
+export constexpr const char* ERROR_TLS_KEY_LOAD_FAILED_PREFIX = "TLS private key load failed: ";
+export constexpr const char* ERROR_TLS_SET_CIPHER_LIST_FAILED = "Failed to set TLS cipher list";
+export constexpr const char* ERROR_TLS_INIT_FAILED_PREFIX = "TLS initialization failed: ";
+export constexpr const char* ERROR_TLS_BIO_CREATION_FAILED = "Failed to create BIO for certificate";
+export constexpr const char* ERROR_TLS_CERT_PARSE_FAILED = "Failed to parse certificate";
+export constexpr const char* ERROR_TLS_CERT_VERIFY_FAILED_PREFIX = "Certificate verification failed: ";
+export constexpr const char* ERROR_TLS_CERT_CHAIN_LOAD_FAILED_PREFIX = "Certificate chain load failed: ";
+export constexpr const char* ERROR_TLS_SET_VERIFY_MODE_FAILED_PREFIX = "Failed to set TLS verify mode: ";
+export constexpr const char* ERROR_TLS_CA_CERT_LOAD_FAILED_PREFIX = "CA certificate load failed: ";
+export constexpr const char* ERROR_TLS_CERT_FILE_NOT_FOUND_PREFIX = "Certificate file not found: ";
+export constexpr const char* ERROR_TLS_KEY_FILE_NOT_FOUND_PREFIX = "Private key file not found: ";
+export constexpr const char* ERROR_TLS_INVALID_CERT_FORMAT_PREFIX = "Invalid certificate format: ";
+export constexpr const char* ERROR_TLS_INVALID_KEY_FORMAT_PREFIX = "Invalid private key format: ";
+
 // Timeout values
-export constexpr std::chrono::milliseconds NETWORK_TIMEOUT{30000}; // 30 seconds
-export constexpr std::chrono::milliseconds TLS_HANDSHAKE_TIMEOUT{10000}; // 10 seconds
-export constexpr std::chrono::milliseconds READ_TIMEOUT{60000}; // 1 minute
-export constexpr std::chrono::milliseconds WRITE_TIMEOUT{60000}; // 1 minute
-export constexpr std::chrono::milliseconds KEEP_ALIVE_TIMEOUT{30000}; // 30 seconds
+export inline constexpr std::chrono::milliseconds NETWORK_TIMEOUT{30000}; // 30 seconds
+export inline constexpr std::chrono::milliseconds TLS_HANDSHAKE_TIMEOUT{10000}; // 10 seconds
+export inline constexpr std::chrono::milliseconds READ_TIMEOUT{60000}; // 1 minute
+export inline constexpr std::chrono::milliseconds WRITE_TIMEOUT{60000}; // 1 minute
+export inline constexpr std::chrono::milliseconds KEEP_ALIVE_TIMEOUT{30000}; // 30 seconds
 
 // Buffer sizes
 export constexpr size_t BUFFER_SIZE_SMALL = 1024;
@@ -409,12 +434,12 @@ export constexpr int SESSION_ID_SIZE = 32;
 export constexpr int MAX_SESSIONS_PER_USER = 5;
 // Retry configuration
 export constexpr Count MAX_RETRY_ATTEMPTS = 3;
-export constexpr std::chrono::milliseconds RETRY_DELAY_BASE{1000}; // 1 second
-export constexpr std::chrono::milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
+export inline constexpr std::chrono::milliseconds RETRY_DELAY_BASE{1000}; // 1 second
+export inline constexpr std::chrono::milliseconds RETRY_DELAY_MAX{10000}; // 10 seconds
 
 // Health check intervals
-export constexpr std::chrono::seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
-export constexpr std::chrono::seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
+export inline constexpr std::chrono::seconds HEALTH_CHECK_INTERVAL{30}; // 30 seconds
+export inline constexpr std::chrono::seconds HEALTH_CHECK_TIMEOUT{5}; // 5 seconds
 
 } // namespace zerossg
 

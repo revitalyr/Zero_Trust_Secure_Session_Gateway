@@ -2,6 +2,9 @@ module;
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <fstream>
+#include <iostream>
+#include <string>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
