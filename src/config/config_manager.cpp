@@ -10,6 +10,7 @@ module;
 module zerossg.config.config_manager;
 
 // C++23 module imports
+import zerossg.logging.logger;
 import zerossg.constants;
 import zerossg.interfaces;
 import zerossg.common; // For Result, make_result_success, make_result_error, LockGuard, String
@@ -58,13 +59,14 @@ zerossg::Result<void> zerossg::ConfigManager::load_config(const zerossg::ConfigF
         
         return zerossg::make_result_success();
     } catch (const std::exception& e) {
-        logger->error(std::format("Exception in load_config: {}", e.what()));
-        logger->error(std::format("Exception in load_config: {}", e.what()));
-        return make_result_error<void>(std::format("{}{}", ERROR_FAILED_TO_LOAD_CONFIG, e.what()));
+        std::ostringstream oss;
+        logger->error("Exception in load_config: {}", e.what());
+        return make_result_error<void>(ERROR_FAILED_TO_LOAD_CONFIG + zerossg::String(e.what()));
     }
 }
 
-zerossg::ConfigValue ConfigManager::get_string(const zerossg::ConfigKey& key, const zerossg::ConfigValue& default_value) {
+zerossg::ConfigValue ConfigManager::get_string(const zerossg::ConfigKey& key,
+                                               const zerossg::ConfigValue& default_value) {
     LockGuard<std::mutex> lock(m_config_mutex);
     return get_config_value(key, default_value);
 }
@@ -275,14 +277,15 @@ zerossg::Result<void> ConfigManager::load_yaml_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const YAML::Exception& e) {
-        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
+        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_YAML_PARSE_PREFIX, e.what()));
+
     } catch (const std::exception& e) {
-        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
-        return make_result_error<void>(std::format("{}{}", ERROR_YAML_LOAD_PREFIX, e.what()));
+        zerossg::Logger::get("ConfigManager")->error("YAML exception: {}", e.what());
+       return make_result_error<void>(std::format("{}{}", ERROR_YAML_LOAD_PREFIX, e.what()));
     }
 }
-
+   
 zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileName& config_file) {
     auto logger = Logger::get("ConfigManager");
     try {
@@ -302,15 +305,18 @@ zerossg::Result<void> ConfigManager::load_json_config(const zerossg::ConfigFileN
         
         return zerossg::make_result_success();
     } catch (const json::exception& e) {
-        logger->error(std::format("JSON exception: {}", e.what()));
+       std::ostringstream oss;
+       oss << "JSON exception: " << e.what();
+       logger->error(oss.str());
+
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_PARSE_PREFIX, e.what()));
     } catch (const std::exception& e) {
         logger->error(std::format("Std exception: {}", e.what()));
-        zerossg::Logger::get("ConfigManager")->error(std::format("YAML exception: {}", e.what()));
+        zerossg::Logger::get("ConfigManager")->error("YAML exception: {}", e.what());
         return make_result_error<void>(std::format("{}{}", ERROR_JSON_LOAD_PREFIX, e.what()));
     }
 }
-
+   
 void ConfigManager::parse_server_config(const json& config) {
     if (config.contains("server")) {
         const auto& server = config["server"];
@@ -390,8 +396,13 @@ zerossg::Result<zerossg::TargetService> ConfigManager::parse_target_service(cons
         
         service.m_name = service_json.value("name", "");
         service.m_host = service_json.value("host", "");
-        service.m_port = service_json.value("port", 0);
         service.m_tls_enabled = service_json.value("tls_enabled", false);
+        auto port_val = service_json.value("port", 0);
+        if (std::in_range<zerossg::PortNo>(port_val)) {
+            service.m_port = static_cast<zerossg::PortNo>(port_val);
+        } else {
+            logger->error("Invalid port value: {}", port_val);
+        }
         
         // Parse allowed roles
         if (service_json.contains("allowed_roles")) {

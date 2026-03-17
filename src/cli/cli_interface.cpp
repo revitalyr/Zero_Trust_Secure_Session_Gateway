@@ -119,8 +119,9 @@ Result<int> zerossg::CLIInterface::run(int argc, char* argv[]) {
         int result = command->handler(command_args);
         return result;
     } catch (const std::exception& e) {
-        print_error("CLI error: " + zerossg::String(e.what()));
-       zerossg::Logger::get("CLIInterface")->error(std::format("CLI error: {}", e.what()));
+        print_error(std::format("CLI error: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("CLI error: {}", e.what());
+        
         return 1;
     }
 }
@@ -150,8 +151,8 @@ void CLIInterface::show_sessions() {
         print_info("Active sessions:");
         std::println("No active sessions (server not running)");
     } catch (const std::exception& e) {
-        print_error("Failed to get active sessions: " + String(e.what()));
-       zerossg::Logger::get("CLIInterface")->error(std::format("Failed to get active sessions: {}", e.what()));
+        print_error(std::format("Failed to get active sessions: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to get active sessions: {}", e.what());
     }
 }
 
@@ -162,8 +163,8 @@ void CLIInterface::export_audit_logs(const zerossg::FilePath& output_file) {
         print_info("Exporting audit logs to: " + output_file);
         print_success("Audit logs exported successfully");
     } catch (const std::exception& e) {
-        print_error("Failed to export audit logs: " + zerossg::String(e.what()));
-      zerossg::Logger::get("CLIInterface")->error(std::format("Failed to export audit logs: {}", e.what()));
+        print_error(std::format("Failed to export audit logs: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to export audit logs: {}", e.what());
     }
 }
 
@@ -451,8 +452,8 @@ int CLIInterface::handle_start_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to start server: " + String(e.what()));
-     zerossg::Logger::get("CLIInterface")->error(std::format("Failed to start server: {}", e.what()));
+        print_error(std::format("Failed to start server: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to start server: {}", e.what());
         return 1;
     }
 }
@@ -475,8 +476,8 @@ int CLIInterface::handle_stop_command(const zerossg::CommandLineArgs& /*args*/) 
         print_success("Server stopped successfully");
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to stop server: " + String(e.what()));
-     zerossg::Logger::get("CLIInterface")->error(std::format("Failed to stop server: {}", e.what()));
+        print_error(std::format("Failed to stop server: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to stop server: {}", e.what());
         return 1;
     }
 }
@@ -509,8 +510,8 @@ int CLIInterface::handle_status_command(const zerossg::CommandLineArgs& /*args*/
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to get server status: " + String(e.what()));
-      zerossg::Logger::get("CLIInterface")->error(std::format("Failed to get server status: {}", e.what()));
+        print_error(std::format("Failed to get server status: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to get security statistics: {}", e.what());
         return 1;
     }
 }
@@ -530,8 +531,8 @@ int CLIInterface::handle_users_command(const zerossg::CommandLineArgs& /*args*/)
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to list users: " + String(e.what()));
-     zerossg::Logger::get("CLIInterface")->error(std::format("Failed to list users: {}", e.what()));
+        print_error(std::format("Failed to list users: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to list users: {}", e.what());
         return 1;
     }
 }
@@ -541,8 +542,8 @@ int CLIInterface::handle_sessions_command(const zerossg::CommandLineArgs& /*args
         show_sessions();
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to list sessions: " + String(e.what()));
-      zerossg::Logger::get("CLIInterface")->error(std::format("Failed to list sessions: {}", e.what()));
+        print_error(std::format("Failed to list sessions: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to list sessions: {}", e.what());
         return 1;
     }
 }
@@ -556,8 +557,8 @@ int CLIInterface::handle_security_command(const zerossg::CommandLineArgs& /*args
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to get security statistics: " + String(e.what()));
-       zerossg::Logger::get("CLIInterface")->error(std::format("Failed to get security statistics: {}", e.what()));
+        print_error(std::format("Failed to get security statistics: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to get security statistics: {}", e.what());
         return 1;
     }
 }
@@ -634,8 +635,8 @@ int CLIInterface::handle_config_command(const zerossg::CommandLineArgs& /*args*/
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Failed to show configuration: " + String(e.what()));
-      zerossg::Logger::get("CLIInterface")->error(std::format("Failed to show configuration: {}", e.what()));
+        print_error(std::format("Failed to show configuration: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Failed to show configuration: {}", e.what());
         return 1;
     }
 }
@@ -648,8 +649,8 @@ int CLIInterface::handle_test_command(const zerossg::CommandLineArgs& args) {
         
         return 0;
     } catch (const std::exception& e) {
-        print_error("Connection test failed: " + String(e.what()));
-      zerossg::Logger::get("CLIInterface")->error(std::format("Connection test failed: {}", e.what()));
+        print_error(std::format("Connection test failed: {}", e.what()));
+        zerossg::Logger::get("CLIInterface")->error("Connection test failed: {}", e.what());
         return 1;
     }
 }
@@ -897,7 +898,7 @@ void InteractiveShell::process_command(const String& command) {
         if (!result.has_value()) {
             std::println("Command failed");
         }
-     zerossg::Logger::get("CLIInterface")->error(std::format("Command failed: {}. Command Args: {}", command, args));
+     zerossg::Logger::get("CLIInterface")->error("Command failed: " + command + ". Command Args: " + args.at(0));
     } catch (const std::exception& e) {
         std::println("Error: {}", e.what());
     }
