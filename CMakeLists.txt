@@ -153,18 +153,11 @@ target_link_libraries(zerossg_app
 
 # add_test(NAME AllTests COMMAND zerossg_tests)
 
-# Simple CLI executable for testing (without complex dependencies)
-add_executable(zerossg_simple src/simple_main.cpp)
-target_link_libraries(zerossg_simple PRIVATE zerossg_lib)
-target_sources(zerossg_simple PRIVATE 
-    src/cli/cli_interface_simple.cpp
-)
-
 # Web interface executable
 add_executable(zerossg_web src/web_main.cpp)
 target_link_libraries(zerossg_web PRIVATE zerossg_lib)
 target_sources(zerossg_web PRIVATE 
-    src/web/web_server_simple.cpp
+    src/web/web_server_impl.cpp
 )
 
 # Add WinSock library for Windows port checking
