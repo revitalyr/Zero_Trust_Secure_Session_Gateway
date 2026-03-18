@@ -22,8 +22,6 @@ import zerossg.third_party.nlohmann_json;
 import zerossg.std;
 
 export namespace zerossg {
-    class Connection;
-    class ConfigManager;
     
 export class GatewayServer {
 public:
@@ -42,10 +40,10 @@ public:
 private:
     zerossg::Result<void> setup_acceptor();
     void start_accept();
-    void handle_accept(std::shared_ptr<zerossg::Connection> connection, const zerossg::ErrorCode& error);
+    void handle_accept(std::shared_ptr<zerossg::TcpSocket> socket, const zerossg::ErrorCode& error);
     void start_io_threads();
     void stop_io_threads();
-    void register_connection(std::shared_ptr<zerossg::Connection> connection);
+    void register_connection(std::shared_ptr<zerossg::TcpSocket> connection);
 
     zerossg::String m_listen_address{"127.0.0.1"};
     uint16_t m_listen_port{8080};
@@ -65,6 +63,8 @@ private:
     std::atomic<size_t> m_active_connections{0};
     std::atomic<size_t> m_total_connections{0};
     std::unique_ptr<zerossg::ProxyManager> m_proxy_manager;
+    std::shared_ptr<zerossg::Logger> m_logger;
+    std::unique_ptr<zerossg::SignalSet> m_signals;
 };
 
 }

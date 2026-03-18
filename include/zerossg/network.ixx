@@ -19,6 +19,7 @@ using TcpAcceptor = boost::asio::ip::tcp::acceptor;
 using IoContext = boost::asio::io_context;
 using StreamBuffer = boost::asio::streambuf;
 using ExecutorWorkGuard = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
+using SignalSet = boost::asio::signal_set;
 
 // SSL verification type aliases
 using SslVerifyMode = boost::asio::ssl::verify_mode;

@@ -163,29 +163,35 @@ void GatewayServer::start_accept() {
         return;
     }
 
-     boost::asio::co_spawn(m_acceptor->get_executor(),
-        [this]() -> boost::asio::awaitable<void> {
-            while (m_running.load()) {
-                auto connection = std::make_shared<Connection>(*this, m_io_context, m_tls_handler->get_context());
-                try {
-                    co_await m_acceptor->async_accept(
-                        connection->m_socket.lowest_layer(),
-                        boost::asio::use_awaitable);
-
-                    register_connection(connection);
-                    connection->start();
-                } catch (const std::exception& e) {
-                    m_logger->error(std::format("Accept error: {}", e.what()));
-                }
-            }
-        },
-        boost::asio::detached);
+    m_acceptor->async_accept(
+        [this](std::shared_ptr<zerossg::TcpSocket> socket, const zerossg::ErrorCode& error) {
+            handle_accept(socket, error);
+        }
+    );
 }
 
+void GatewayServer::handle_accept(std::shared_ptr<zerossg::TcpSocket> socket, const zerossg::ErrorCode& error) {
+    if (!error) {
+        register_connection(socket);
+        
+        if (m_logger) {
+            m_logger->info("New connection from " + socket->remote_endpoint().address().to_string());
+        }
+        
+        start_accept();
+    } else {
+        if (m_logger) {
+            m_logger->error("Accept error: " + error.message());
+        }
+        
+        start_accept();
+    }
+}
 
-void GatewayServer::handle_accept(const ConnectionPtr& /*connection*/, const zerossg::ErrorCode& /*error*/) {
-    // Deprecated: Logic moved to start_accept coroutine
-} 
+void GatewayServer::register_connection(std::shared_ptr<zerossg::TcpSocket> connection) {
+    m_active_connections++;
+    m_total_connections++;
+}
 
 void GatewayServer::start_io_threads() {
     for (size_t i = 0; i < m_thread_count; ++i) {
@@ -196,21 +202,15 @@ void GatewayServer::start_io_threads() {
 }
 
 void GatewayServer::stop_io_threads() {
+    m_io_context.stop();
+    
     for (auto& thread : m_io_threads) {
         if (thread.joinable()) {
             thread.join();
         }
     }
+    
     m_io_threads.clear();
-}
-
-void GatewayServer::register_connection(const ConnectionPtr& connection) {
-    m_active_connections.fetch_add(1);
-    m_total_connections.fetch_add(1);
-}
-
-void GatewayServer::unregister_connection(const ConnectionPtr& connection) {
-    m_active_connections.fetch_sub(1);
 }
 
 void GatewayServer::register_signal_handlers() {
@@ -227,13 +227,6 @@ void GatewayServer::register_signal_handlers() {
             m_logger->error(std::format("Error waiting for signals: {}", error.message()));
         }
     });
-}
-
-
-void GatewayServer::handle_signal(const boost::system::error_code& error, int signal_number) {
-    if (!error) {
-
-    }
 }
 
 } // namespace zerossg
