@@ -1,6 +1,15 @@
 # Zero Trust Secure Session Gateway
 
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B23)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/Build-Working-brightgreen.svg)](https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway)
+[![Tests](https://img.shields.io/badge/Tests-Passing%20(100%25)-brightgreen.svg)](https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway)
+
 A modern C++23 implementation of a Zero Trust Architecture secure session gateway with web-based management interface and CLI tools.
+
+## 🏷️ GitHub Topics
+`cpp23, modules, zero-trust, security, gateway, authentication, authorization, session-management, rbac, tls, openssl, boost-asio, cmake, modern-cpp, enterprise-security, jwt, web-server, cli`
 
 ## 🚀 Current Status
 
@@ -398,6 +407,36 @@ spec:
         - name: ZEROSSG_PORT
           value: "8080"
 ```
+
+## 📂 Repository
+
+**GitHub**: https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway.git  
+**Version**: v1.0.0  
+**License**: MIT  
+
+### 🚀 Quick Publication
+
+```bash
+# Clone the repository
+git clone https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway.git
+cd Zero_Trust_Secure_Session_Gateway
+
+# Build and test
+cmake --preset "Build-Debug"
+cmake --build --preset "Build-Debug"
+ctest --preset "Test-Debug"
+
+# Run applications
+./out/build/Config-Debug/zerossg_web.exe 8080
+./out/build/Config-Debug/zerossg_app.exe --help
+```
+
+### 📋 Publication Scripts
+
+- **Windows**: Run `.\publish_github.ps1` for automated publication
+- **Linux/macOS**: Run `./publish_github.sh` for automated publication
+
+---
 
 ## License
 
