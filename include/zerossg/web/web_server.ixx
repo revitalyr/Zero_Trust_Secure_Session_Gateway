@@ -36,6 +36,10 @@ public:
     Result<void> stop();
     bool is_running() const;
     
+    // Port checking
+    static bool is_port_available(const String& address, int port);
+    static bool is_port_available(int port);
+    
     // HTTP handlers
     HttpResponse handle_root();
     HttpResponse handle_status();
@@ -43,6 +47,7 @@ public:
     HttpResponse handle_users();
     HttpResponse handle_sessions();
     HttpResponse handle_logs();
+    HttpResponse handle_not_found();
     
     // Utility methods
     String get_status_json() const;
@@ -53,8 +58,10 @@ private:
     String m_address = "localhost";
     int m_port = 8080;
     
-    void setup_routes();
-    HttpResponse handle_not_found();
+    // HTTP server implementation
+    void run_http_server();
+    void handle_client(int clientSocket);
+    HttpResponse route_request(const String& path);
     HttpResponse make_json_response(const String& json);
     HttpResponse make_html_response(const String& html);
 };

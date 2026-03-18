@@ -166,3 +166,8 @@ target_link_libraries(zerossg_web PRIVATE zerossg_lib)
 target_sources(zerossg_web PRIVATE 
     src/web/web_server_simple.cpp
 )
+
+# Add WinSock library for Windows port checking
+if(WIN32)
+    target_link_libraries(zerossg_web PRIVATE ws2_32)
+endif()

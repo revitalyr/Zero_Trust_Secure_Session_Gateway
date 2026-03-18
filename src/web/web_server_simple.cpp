@@ -1,4 +1,4 @@
-// Simple web server implementation using Boost.Beast
+// Simple web server implementation with real HTTP handling
 module;
 
 #include <iostream>
@@ -6,34 +6,280 @@ module;
 #include <thread>
 #include <vector>
 #include <map>
+#include <chrono>
+#include <regex>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+#endif
 
 module zerossg.web.web_server;
 
 namespace zerossg {
 
-// Simple HTTP server implementation
+// Port checking implementation
+bool WebServer::is_port_available(const String& address, int port) {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return false;
+    }
+    
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock == INVALID_SOCKET) {
+        WSACleanup();
+        return false;
+    }
+    
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    
+    if (address == "localhost" || address == "127.0.0.1") {
+        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    } else {
+        serverAddr.sin_addr.s_addr = inet_addr(address.c_str());
+    }
+    
+    // Try to bind to the port
+    int result = bind(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    
+    closesocket(sock);
+    WSACleanup();
+    
+    return result == 0;
+#else
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock < 0) {
+        return false;
+    }
+    
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    
+    if (address == "localhost" || address == "127.0.0.1") {
+        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    } else {
+        serverAddr.sin_addr.s_addr = inet_addr(address.c_str());
+    }
+    
+    int result = bind(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    close(sock);
+    
+    return result == 0;
+#endif
+}
+
+bool WebServer::is_port_available(int port) {
+    return is_port_available("localhost", port);
+}
+
+// Simple HTTP response helper
+String create_http_response(int status, const String& content_type, const String& body) {
+    std::ostringstream response;
+    response << "HTTP/1.1 " << status << " OK\r\n";
+    response << "Content-Type: " << content_type << "\r\n";
+    response << "Content-Length: " << body.length() << "\r\n";
+    response << "Connection: close\r\n";
+    response << "\r\n";
+    response << body;
+    return response.str();
+}
+
+// Parse HTTP request
+String parse_http_path(const String& request) {
+    std::regex path_regex(R"(GET\s+([^\s]+)\s+HTTP)");
+    std::smatch match;
+    
+    if (std::regex_search(request, match, path_regex)) {
+        return match[1].str();
+    }
+    
+    return "/";
+}
+
 Result<void> WebServer::start(const String& address, int port) {
     if (m_running) {
         return std::unexpected("Server is already running");
     }
     
+    // Check if port is available
+    if (!is_port_available(address, port)) {
+        return std::unexpected("Port " + std::to_string(port) + " is already in use on " + address);
+    }
+    
     m_address = address;
     m_port = port;
+    
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return std::unexpected("Failed to initialize WinSock");
+    }
+#endif
     
     std::cout << "Starting web server on " << address << ":" << port << "\n";
     std::cout << "Web interface available at: http://" << address << ":" << port << "\n";
     
     m_running = true;
     
-    // Simple simulation - in real implementation would start actual HTTP server
+    // Start actual HTTP server in separate thread
     std::thread([this]() {
-        while (m_running) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            // Simulate handling requests
-        }
+        run_http_server();
     }).detach();
     
     return {};
+}
+
+void WebServer::run_http_server() {
+#ifdef _WIN32
+    SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listenSocket == INVALID_SOCKET) {
+        std::cerr << "Failed to create socket\n";
+        return;
+    }
+    
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(m_port);
+    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    
+    if (bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        std::cerr << "Bind failed\n";
+        closesocket(listenSocket);
+        return;
+    }
+    
+    if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
+        std::cerr << "Listen failed\n";
+        closesocket(listenSocket);
+        return;
+    }
+    
+    std::cout << "HTTP server listening on port " << m_port << "\n";
+    
+    while (m_running) {
+        SOCKET clientSocket = accept(listenSocket, NULL, NULL);
+        if (clientSocket == INVALID_SOCKET) {
+            if (m_running) {
+                std::cerr << "Accept failed\n";
+            }
+            continue;
+        }
+        
+        // Handle client request
+        handle_client(clientSocket);
+    }
+    
+    closesocket(listenSocket);
+    WSACleanup();
+#else
+    int listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listenSocket < 0) {
+        std::cerr << "Failed to create socket\n";
+        return;
+    }
+    
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(m_port);
+    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    
+    if (bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        std::cerr << "Bind failed\n";
+        close(listenSocket);
+        return;
+    }
+    
+    if (listen(listenSocket, SOMAXCONN) < 0) {
+        std::cerr << "Listen failed\n";
+        close(listenSocket);
+        return;
+    }
+    
+    std::cout << "HTTP server listening on port " << m_port << "\n";
+    
+    while (m_running) {
+        int clientSocket = accept(listenSocket, NULL, NULL);
+        if (clientSocket < 0) {
+            if (m_running) {
+                std::cerr << "Accept failed\n";
+            }
+            continue;
+        }
+        
+        // Handle client request
+        handle_client(clientSocket);
+    }
+    
+    close(listenSocket);
+#endif
+}
+
+void WebServer::handle_client(int clientSocket) {
+    // Read request
+    char buffer[4096];
+    int bytesReceived;
+    
+#ifdef _WIN32
+    bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+#else
+    bytesReceived = read(clientSocket, buffer, sizeof(buffer) - 1);
+#endif
+    
+    if (bytesReceived <= 0) {
+#ifdef _WIN32
+        closesocket(clientSocket);
+#else
+        close(clientSocket);
+#endif
+        return;
+    }
+    
+    buffer[bytesReceived] = '\0';
+    String request(buffer);
+    
+    // Parse path and route
+    String path = parse_http_path(request);
+    HttpResponse response = route_request(path);
+    
+    // Send response
+    String httpResponse = create_http_response(response.status_code, response.content_type, response.body);
+    
+#ifdef _WIN32
+    send(clientSocket, httpResponse.c_str(), httpResponse.length(), 0);
+    closesocket(clientSocket);
+#else
+    write(clientSocket, httpResponse.c_str(), httpResponse.length());
+    close(clientSocket);
+#endif
+}
+
+HttpResponse WebServer::route_request(const String& path) {
+    if (path == "/" || path.empty()) {
+        return handle_root();
+    } else if (path == "/status") {
+        return handle_status();
+    } else if (path == "/config") {
+        return handle_config();
+    } else if (path == "/users") {
+        return handle_users();
+    } else if (path == "/sessions") {
+        return handle_sessions();
+    } else if (path == "/logs") {
+        return handle_logs();
+    } else {
+        return handle_not_found();
+    }
 }
 
 Result<void> WebServer::stop() {
