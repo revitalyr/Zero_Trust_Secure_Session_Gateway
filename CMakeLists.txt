@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.28) # Рекомендуется 3.28+ для стабильных модулей
+cmake_minimum_required(VERSION 3.28) # Recommended 3.28+ for stable modules
 
-# 1. ПОДАВЛЕНИЕ ПРЕДУПРЕЖДЕНИЙ (ДО project())
+# 1. SUPPRESS WARNINGS (before project())
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS ON CACHE BOOL "Mute dev warnings" FORCE)
-# Убираем предупреждения о старом поиске Boost
+# Suppress old Boost search warnings
 if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif()
-# Убираем предупреждение о FetchContent_Populate (для CPM/UT)
+# Suppress FetchContent_Populate warnings (for CPM/UT)
 if(POLICY CMP0169)
     cmake_policy(SET CMP0169 OLD)
 endif()
-# Убираем предупреждения add_custom_command (для UT)
+# Suppress add_custom_command warnings (for UT)
 if(POLICY CMP0175)
     cmake_policy(SET CMP0175 OLD)
 endif()
@@ -22,26 +22,26 @@ if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x0601) 
 endif()
 
-# 2. НАСТРОЙКИ СТАНДАРТА
+# 2. STANDARD SETTINGS
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
-# 3. ПОИСК ЗАВИСИМОСТЕЙ (vcpkg)
-# Поиск Readline (QUIET убирает Warning, если библиотека не найдена)
+# 3. DEPENDENCY SEARCH (vcpkg)
+# Search Readline (QUIET removes Warning if library not found)
 find_package(Readline QUIET)
 
-# Поиск остальных зависимостей
+# Search other dependencies
 find_package(Boost REQUIRED COMPONENTS system thread date_time container)
 find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 
-# 4. СОЗДАНИЕ БИБЛИОТЕКИ (MODULES)
+# 4. LIBRARY CREATION (MODULES)
 add_library(zerossg_lib)
 
-# Добавление файлов интерфейсов модулей (.ixx)
+# Add module interface files (.ixx)
 target_sources(zerossg_lib
     PUBLIC
         FILE_SET CXX_MODULES FILES
@@ -67,20 +67,20 @@ target_sources(zerossg_lib
         "include/zerossg/third_party/openssl.ixx"
 )
 
-# Добавление файлов реализации (.cpp)
+# Add implementation files (.cpp)
 target_sources(zerossg_lib
     PRIVATE
         "src/config/config_manager.cpp"
         # "src/cli/cli_interface.cpp"  # Commented out due to m_server dependency issues
         "src/logging/logger.cpp"
-        # Добавьте остальные .cpp файлы проекта здесь
+        # Add other .cpp files here
 )
 
-# 5. КОНФИГУРАЦИЯ КОМПИЛЯТОРА
+# 5. COMPILER CONFIGURATION
 target_include_directories(zerossg_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_compile_options(zerossg_lib PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4> # Убрали /WX (warnings as errors) для мягкой сборки
+    $<$<CXX_COMPILER_ID:MSVC>:/W4> # Removed /WX (warnings as errors) for soft build
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
@@ -88,12 +88,12 @@ target_compile_definitions(zerossg_lib PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
 )
 
-# Флаги, которые должны наследоваться потребителями библиотеки (например, тестами)
+# Flags that should be inherited by library consumers (e.g., tests)
 target_compile_options(zerossg_lib PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/utf-8>
 )
 
-# 6. ЛИНКОВКА
+# 6. LINKING
 target_link_libraries(zerossg_lib 
     PUBLIC 
         Boost::system 
@@ -111,7 +111,7 @@ if(Readline_FOUND)
     target_compile_definitions(zerossg_lib PUBLIC HAS_READLINE)
 endif()
 
-# 7. ИСПОЛНЯЕМЫЙ ФАЙЛ
+# 7. EXECUTABLE
 add_executable(zerossg_app 
     "src/main.cpp"
     "src/network/gateway_server.cpp"
@@ -124,7 +124,7 @@ target_link_libraries(zerossg_app
     yaml-cpp
 )
 
-# 8. ТЕСТЫ (暂时禁用)
+# 8. TESTS (disabled)
 # enable_testing()
 
 # include(FetchContent)
