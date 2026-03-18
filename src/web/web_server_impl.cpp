@@ -23,7 +23,7 @@ module;
 import zerossg.web.web_server;
 import zerossg.constants;
 
-export namespace zerossg {
+namespace zerossg {
 
 // Port checking implementation
 bool WebServer::is_port_available(const String& address, int port) {
