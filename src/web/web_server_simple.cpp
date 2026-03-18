@@ -21,6 +21,7 @@ module;
 #include <cstring>
 #endif
 
+import zerossg.constants;
 module zerossg.web.web_server;
 
 namespace zerossg {
@@ -29,22 +30,22 @@ namespace zerossg {
 bool WebServer::is_port_available(const String& address, int port) {
 #ifdef _WIN32
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    if (WSAStartup(WINSOCK_VERSION_REQUESTED, &wsaData) != WINSOCK_VERSION_SUCCESS) {
         return false;
     }
     
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = socket(SOCKET_FAMILY_IPV4, SOCKET_TYPE_TCP, SOCKET_PROTOCOL_TCP);
     if (sock == INVALID_SOCKET) {
         WSACleanup();
         return false;
     }
     
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_family = SOCKET_FAMILY_IPV4;
     serverAddr.sin_port = htons(port);
     
-    if (address == "localhost" || address == "127.0.0.1") {
-        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if (address == DEFAULT_LOCALHOST || address == DEFAULT_LOOPBACK_IP) {
+        serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_LOOPBACK_IP);
     } else {
         serverAddr.sin_addr.s_addr = inet_addr(address.c_str());
     }
@@ -57,17 +58,17 @@ bool WebServer::is_port_available(const String& address, int port) {
     
     return result == 0;
 #else
-    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int sock = socket(SOCKET_FAMILY_IPV4, SOCKET_TYPE_TCP, SOCKET_PROTOCOL_TCP);
     if (sock < 0) {
         return false;
     }
     
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_family = SOCKET_FAMILY_IPV4;
     serverAddr.sin_port = htons(port);
     
-    if (address == "localhost" || address == "127.0.0.1") {
-        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if (address == DEFAULT_LOCALHOST || address == DEFAULT_LOOPBACK_IP) {
+        serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_LOOPBACK_IP);
     } else {
         serverAddr.sin_addr.s_addr = inet_addr(address.c_str());
     }
@@ -80,15 +81,15 @@ bool WebServer::is_port_available(const String& address, int port) {
 }
 
 bool WebServer::is_port_available(int port) {
-    return is_port_available("localhost", port);
+    return is_port_available(DEFAULT_LOCALHOST, port);
 }
 
 // Simple HTTP response helper
 String create_http_response(int status, const String& content_type, const String& body) {
     std::ostringstream response;
-    response << "HTTP/1.1 " << status << " OK\r\n";
-    response << "Content-Type: " << content_type << "\r\n";
-    response << "Content-Length: " << body.length() << "\r\n";
+    response << HTTP_VERSION_1_1 << " " << status << " OK\r\n";
+    response << HTTP_HEADER_CONTENT_TYPE << ": " << content_type << "\r\n";
+    response << HTTP_HEADER_CONTENT_LENGTH << ": " << body.length() << "\r\n";
     response << "Connection: close\r\n";
     response << "\r\n";
     response << body;
@@ -122,7 +123,7 @@ Result<void> WebServer::start(const String& address, int port) {
     
 #ifdef _WIN32
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    if (WSAStartup(WINSOCK_VERSION_REQUESTED, &wsaData) != WINSOCK_VERSION_SUCCESS) {
         return std::unexpected("Failed to initialize WinSock");
     }
 #endif
@@ -142,16 +143,16 @@ Result<void> WebServer::start(const String& address, int port) {
 
 void WebServer::run_http_server() {
 #ifdef _WIN32
-    SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET listenSocket = socket(SOCKET_FAMILY_IPV4, SOCKET_TYPE_TCP, SOCKET_PROTOCOL_TCP);
     if (listenSocket == INVALID_SOCKET) {
         std::cerr << "Failed to create socket\n";
         return;
     }
     
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_family = SOCKET_FAMILY_IPV4;
     serverAddr.sin_port = htons(m_port);
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_LOOPBACK_IP);
     
     if (bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
         std::cerr << "Bind failed\n";
@@ -183,16 +184,16 @@ void WebServer::run_http_server() {
     closesocket(listenSocket);
     WSACleanup();
 #else
-    int listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int listenSocket = socket(SOCKET_FAMILY_IPV4, SOCKET_TYPE_TCP, SOCKET_PROTOCOL_TCP);
     if (listenSocket < 0) {
         std::cerr << "Failed to create socket\n";
         return;
     }
     
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_family = SOCKET_FAMILY_IPV4;
     serverAddr.sin_port = htons(m_port);
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_LOOPBACK_IP);
     
     if (bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         std::cerr << "Bind failed\n";

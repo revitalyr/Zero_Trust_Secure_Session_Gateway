@@ -210,7 +210,20 @@ export constexpr const char* TLS_VERSION_1_2 = "TLSv1.2";
 export constexpr const char* TLS_VERSION_1_3 = "TLSv1.3";
 
 // Network constants
+export constexpr const char* DEFAULT_LOCALHOST = "localhost";
+export constexpr const char* DEFAULT_LOOPBACK_IP = "127.0.0.1";
 export constexpr const char* MESSAGE_DELIMITER = "\n\n";
+
+// Socket and network constants
+export constexpr int SOCKET_FAMILY_IPV4 = AF_INET;
+export constexpr int SOCKET_TYPE_TCP = SOCK_STREAM;
+export constexpr int SOCKET_PROTOCOL_TCP = IPPROTO_TCP;
+export constexpr int SOCKET_INVALID = -1;
+export constexpr int SOCKET_ERROR = -1;
+
+// WinSock constants (Windows)
+export constexpr int WINSOCK_VERSION_REQUESTED = MAKEWORD(2, 2);
+export constexpr int WINSOCK_VERSION_SUCCESS = 0;
 
 // Character encodings
 export constexpr const char* ENCODING_UTF8 = "UTF-8";

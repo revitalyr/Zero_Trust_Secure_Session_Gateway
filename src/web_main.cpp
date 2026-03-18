@@ -5,7 +5,8 @@ module;
 #include <thread>
 #include <chrono>
 
-module zerossg.web.web_server;
+import zerossg.web.web_server;
+import zerossg.constants;
 
 namespace zerossg {
 
@@ -18,18 +19,18 @@ public:
         std::cout << "================================================\n\n";
         
         // Parse command line arguments for port
-        int port = 8080;
+        int port = DEFAULT_WEB_PORT;
         if (argc > 1) {
             try {
                 port = std::stoi(argv[1]);
-                if (port < 1 || port > 65535) {
-                    std::cerr << "Error: Port must be between 1 and 65535\n";
-                    return 1;
+                if (port < PortNoMin || port > PortNoMax) {
+                    std::cerr << "Error: Port must be between " << PortNoMin << " and " << PortNoMax << "\n";
+                    return EXIT_FAILURE;
                 }
             } catch (const std::exception& e) {
                 std::cerr << "Error: Invalid port number\n";
                 std::cerr << "Usage: " << argv[0] << " [port]\n";
-                return 1;
+                return EXIT_FAILURE;
             }
         }
         
@@ -41,18 +42,18 @@ public:
             std::cerr << "Error: Port " << port << " is already in use!\n";
             std::cerr << "Please stop the other service or use a different port.\n";
             std::cerr << "Usage: " << argv[0] << " [port]\n";
-            return 1;
+            return EXIT_FAILURE;
         }
         
         // Start server
-        auto result = server->start("localhost", port);
+        auto result = server->start(DEFAULT_LOCALHOST, port);
         if (!result) {
             std::cerr << "Failed to start web server: " << result.error() << "\n";
-            return 1;
+            return EXIT_FAILURE;
         }
         
         std::cout << "\nWeb interface is running!\n";
-        std::cout << "Open http://localhost:" << port << " in your browser\n\n";
+        std::cout << "Open http://" << DEFAULT_LOCALHOST << ":" << port << " in your browser\n\n";
         std::cout << "Press Ctrl+C to stop the server\n\n";
         
         // Keep server running
@@ -60,7 +61,7 @@ public:
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         
-        return 0;
+        return EXIT_SUCCESS;
     }
 };
 
@@ -72,9 +73,9 @@ int main(int argc, char* argv[]) {
         return app.run(argc, argv);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
-        return 1;
+        return EXIT_FAILURE;
     } catch (...) {
         std::cerr << "Unknown error occurred\n";
-        return 1;
+        return EXIT_FAILURE;
     }
 }
