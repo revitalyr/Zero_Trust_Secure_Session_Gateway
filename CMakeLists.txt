@@ -151,7 +151,7 @@ target_link_libraries(zerossg_tests
     Boost::date_time
     Boost::container
     yaml-cpp
-    ut::ut
+    Boost::ut
 )
 target_include_directories(zerossg_tests PRIVATE ${ut_SOURCE_DIR}/include)
 

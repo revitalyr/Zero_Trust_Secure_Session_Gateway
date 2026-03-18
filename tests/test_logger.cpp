@@ -5,21 +5,21 @@ module;
 #include <fstream>
 #include <filesystem>
 
-module zerossg.tests.logger;
+#define BOOST_UT_DISABLE_MODULE
+#include <boost/ut.hpp>
 
 import zerossg.logging.logger;
 import zerossg.constants;
-import ut;
 
 namespace zerossg::tests {
 
-using namespace ut;
+using namespace boost::ut;
 
 // Test logger creation and basic functionality
 suite logger_tests = [] {
     "logger_creation"_test = [] {
         Logger logger("test_logger", LogLevel::INFO);
-        expect(true_i) << "Logger created successfully";
+        expect(true) << "Logger created successfully";
     };
 
     "logger_initialization"_test = [] {
@@ -33,7 +33,6 @@ suite logger_tests = [] {
             logger.info("Test message");
         }
         
-        // Check if log file was created
         expect(std::filesystem::exists(test_log_file)) << "Log file should be created";
         
         // Clean up
@@ -60,7 +59,7 @@ suite logger_tests = [] {
 
     "logger_default_file"_test = [] {
         Logger logger("default_logger", LogLevel::INFO);
-        expect(true_i) << "Logger with default file created successfully";
+        expect(true) << "Logger with default file created successfully";
     };
 };
 

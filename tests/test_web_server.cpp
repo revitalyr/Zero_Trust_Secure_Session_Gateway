@@ -5,15 +5,15 @@ module;
 #include <thread>
 #include <chrono>
 
-module zerossg.tests.web_server;
+#define BOOST_UT_DISABLE_MODULE
+#include <boost/ut.hpp>
 
 import zerossg.web.web_server;
 import zerossg.constants;
-import ut;
 
 namespace zerossg::tests {
 
-using namespace ut;
+using namespace boost::ut;
 
 // Test web server creation and basic functionality
 suite web_server_tests = [] {
@@ -30,12 +30,12 @@ suite web_server_tests = [] {
     "port_availability_check"_test = [] {
         // Test port availability for a port that should be available
         bool is_available = WebServer::is_port_available(9999);
-        expect(true_i) << "Port availability check should work";
+        expect(true) << "Port availability check should work";
     };
 
     "port_availability_with_address"_test = [] {
         bool is_available = WebServer::is_port_available(DEFAULT_LOCALHOST, 9999);
-        expect(true_i) << "Port availability check with address should work";
+        expect(true) << "Port availability check with address should work";
     };
 
     "web_server_start_stop"_test = [] {
@@ -94,7 +94,6 @@ suite web_server_tests = [] {
         expect(!config_json.empty()) << "Config JSON should not be empty";
         expect(config_json.find("server_port") != String::npos) << "Config JSON should contain server_port field";
     };
-
 };
 
 } // namespace zerossg::tests

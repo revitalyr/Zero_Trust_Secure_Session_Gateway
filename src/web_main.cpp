@@ -1,8 +1,10 @@
-module zerossg.web_main;
+module;
 
 #include <iostream>
 #include <thread>
 #include <chrono>
+
+module zerossg.web_main;
 
 import zerossg.web.web_server;
 import zerossg.constants;

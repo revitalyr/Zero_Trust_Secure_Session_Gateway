@@ -1,4 +1,4 @@
-module zerossg.web.web_server_impl;
+module;
 
 #include <iostream>
 #include <sstream>
@@ -23,7 +23,7 @@ module zerossg.web.web_server_impl;
 import zerossg.web.web_server;
 import zerossg.constants;
 
-namespace zerossg {
+export namespace zerossg {
 
 // Port checking implementation
 bool WebServer::is_port_available(const String& address, int port) {
@@ -285,7 +285,7 @@ HttpResponse WebServer::handle_users() {
         body { font-family: Arial, sans-serif; margin: 40px; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f22; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
