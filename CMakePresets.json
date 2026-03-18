@@ -1,0 +1,48 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "base-vcpkg",
+            "hidden": true,
+            "description": "Базовый пресет с настройками vcpkg и Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            }
+        },
+        {
+            "name": "Config-Debug",
+            "displayName": "Debug (vcpkg)",
+            "inherits": "base-vcpkg",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Config-Release",
+            "displayName": "Release (vcpkg)",
+            "inherits": "base-vcpkg",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Build-Debug",
+            "configurePreset": "Config-Debug"
+        },
+        {
+            "name": "Build-Release",
+            "configurePreset": "Config-Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "Test-Debug",
+            "configurePreset": "Config-Debug"
+        }
+    ]
+}
