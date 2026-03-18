@@ -1,5 +1,4 @@
-// Web server implementation
-module;
+module zerossg.web.web_server_impl;
 
 #include <iostream>
 #include <sstream>

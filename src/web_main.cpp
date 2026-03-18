@@ -1,5 +1,4 @@
-// Web interface main entry point
-module;
+module zerossg.web_main;
 
 #include <iostream>
 #include <thread>

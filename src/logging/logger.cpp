@@ -24,18 +24,18 @@ import zerossg.std;
 namespace zerossg {
 
 Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
-    initialize_default_sinks();
+    initialize_default_sinks(name, DEFAULT_LOG_FILE);
     // m_logger->set_name(name); // spdlog::logger does not have set_name
     set_level(level);
 }
 
 // Private helper methods
-void Logger::initialize_default_sinks() {
+void Logger::initialize_default_sinks(const String& name, const String& log_file) {
     // Create default file sink
-    auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/zerossg.log", 1024*1024, 3);
+    auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file, 1024*1024, 3);
     file_sink->set_level(spdlog::level::info);
     
-    m_logger = std::make_shared<spdlog::logger>("zerossg", file_sink);
+    m_logger = std::make_shared<spdlog::logger>(name, file_sink);
     m_logger->set_level(spdlog::level::info);
     m_logger->flush_on(spdlog::level::info);
 }

@@ -164,3 +164,9 @@ target_sources(zerossg_web PRIVATE
 if(WIN32)
     target_link_libraries(zerossg_web PRIVATE ws2_32)
 endif()
+
+# Set module properties for web server
+set_source_files_properties(src/web/web_server_impl.cpp PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)
