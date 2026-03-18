@@ -49,6 +49,7 @@ export class LoggerManager;
 export class Logger {
 public:
     Logger(const String& name, LogLevel level = LogLevel::INFO);
+    Logger(const String& name, LogLevel level, const String& file_path);
     ~Logger();
     
     static std::shared_ptr<Logger> get(const String& name) {
@@ -136,7 +137,7 @@ public:
 
 private:
     void log_impl(LogLevel level, const std::source_location& loc, std::string_view fmt, std::format_args args);
-    void initialize_default_sinks();
+    void initialize_default_sinks(const String& name, LogLevel level, const String& log_file);
 
     String m_name;
     LogLevel m_level;

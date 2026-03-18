@@ -24,19 +24,27 @@ import zerossg.std;
 namespace zerossg {
 
 Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
-    initialize_default_sinks(name, DEFAULT_LOG_FILE);
-    set_level(level);
+    initialize_default_sinks(name, level, DEFAULT_LOG_FILE);
 }
 
+Logger::Logger(const String& name, LogLevel level, const String& file_path) : m_mutex(), m_logger(nullptr) {
+    initialize_default_sinks(name, level, file_path);
+}
+
+Logger::~Logger() = default;
+
 // Private helper methods
-void Logger::initialize_default_sinks(const String& name, const String& log_file) {
+void Logger::initialize_default_sinks(const String& name, LogLevel level, const String& log_file) {
     // Create default file sink
     auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file, 1024*1024, 3);
     file_sink->set_level(spdlog::level::info);
     
     m_logger = std::make_shared<spdlog::logger>(name, file_sink);
-    m_logger->set_level(spdlog::level::info);
+    m_logger->set_level(convert_log_level(level));
     m_logger->flush_on(spdlog::level::info);
+    
+    m_name = name;
+    m_level = level;
 }
 
 String Logger::format_fields(const std::vector<std::pair<String, String>>& fields) {
@@ -278,6 +286,34 @@ void zerossg::Logger::log_throughput(size_t bytes_transferred, const zerossg::St
     
     zerossg::String fields_str = zerossg::Logger::format_fields(fields);
     m_logger->info("THROUGHPUT: {}", fields_str);
+}
+
+LogLevel zerossg::Logger::get_level() const noexcept {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(m_mutex));
+    return m_level;
+}
+
+void zerossg::Logger::format_timestamp(bool enable) noexcept {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_format_timestamp = enable;
+}
+
+void zerossg::Logger::format_security_event(bool enable) noexcept {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_format_security_event = enable;
+}
+
+void zerossg::Logger::log_security_event(const SecurityEvent& event) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    
+    std::vector<std::pair<String, String>> fields;
+    fields.emplace_back("type", security_event_type_to_string(event.m_type));
+    fields.emplace_back("username", event.m_username);
+    fields.emplace_back("client_ip", event.m_client_ip);
+    fields.emplace_back("details", event.m_details);
+    
+    String fields_str = zerossg::Logger::format_fields(fields);
+    m_logger->warn("SECURITY_EVENT: {}", fields_str);
 }
 
 } // namespace zerossg

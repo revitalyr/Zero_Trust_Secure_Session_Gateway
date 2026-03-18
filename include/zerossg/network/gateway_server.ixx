@@ -10,27 +10,29 @@ module;
 export module zerossg.network.gateway_server;
 
 import zerossg.network;
-// Import required modules
-import zerossg.tls.tls_handler;
-import zerossg.auth.authenticator;
-import zerossg.rbac.authorizer;
-import zerossg.session.session_manager;
-import zerossg.proxy.proxy_manager;
-import zerossg.security.security_manager;
-import zerossg.logging.logger;
-import zerossg.third_party.nlohmann_json;
 import zerossg.std;
+import zerossg.common;
 
 export namespace zerossg {
+
+// Forward declarations to reduce module interface complexity
+class TlsHandler;
+class AuthenticationManager;
+class AuthorizationManager;
+class SessionManager;
+class SecurityManager;
+class ProxyManager;
+class Logger;
+class ConfigManager;
     
 export class GatewayServer {
 public:
     GatewayServer() = default;
     ~GatewayServer();
 
-    zerossg::Result<void> initialize(const zerossg::ConfigManager& config);
-    zerossg::Result<void> start();
-    zerossg::Result<void> stop();
+    Result<void> initialize(const ConfigManager& config);
+    Result<void> start();
+    Result<void> stop();
     
     bool is_running() const { return m_running; }
     
@@ -38,33 +40,34 @@ public:
     size_t get_total_connection_count() const { return m_total_connections.load(); }
 
 private:
-    zerossg::Result<void> setup_acceptor();
+    Result<void> setup_acceptor();
     void start_accept();
-    void handle_accept(std::shared_ptr<zerossg::TcpSocket> socket, const zerossg::ErrorCode& error);
+    void handle_accept(std::shared_ptr<TcpSocket> socket, const ErrorCode& error);
     void start_io_threads();
     void stop_io_threads();
-    void register_connection(std::shared_ptr<zerossg::TcpSocket> connection);
+    void register_connection(std::shared_ptr<TcpSocket> connection);
+    void register_signal_handlers();
 
-    zerossg::String m_listen_address{"127.0.0.1"};
+    String m_listen_address{"127.0.0.1"};
     uint16_t m_listen_port{8080};
-    std::unique_ptr<zerossg::TcpAcceptor> m_acceptor;
-    zerossg::IoContext m_io_context;
-    std::optional<zerossg::ExecutorWorkGuard> m_work_guard;
+    std::unique_ptr<TcpAcceptor> m_acceptor;
+    IoContext m_io_context;
+    std::optional<ExecutorWorkGuard> m_work_guard;
     std::vector<std::thread> m_io_threads;
     std::atomic<bool> m_running{false};
     size_t m_thread_count{4};
-    std::unique_ptr<zerossg::TlsHandler> m_tls_handler;
-    std::unique_ptr<zerossg::AuthenticationManager> m_auth_manager;
-    std::unique_ptr<zerossg::AuthorizationManager> m_authz_manager;
-    std::unique_ptr<zerossg::SessionManager> m_session_manager;
-    std::unique_ptr<zerossg::SecurityManager> m_security_manager;
-    zerossg::String m_tls_cert_file{"server.crt"};
-    zerossg::String m_tls_key_file{"server.key"};
+    std::unique_ptr<TlsHandler> m_tls_handler;
+    std::unique_ptr<AuthenticationManager> m_auth_manager;
+    std::unique_ptr<AuthorizationManager> m_authz_manager;
+    std::unique_ptr<SessionManager> m_session_manager;
+    std::unique_ptr<SecurityManager> m_security_manager;
+    String m_tls_cert_file{"server.crt"};
+    String m_tls_key_file{"server.key"};
     std::atomic<size_t> m_active_connections{0};
     std::atomic<size_t> m_total_connections{0};
-    std::unique_ptr<zerossg::ProxyManager> m_proxy_manager;
-    std::shared_ptr<zerossg::Logger> m_logger;
-    std::unique_ptr<zerossg::SignalSet> m_signals;
+    std::unique_ptr<ProxyManager> m_proxy_manager;
+    std::shared_ptr<Logger> m_logger;
+    std::unique_ptr<SignalSet> m_signals;
 };
 
 }

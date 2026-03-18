@@ -7,7 +7,6 @@
 import zerossg.session.session_manager;
 import zerossg.types;
 import zerossg.interfaces;
-import zerossg.result;
 
 // Корректные алиасы типов для тестов
 using User = zerossg::User;

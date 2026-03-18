@@ -20,7 +20,8 @@ module;
 #include <cstring>
 #endif
 
-import zerossg.web.web_server;
+module zerossg.web.web_server;
+
 import zerossg.constants;
 
 namespace zerossg {

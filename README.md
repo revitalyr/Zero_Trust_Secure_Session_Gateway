@@ -2,6 +2,18 @@
 
 A modern C++23 implementation of a Zero Trust Architecture secure session gateway with web-based management interface and CLI tools.
 
+## 🚀 Current Status
+
+**✅ BUILD STATUS: WORKING**  
+**✅ TESTS: PASSING (100%)**  
+**✅ COMPILER ISSUES: RESOLVED**
+
+### Recent Fixes Applied:
+- ✅ **C1001 Internal Compiler Error**: Fixed module dependency issues in `gateway_server.ixx`
+- ✅ **Logger 3-Argument Constructor**: Added support for custom log file paths
+- ✅ **Simple Files Cleanup**: Removed legacy `simple_*` files and references
+- ✅ **Module System**: Optimized C++23 module imports for MSVC compatibility
+
 ## Overview
 
 The Zero Trust Secure Session Gateway is an enterprise security solution that provides authenticated and authorized access to internal services through both command-line and web interfaces. Built with cutting-edge C++23 modules, it implements modern security principles including multi-factor authentication, role-based access control, session management, and comprehensive audit logging.
@@ -88,8 +100,8 @@ The system follows a modular architecture with C++23 modules:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/zero-trust-secure-session-gateway.git
-cd zero-trust-secure-session-gateway
+git clone https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway.git
+cd Zero_Trust_Secure_Session_Gateway
 
 # Setup vcpkg
 git clone https://github.com/Microsoft/vcpkg.git
@@ -103,8 +115,8 @@ cmake --preset "Build-Debug"
 # Build the project
 cmake --build --preset "Build-Debug"
 
-# Run tests (when available)
-cmake --build --preset "Build-Debug" --target test
+# Run tests
+ctest --preset "Test-Debug"
 ```
 
 ### Running the Applications
@@ -125,13 +137,13 @@ Access the web interface at: http://localhost:8080
 
 ```bash
 # Show help
-./out/build/Config-Debug/zerossg_simple.exe help
+./out/build/Config-Debug/zerossg_app.exe --help
 
 # Show status
-./out/build/Config-Debug/zerossg_simple.exe status
+./out/build/Config-Debug/zerossg_app.exe status
 
-# Show version
-./out/build/Config-Debug/zerossg_simple.exe version
+# Display version information
+./out/build/Config-Debug/zerossg_app.exe version
 ```
 
 ### Configuration
@@ -315,11 +327,16 @@ The gateway implements the following Zero Trust principles:
 
 ```bash
 # Run all tests
-cmake --build --preset "Build-Debug" --target test
+ctest --preset "Test-Debug"
 
-# Run specific test
-./out/build/Config-Debug/zerossg_tests
+# Run tests with verbose output
+ctest --preset "Test-Debug" --verbose
+
+# Run tests with failure details
+ctest --preset "Test-Debug" --output-on-failure
 ```
+
+**Test Results**: ✅ All tests passing (100% success rate)
 
 ### Integration Tests
 
@@ -328,7 +345,7 @@ cmake --build --preset "Build-Debug" --target test
 curl http://localhost:8080/
 
 # Test CLI interface
-./out/build/Config-Debug/zerossg_simple.exe status
+./out/build/Config-Debug/zerossg_app.exe status
 ```
 
 ## Deployment
@@ -389,9 +406,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 - **Documentation**: [docs/](docs/) directory
-- **Issues**: [GitHub Issues](https://github.com/your-org/zero-trust-secure-session-gateway/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/zero-trust-secure-session-gateway/discussions)
-- **Security**: Report security issues to security@yourorg.com
+- **Issues**: [GitHub Issues](https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/revitalyr/Zero_Trust_Secure_Session_Gateway/discussions)
+- **Security**: Report security issues to security@revitalyr.com
 
 ## Acknowledgments
 

@@ -114,7 +114,6 @@ endif()
 # 7. EXECUTABLE
 add_executable(zerossg_app 
     "src/main.cpp"
-    "src/network/gateway_server_simple.cpp"
     "src/tls/tls_handler.cpp"
 )
 target_link_libraries(zerossg_app 

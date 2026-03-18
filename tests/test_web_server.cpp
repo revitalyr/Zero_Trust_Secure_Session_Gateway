@@ -1,6 +1,4 @@
 // Web server tests
-module;
-
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -43,7 +41,7 @@ suite web_server_tests = [] {
         
         // Try to start on available port
         auto result = server->start(DEFAULT_LOCALHOST, 9999);
-        expect(result) << "Server should start successfully";
+        expect(static_cast<bool>(result)) << "Server should start successfully";
         
         if (result) {
             expect(server->is_running()) << "Server should be running after start";
@@ -53,7 +51,7 @@ suite web_server_tests = [] {
             
             // Stop the server
             auto stop_result = server->stop();
-            expect(stop_result) << "Server should stop successfully";
+            expect(static_cast<bool>(stop_result)) << "Server should stop successfully";
         }
     };
 

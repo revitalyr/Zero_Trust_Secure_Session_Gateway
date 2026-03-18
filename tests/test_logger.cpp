@@ -1,6 +1,4 @@
 // Logger tests
-module;
-
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -47,7 +45,7 @@ suite logger_tests = [] {
             Logger logger("test_logger", LogLevel::DEBUG, test_log_file);
             logger.debug("Debug message");
             logger.info("Info message");
-            logger.warning("Warning message");
+            logger.warn("Warning message");
             logger.error("Error message");
         }
         
