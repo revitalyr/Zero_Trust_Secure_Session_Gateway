@@ -124,34 +124,38 @@ target_link_libraries(zerossg_app
     yaml-cpp
 )
 
-# 8. TESTS (disabled)
-# enable_testing()
+# 8. TESTS (enabled)
+enable_testing()
 
-# include(FetchContent)
-# FetchContent_Declare(
-#     ut
-#     GIT_REPOSITORY https://github.com/boost-ext/ut
-#     GIT_TAG        v1.1.9
-# )
-# FetchContent_MakeAvailable(ut)
+include(FetchContent)
+FetchContent_Declare(
+    ut
+    GIT_REPOSITORY https://github.com/boost-ext/ut
+    GIT_TAG        v1.1.9
+)
+FetchContent_MakeAvailable(ut)
 
-# add_executable(zerossg_tests 
-#     "tests/test_authentication.cpp"
-#     "tests/test_authorization.cpp"
-#     "tests/test_session_manager.cpp"
-#     src/auth/authenticator.cpp
-#     src/rbac/authorizer.cpp
-#     src/session/session_manager.cpp
-# )
-# target_link_libraries(zerossg_tests 
-#     PRIVATE zerossg_lib
-#     Boost::date_time
-#     Boost::container
-#     yaml-cpp
-# )
-# target_include_directories(zerossg_tests PRIVATE ${ut_SOURCE_DIR}/include)
+add_executable(zerossg_tests 
+    "tests/test_authentication.cpp"
+    "tests/test_authorization.cpp"
+    "tests/test_session_manager.cpp"
+    "tests/test_logger.cpp"
+    "tests/test_web_server.cpp"
+    src/auth/authenticator.cpp
+    src/rbac/authorizer.cpp
+    src/session/session_manager.cpp
+    src/logging/logger.cpp
+)
+target_link_libraries(zerossg_tests 
+    PRIVATE zerossg_lib
+    Boost::date_time
+    Boost::container
+    yaml-cpp
+    ut::ut
+)
+target_include_directories(zerossg_tests PRIVATE ${ut_SOURCE_DIR}/include)
 
-# add_test(NAME AllTests COMMAND zerossg_tests)
+add_test(NAME AllTests COMMAND zerossg_tests)
 
 # Web interface executable
 add_executable(zerossg_web src/web_main.cpp)

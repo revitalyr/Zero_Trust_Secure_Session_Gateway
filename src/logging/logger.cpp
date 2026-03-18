@@ -25,7 +25,6 @@ namespace zerossg {
 
 Logger::Logger(const String& name, LogLevel level) : m_mutex(), m_logger(nullptr) {
     initialize_default_sinks(name, DEFAULT_LOG_FILE);
-    // m_logger->set_name(name); // spdlog::logger does not have set_name
     set_level(level);
 }
 
