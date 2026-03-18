@@ -305,13 +305,39 @@ HttpResponse WebServer::handle_root() {
 <head>
     <title>Zero Trust Secure Session Gateway</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
-        .nav { background: #34495e; padding: 10px; }
-        .nav a { color: white; text-decoration: none; margin: 0 15px; }
-        .content { margin: 20px 0; }
-        .card { border: 1px solid #ddd; padding: 20px; margin: 10px 0; border-radius: 5px; }
-        .status { background: #d4edda; padding: 10px; border-radius: 5px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+        }
+        .header { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .nav { 
+            background: #34495e; 
+            padding: 10px; 
+        }
+        .nav a { 
+            color: white; 
+            text-decoration: none; 
+            margin: 0 15px; 
+        }
+        .content { 
+            margin: 20px 0; 
+        }
+        .card { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .status { 
+            background: #d4edda; 
+            padding: 10px; 
+            border-radius: 5px; 
+        }
     </style>
 </head>
 <body>
@@ -348,7 +374,7 @@ HttpResponse WebServer::handle_root() {
 </html>
     )";
     
-    return HttpResponse(200, "text/html", html);
+    return HttpResponse(HTTP_STATUS_OK, MIME_TYPE_HTML, html);
 }
 
 HttpResponse WebServer::handle_status() {
@@ -363,12 +389,35 @@ HttpResponse WebServer::handle_config() {
 <head>
     <title>Configuration - Zero Trust Gateway</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .form-group { margin: 15px 0; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #2980b9; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+        }
+        .form-group { 
+            margin: 15px 0; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+        }
+        input, textarea, select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        button { 
+            background: #3498db; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { 
+            background: #2980b9; 
+        }
     </style>
 </head>
 <body>
@@ -401,7 +450,7 @@ HttpResponse WebServer::handle_config() {
 </html>
     )";
     
-    return HttpResponse(200, "text/html", html);
+    return HttpResponse(HTTP_STATUS_OK, MIME_TYPE_HTML, html);
 }
 
 HttpResponse WebServer::handle_users() {
